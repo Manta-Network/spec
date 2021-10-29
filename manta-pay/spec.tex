@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[margin=1.1in]{geometry}
+\usepackage[margin=0.8in]{geometry}
 \usepackage[
     colorlinks=true,
     linkcolor=blue,
@@ -22,9 +22,90 @@
 \usepackage{tikz-cd}
 \usepackage{wrapfig}
 
-\include{prelude.tex}
+\newcommand{\subsubsubsection}[1]{\paragraph{#1}}
+\newcommand{\subsubsubsubsection}[1]{\subparagraph{#1}}
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
 
-\title{\MantaPay{} Protocol Specification}
+\def\sectionautorefname{$\S$}
+\def\subsectionautorefname{$\S$}
+\def\subsubsectionautorefname{$\S$}
+\def\subsubsubsectionautorefname{$\S$}
+
+\newcommand{\lsection}[2]{\def\sectionlabel{#2} \section{#1}\label{sec:#2}}
+\newcommand{\lsubsection}[2]{\def\sectionlabel{#2} \subsection{#1}\label{sec:#2}}
+\newcommand{\lsubsubsection}[2]{\def\sectionlabel{#2} \subsubsection{#1}\label{sec:#2}}
+\newcommand{\lsubsubsubsection}[2]{\def\sectionlabel{#2} \subsubsubsection{#1}\label{sec:#2}}
+\newcommand{\lsubsubsubsubsection}[2]{\def\sectionlabel{#2} \subsubsubsubsection{#1}\label{sec:#2}}
+
+\floatstyle{boxed} 
+\restylefloat{figure}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem*{definition*}{Definition}
+
+\newcommand{\Alice}{{\textsf{Alice}}}
+\newcommand{\AssetId}{{\textsf{AssetId}}}
+\newcommand{\AssetValue}{{\textsf{AssetValue}}}
+\newcommand{\Asset}{{\textsf{Asset}}}
+\newcommand{\Bob}{{\textsf{Bob}}}
+\newcommand{\COM}{{\textbf{\textsf{COM}}}}
+\newcommand{\Charlie}{{\textsf{Charlie}}}
+\newcommand{\CheckProof}{{\textbf{\textsf{CheckProof}}}}
+\newcommand{\Concat}{{\textbf{\textsf{Concat}}}}
+\newcommand{\Decrypt}{{\textbf{\textsf{Decrypt}}}}
+\newcommand{\DerivePublic}{{\textbf{\textsf{DerivePublic}}}}
+\newcommand{\Derive}{{\textbf{\textsf{Derive}}}}
+\newcommand{\Encrypt}{{\textbf{\textsf{Encrypt}}}}
+\newcommand{\EntropySource}{{\textbf{\textsf{EntropySource}}}}
+\newcommand{\Enumerate}{{\textsf{enumerate}}}
+\newcommand{\FAIR}{{\textbf{\textsf{FAIR}}}}
+\newcommand{\GetAccumulatorAndZeroes}{{\textsf{GetAccumulatorAndZeroes}}}
+\newcommand{\GetProof}{{\textbf{\textsf{GetProof}}}}
+\newcommand{\HASH}{{\textbf{\textsf{HASH}}}}
+\newcommand{\MantaDAP}{{\Manta{}_{\texttt{DAP}}}}
+\newcommand{\MantaPay}{{\textsf{MantaPay}}}
+\newcommand{\Manta}{{\textsc{Manta}}}
+\newcommand{\Mint}{{\textsf{Mint}}}
+\newcommand{\Next}{{\textsf{Next}}}
+\newcommand{\PRF}{{\textbf{\textsf{PRF}}}}
+\newcommand{\PrepareZeroes}{{\textsf{PrepareZeroes}}}
+\newcommand{\PrivateTransfer}{{\textsf{PrivateTransfer}}}
+\newcommand{\Prop}{{\textsf{Prop}}}
+\newcommand{\Prove}{{\textbf{\textsf{Prove}}}}
+\newcommand{\PublicAddress}{{\textsf{PublicAddress}}}
+\newcommand{\PublicLedger}{{\textsf{PublicLedger}}}
+\newcommand{\Receiver}{{\textsf{Receiver}}}
+\newcommand{\Reclaim}{{\textsf{Reclaim}}}
+\newcommand{\Sample}{{\textsf{Sample}}}
+\newcommand{\SeededRng}{{\textsf{SeededRng}}}
+\newcommand{\Sender}{{\textsf{Sender}}}
+\newcommand{\ShieldedAddress}{{\textsf{ShieldedAddress}}}
+\newcommand{\ShieldedAssetPool}{{\textsf{ShieldedAssetPool}}}
+\newcommand{\ShieldedIdentity}{{\textsf{ShieldedIdentity}}}
+\newcommand{\Sink}{{\textsf{Sink}}}
+\newcommand{\Source}{{\textsf{Source}}}
+\newcommand{\SymmDecrypt}{{\textbf{\textsf{SymmDecrypt}}}}
+\newcommand{\SymmEncrypt}{{\textbf{\textsf{SymmEncrypt}}}}
+\newcommand{\TransferPost}{{\textsf{TransferPost}}}
+\newcommand{\Transfer}{{\textsf{Transfer}}}
+\newcommand{\UTXO}{{\textsf{UTXO}}}
+\newcommand{\Value}{{\textsf{Value}}}
+\newcommand{\Verify}{{\textbf{\textsf{Verify}}}}
+\newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
+\newcommand{\Void}{{\textsf{Void}}}
+\newcommand{\allocated}{{\textsf{allocated}}}
+\newcommand{\len}{{\textsf{len}}}
+\newcommand{\note}{{\textsf{note}}}
+\newcommand{\public}{{\textsf{public}}}
+\newcommand{\pub}{{\textbf{\textsf{pub}}}}
+\newcommand{\remainder}{{\textsf{remainder}}}
+\newcommand{\secret}{{\textsf{secret}}}
+\newcommand{\spend}{{\textsf{spend}}}
+\newcommand{\spent}{{\textsf{spent}}}
+
+
+\title{\textbf{\MantaPay{} Protocol Specification}\\ v0.4.0}
 \author{Shumo Chu and Brandon H. Gomes}
 \date{\today}
 
@@ -33,10 +114,141 @@
 \maketitle
 
 \begin{abstract}
-    This article outlines a generalized transfer protocol based on the original $\MantaDAP$ protocol outlined in the \href{https://eprint.iacr.org/2021/743.pdf}{\Manta{} whitepaper}. In this protocol, the \Manta{} transfer types, (\Mint{}, \PrivateTransfer{}, \Reclaim{}), are replaced by one transfer type \Transfer{} who's fundamental verification algorithm is uniform over all possible transfer shapes. In this specification, we also introduce a reusable address system to replace the one-time shielded address scheme. This specification also outlines "semantic transactions" and the algorithm for building them from the \Transfer{} primitive.
+    \MantaPay{} is an implementation of a \emph{decentralized anonymous payment} scheme based on the $\MantaDAP$ protocol outlined in the original \href{https://eprint.iacr.org/2021/743.pdf}{\Manta{} whitepaper}.
 \end{abstract}
     
 \tableofcontents
+
+\lsection{Introduction}{introduction}
+
+\lsection{Notation}{notation}
+
+\lsection{Concepts}{concepts}
+
+\subsection{Assets}
+
+The \Asset{} is the fundamental currency object in the \MantaPay{} protocol. An asset $a : \Asset$ is a tuple
+\[a = (a.\textsf{id}, a.\textsf{value}) : \AssetId \times \AssetValue\]
+The \MantaPay{} protocol is a \emph{decentralized anonymous payment} scheme which facilitiates the private ownership and private transfer of \Asset{} objects. The \AssetId{} field encodes the type of currency being used, and the \AssetValue{} encodes how many units of that currency are being used, in the standard base unit of that currency.
+
+Whenever an \Asset{} is being used in a public setting, we simply refer to it as an \Asset{}, but when the \AssetId{} and/or \AssetValue{} of a particular \Asset{} is meant to be hidden from public view, we refer to the \Asset{} as either, \emph{secret}, \emph{private}, \emph{hidden}, or \emph{shielded}.
+
+\Asset{s} form the basic units of \emph{transactions} which consume \Asset{s} on input, transform them, and return \Asset{s} on output. To preserve the economic value stored in \Asset{s}, the sum of the input \AssetValue{s} must balance the sum of the output \AssetValue{s}, and all assets in a single transaction must have the same \AssetId{}\footnotemark{}. 
+
+\footnotetext{It is beyond the scope of this paper to discuss transactions with inputs and outputs that feature different \AssetId{s}, like those that would be featured in a \emph{decentralized anonymous exchange}.}
+
+\lsubsection{Addresses}{addresses}
+
+In order for participants in the \MantaPay{} protocol to send and receive \Asset{s}, they must create secret and public \emph{addresses} according to an \emph{address scheme}. For \MantaPay{}, the address scheme consists of a \emph{spending key} $sk$, a \emph{viewing key} $vk$, and a \emph{public key} $pk$. The keys have the following uses/properties:
+
+\begin{itemize}
+    \item Access to a public key $pk$ represents the ability to send \Asset{s} to the owner of the associated $sk$.
+    \item Access to a viewing key $vk$ represents the ability to reveal shielded \Asset{} information for \Asset{s} belonging to the owner of the associated $sk$.
+    \item Access to a spending key $sk$ represents the ability to spend \Asset{s} that were received under the associated public key $pk$.
+\end{itemize}
+
+See \autoref{sec:abstract-encryption} and \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, viewing, and receiving.
+
+\subsection{Ledger}
+
+\begingroup
+\setlength{\columnsep}{20pt}
+
+\begin{wrapfigure}{r}[-10pt]{0.45\textwidth}
+    \begin{center}
+    \begin{tikzcd}
+        \ShieldedAssetPool & & \\
+            & \Transfer
+                \arrow[r, "\spend"]
+                \arrow[lu, leftrightarrow, start anchor = north west, end anchor = south east]
+                \arrow[ld, leftrightarrow, start anchor = south west, end anchor = north east]
+            & \Void \\
+        \PublicLedger & &
+    \end{tikzcd}
+    \end{center}
+    \caption{Lifecycle of an \Asset{}.}
+\end{wrapfigure}
+
+Ensuring that \Asset{s} maintain their economic value is not only dependent on transactions preserving inputs and outputs, but also that \Asset{s} are not \emph{double-spent}. The \emph{double-spending problem} can be solved by using a public ledger\footnotemark{} that keeps track of the flow of \Asset{s} from one participant to the other. Unfortunately, using a public ledger alone does not allow participants to remain anonymous, so \MantaPay{} extends the public ledger by adding a special account called the \ShieldedAssetPool{}. The \ShieldedAssetPool{} is responsible for keeping track of the \Asset{s} which have been anonymized by the protocol.
+
+\Asset{s} can be in one of three states, \public{} (tracked by the \PublicLedger{}), \allocated{} (spendable subset of the \ShieldedAssetPool{}), or \spent{} (voided \Asset{s}). By way of the \autoref{sec:transfer-protocol} \Transfer{} Protocol, \Asset{s} can be sent to and from the \PublicLedger{} and the \ShieldedAssetPool{}.
+
+The \ShieldedAssetPool{} is made up of four parts:
+
+\begin{enumerate}
+    \item \ShieldedAssetPool{} Balance: The \MantaPay{} ledger contains a collection of \Asset{s} which represent the combined economic value of the \ShieldedAssetPool{} and the \PublicLedger{}. The \ShieldedAssetPool{} Balance is the subset of this total value that has been anonymized by the \MantaPay{} protocol.
+    \item \autoref{sec:ledger-utxo-set} \UTXO{} Set: A collection of claims to subsets of the \ShieldedAssetPool{}, each owned by participants of the \MantaPay{} protocol.
+    \item \autoref{sec:ledger-encrypted-notes} Encrypted Notes: For each \UTXO{} there is a matching encrypted \note{} which contains information necessary to spend the \Asset{}, which is commited in the \UTXO{}, but can only be decrypted by the recipient of the \Asset{}, specifically, the correct viewing key $vk$. See \autoref{sec:addresses} for more.
+    \item \autoref{sec:ledger-void-number-set} \VoidNumber{} Set: A collection of commitments keeping track of those \UTXO{s} which have participated in exactly one instance of the \Transfer{} Protocol.
+\end{enumerate}
+
+An \Asset{} is in the \public{} state if it belongs to the \PublicLedger{}. An \Asset{} is in the \allocated{} state if a \UTXO{} for the \Asset{} is a member of the \UTXO{} Set, but its matching \VoidNumber{} is \textbf{not} in the \VoidNumber{} Set. An \Asset{} is in the \spent{} state if it was \allocated{} in the past, but its matching \VoidNumber{} is now in the \VoidNumber{} Set.
+
+The operation of the different parts of the \ShieldedAssetPool{} is elaborated in the following subsections.
+
+\endgroup
+
+\footnotetext{A public (or private) ledger is not enough to solve the \emph{double-spending problem}. A \emph{consensus mechanism} is also required to ensure that all participants agree on the current state of the ledger. The \emph{consensus mechanism} that secures the \MantaPay{} ledger is out of scope of this paper.}
+
+\lsubsubsection{\UTXO{} Set}{ledger-utxo-set}
+
+\lsubsubsection{Encrypted Notes}{ledger-encrypted-notes}
+
+\lsubsubsection{\VoidNumber{} Set}{ledger-void-number-set}
+
+\lsection{Abstract Protocol}{abstract-protocol}
+
+\subsection{Abstract Cryptographic Schemes}
+
+\subsubsection{Commitments}
+
+\subsubsection{Hash Functions}
+
+\lsubsubsection{Encryption}{abstract-encryption}
+
+\subsubsection{Zero-Knowledge Proving Systems}
+
+\lsubsection{Addresses and Key Components}{addresses-and-key-components}
+
+\lsubsection{\Transfer{} Protocol}{transfer-protocol}
+
+\subsubsection{\Sender{s}}
+
+\subsubsection{\Receiver{s}}
+
+\subsubsection{\Transfer{s}}
+
+\subsubsection{\TransferPost{s}}
+
+\lsection{Concrete Protocol}{concrete-protocol}
+
+\subsection{Conventions}
+
+\subsection{Constants}
+
+\subsection{Concrete Cryptographic Schemes}
+
+\subsubsection{Commitments}
+
+\subsubsection{Hash Functions}
+
+\subsubsection{Encryption}
+
+\subsubsection{Zero-Knowledge Proving Systems}
+
+\subsubsubsection{Groth16}
+
+\subsubsubsection{PLONK}
+
+\lsection{Differences from $\MantaDAP$}{differences}
+
+\subsection{Reusable Addresses}
+
+\subsection{\Transfer{} Circuit Unification}
+
+\lsection{Acknowledgements}{acknowledgements}
+
+\lsection{References}{references}
 
 \end{document}
 
