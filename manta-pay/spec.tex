@@ -1,0 +1,42 @@
+\documentclass[a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1.1in]{geometry}
+\usepackage[
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=blue,
+    urlcolor=blue,
+    pdfpagemode=FullScreen,
+]{hyperref}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{commath}
+\usepackage{float}
+\usepackage{parskip}
+\usepackage{tikz-cd}
+\usepackage{wrapfig}
+
+\include{prelude.tex}
+
+\title{\MantaPay{} Protocol Specification}
+\author{Shumo Chu and Brandon H. Gomes}
+\date{\today}
+
+\begin{document}
+    
+\maketitle
+
+\begin{abstract}
+    This article outlines a generalized transfer protocol based on the original $\MantaDAP$ protocol outlined in the \href{https://eprint.iacr.org/2021/743.pdf}{\Manta{} whitepaper}. In this protocol, the \Manta{} transfer types, (\Mint{}, \PrivateTransfer{}, \Reclaim{}), are replaced by one transfer type \Transfer{} who's fundamental verification algorithm is uniform over all possible transfer shapes. In this specification, we also introduce a reusable address system to replace the one-time shielded address scheme. This specification also outlines "semantic transactions" and the algorithm for building them from the \Transfer{} primitive.
+\end{abstract}
+    
+\tableofcontents
+
+\end{document}
+
