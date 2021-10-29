@@ -1,0 +1,1 @@
+# Manta Pay Protocol Specification
