@@ -37,6 +37,7 @@
 \newcommand{\lsubsubsection}[2]{\def\sectionlabel{#2} \subsubsection{#1}\label{sec:#2}}
 \newcommand{\lsubsubsubsection}[2]{\def\sectionlabel{#2} \subsubsubsection{#1}\label{sec:#2}}
 \newcommand{\lsubsubsubsubsection}[2]{\def\sectionlabel{#2} \subsubsubsubsection{#1}\label{sec:#2}}
+\newcommand{\TODO}[1]{{\color{red}\textbf{TODO}}: #1}
 
 \floatstyle{boxed} 
 \restylefloat{figure}
@@ -49,30 +50,37 @@
 \newcommand{\AssetValue}{{\textsf{AssetValue}}}
 \newcommand{\Asset}{{\textsf{Asset}}}
 \newcommand{\Bob}{{\textsf{Bob}}}
-\newcommand{\COM}{{\textbf{\textsf{COM}}}}
+\newcommand{\COM}{{\textsf{COM}}}
+\newcommand{\CRH}{{\textsf{CRH}}}
 \newcommand{\Charlie}{{\textsf{Charlie}}}
-\newcommand{\CheckProof}{{\textbf{\textsf{CheckProof}}}}
-\newcommand{\Concat}{{\textbf{\textsf{Concat}}}}
-\newcommand{\Decrypt}{{\textbf{\textsf{Decrypt}}}}
-\newcommand{\DerivePublic}{{\textbf{\textsf{DerivePublic}}}}
-\newcommand{\Derive}{{\textbf{\textsf{Derive}}}}
-\newcommand{\Encrypt}{{\textbf{\textsf{Encrypt}}}}
-\newcommand{\EntropySource}{{\textbf{\textsf{EntropySource}}}}
+\newcommand{\CheckProof}{{\textsf{CheckProof}}}
+\newcommand{\Ciphertext}{{\textsf{Ciphertext}}}
+\newcommand{\Concat}{{\textsf{Concat}}}
+\newcommand{\Decrypt}{{\textsf{Decrypt}}}
+\newcommand{\DerivePublic}{{\textsf{DerivePublic}}}
+\newcommand{\Derive}{{\textsf{Derive}}}
+\newcommand{\Encrypt}{{\textsf{Encrypt}}}
+\newcommand{\EntropySource}{{\textsf{EntropySource}}}
 \newcommand{\Enumerate}{{\textsf{enumerate}}}
-\newcommand{\FAIR}{{\textbf{\textsf{FAIR}}}}
+\newcommand{\FAIR}{{\textsf{FAIR}}}
 \newcommand{\GetAccumulatorAndZeroes}{{\textsf{GetAccumulatorAndZeroes}}}
-\newcommand{\GetProof}{{\textbf{\textsf{GetProof}}}}
-\newcommand{\HASH}{{\textbf{\textsf{HASH}}}}
+\newcommand{\GetProof}{{\textsf{GetProof}}}
+\newcommand{\HASH}{{\textsf{HASH}}}
+\newcommand{\Input}{{\textsf{Input}}}
+\newcommand{\Key}{{\textsf{Key}}}
 \newcommand{\MantaDAP}{{\Manta{}_{\texttt{DAP}}}}
 \newcommand{\MantaPay}{{\textsf{MantaPay}}}
 \newcommand{\Manta}{{\textsc{Manta}}}
 \newcommand{\Mint}{{\textsf{Mint}}}
 \newcommand{\Next}{{\textsf{Next}}}
-\newcommand{\PRF}{{\textbf{\textsf{PRF}}}}
+\newcommand{\Option}{{\textsf{Option}}}
+\newcommand{\Output}{{\textsf{Output}}}
+\newcommand{\PRF}{{\textsf{PRF}}}
+\newcommand{\Plaintext}{{\textsf{Plaintext}}}
 \newcommand{\PrepareZeroes}{{\textsf{PrepareZeroes}}}
 \newcommand{\PrivateTransfer}{{\textsf{PrivateTransfer}}}
 \newcommand{\Prop}{{\textsf{Prop}}}
-\newcommand{\Prove}{{\textbf{\textsf{Prove}}}}
+\newcommand{\Prove}{{\textsf{Prove}}}
 \newcommand{\PublicAddress}{{\textsf{PublicAddress}}}
 \newcommand{\PublicLedger}{{\textsf{PublicLedger}}}
 \newcommand{\Receiver}{{\textsf{Receiver}}}
@@ -84,26 +92,32 @@
 \newcommand{\ShieldedAssetPool}{{\textsf{ShieldedAssetPool}}}
 \newcommand{\ShieldedIdentity}{{\textsf{ShieldedIdentity}}}
 \newcommand{\Sink}{{\textsf{Sink}}}
+\newcommand{\Some}{{\textsf{Some}}}
 \newcommand{\Source}{{\textsf{Source}}}
-\newcommand{\SymmDecrypt}{{\textbf{\textsf{SymmDecrypt}}}}
-\newcommand{\SymmEncrypt}{{\textbf{\textsf{SymmEncrypt}}}}
+\newcommand{\Symm}{{\textsf{Symm}}}
 \newcommand{\TransferPost}{{\textsf{TransferPost}}}
 \newcommand{\Transfer}{{\textsf{Transfer}}}
+\newcommand{\TrapdoorDistribution}{{\textsf{TrapdoorDistribution}}}
+\newcommand{\Trapdoor}{{\textsf{Trapdoor}}}
+\newcommand{\Type}{{\textsf{Type}}}
 \newcommand{\UTXO}{{\textsf{UTXO}}}
 \newcommand{\Value}{{\textsf{Value}}}
-\newcommand{\Verify}{{\textbf{\textsf{Verify}}}}
+\newcommand{\Verify}{{\textsf{Verify}}}
 \newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
 \newcommand{\Void}{{\textsf{Void}}}
 \newcommand{\allocated}{{\textsf{allocated}}}
+\newcommand{\commit}{{\textsf{commit}}}
+\newcommand{\decrypt}{{\textsf{decrypt}}}
+\newcommand{\encrypt}{{\textsf{encrypt}}}
+\newcommand{\hash}{{\textsf{hash}}}
 \newcommand{\len}{{\textsf{len}}}
 \newcommand{\note}{{\textsf{note}}}
 \newcommand{\public}{{\textsf{public}}}
-\newcommand{\pub}{{\textbf{\textsf{pub}}}}
+\newcommand{\pub}{{\textsf{pub}}}
 \newcommand{\remainder}{{\textsf{remainder}}}
 \newcommand{\secret}{{\textsf{secret}}}
 \newcommand{\spend}{{\textsf{spend}}}
 \newcommand{\spent}{{\textsf{spent}}}
-
 
 \title{\textbf{\MantaPay{} Protocol Specification}\\ v0.4.0}
 \author{Shumo Chu and Brandon H. Gomes}
@@ -188,7 +202,7 @@ The operation of the different parts of the \ShieldedAssetPool{} is elaborated i
 
 \endgroup
 
-\footnotetext{A public (or private) ledger is not enough to solve the \emph{double-spending problem}. A \emph{consensus mechanism} is also required to ensure that all participants agree on the current state of the ledger. The \emph{consensus mechanism} that secures the \MantaPay{} ledger is out of scope of this paper.}
+\footnotetext{A public (or private) ledger is not enough to solve the \emph{double-spending problem}. A \emph{consensus mechanism} is also required to ensure that all participants agree on the current state of the ledger. The \emph{consensus mechanism} that secures the \MantaPay{} ledger is beyond the scope of this paper.}
 
 \lsubsubsection{\UTXO{} Set}{ledger-utxo-set}
 
@@ -202,9 +216,56 @@ The operation of the different parts of the \ShieldedAssetPool{} is elaborated i
 
 \subsubsection{Commitments}
 
+A \emph{commitment scheme} $\COM$ is defined by the following schema:
+\begin{align*}
+    \Trapdoor             &: \Type \\
+    \Input                &: \Type \\
+    \Output               &: \Type \\
+    \TrapdoorDistribution &: \mathcal{D}(\Trapdoor) \\
+    \commit               &: \Trapdoor \times \Input \to \Output
+\end{align*}
+with the properties:
+
+\begin{itemize}
+    \item Binding: It is infeasible to find an $x, y : \Input$ and $r, s: \Trapdoor$ such that $x \ne y$ and $\commit(r, x) = \commit(s, y)$.
+    \item Hiding: For all $x, y : \Input$, the distributions $\set{\commit(r, x)\,|\,r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r, y)\,|\,r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
+\end{itemize}
+
+\textbf{Notation}: For convenience we refer to $\COM.\commit(r, x)$ by $\COM_r(x)$.
+
 \subsubsection{Hash Functions}
 
+A \emph{hash function} $\CRH$ is defined by the following schema:
+\begin{align*}
+    \Input  &: \Type \\
+    \Output &: \Type \\
+    \hash   &: \Input \to \Output
+\end{align*}
+with the properties:
+
+\begin{itemize}
+    \item Pre-Image Resistance: For a given $y : \Output$, it is infeasible to find $x : \Input$ such that $\hash(x) = y$.
+    \item Collision Resistance: It is infeasible to find an $x_1, x_2 : \Input$ such that $x_1 \ne x_2$ and $\hash(x_1) = \hash(x_2)$.
+\end{itemize}
+
+\textbf{Notation}: For convenience we refer to $\CRH.\hash(x)$ by $\CRH(x)$.
+
 \lsubsubsection{Encryption}{abstract-encryption}
+
+A \emph{symmetric encryption echeme} $\Symm$ is defined by the following schema:
+\begin{align*}
+    \Key &: \Type \\
+    \Plaintext &: \Type \\
+    \Ciphertext &: \Type \\
+    \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
+    \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
+\end{align*}
+with the properties:
+
+\begin{itemize}
+    \item Valid Decryption: $\decrypt(k, \encrypt(k, p)) = \Some(p)$
+    \item \TODO{hiding? one-time encryption security?}
+\end{itemize}
 
 \subsubsection{Zero-Knowledge Proving Systems}
 
