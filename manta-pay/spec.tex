@@ -48,6 +48,7 @@
 
 \newcommand{\dash}{{\textrm{--}}}
 \renewcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\Prob}[2]{\mathrm{Pr}\scalebox{0.88}{\ensuremath{\left[\!\!\begin{array}{c}#1\end{array} \middle| \begin{array}{l}#2\end{array}\!\!\right]}}}
 
 \newcommand{\Alice}{{\textsf{Alice}}}
 \newcommand{\AssetId}{{\textsf{AssetId}}}
@@ -72,6 +73,7 @@
 \newcommand{\GetAccumulatorAndZeroes}{{\textsf{GetAccumulatorAndZeroes}}}
 \newcommand{\GetProof}{{\textsf{GetProof}}}
 \newcommand{\HASH}{{\textsf{HASH}}}
+\newcommand{\ID}{{\textsf{id}}}
 \newcommand{\IES}{{\textsf{IES}}}
 \newcommand{\Input}{{\textsf{Input}}}
 \newcommand{\KA}{{\textsf{KA}}}
@@ -80,13 +82,16 @@
 \newcommand{\MantaDAP}{{\Manta{}_{\texttt{DAP}}}}
 \newcommand{\MantaPay}{{\textsf{MantaPay}}}
 \newcommand{\Manta}{{\textsc{Manta}}}
+\newcommand{\MerkleTree}{{\textsf{MerkleTree}}}
 \newcommand{\Message}{{\textsf{Message}}}
 \newcommand{\Mint}{{\textsf{Mint}}}
 \newcommand{\Next}{{\textsf{Next}}}
 \newcommand{\None}{{\textsf{None}}}
 \newcommand{\Option}{{\textsf{Option}}}
 \newcommand{\Output}{{\textsf{Output}}}
+\newcommand{\PATH}{{\textsf{path}}}
 \newcommand{\PRF}{{\textsf{PRF}}}
+\newcommand{\Path}{{\textsf{Path}}}
 \newcommand{\Plaintext}{{\textsf{Plaintext}}}
 \newcommand{\PrepareZeroes}{{\textsf{PrepareZeroes}}}
 \newcommand{\PrivateTransfer}{{\textsf{PrivateTransfer}}}
@@ -98,13 +103,17 @@
 \newcommand{\PublicInput}{{\textsf{PublicInput}}}
 \newcommand{\PublicKey}{{\textsf{PublicKey}}}
 \newcommand{\PublicLedger}{{\textsf{PublicLedger}}}
+\newcommand{\ROOT}{{\textsf{root}}}
+\newcommand{\ReceiverPost}{{\textsf{ReceiverPost}}}
 \newcommand{\Receiver}{{\textsf{Receiver}}}
 \newcommand{\Reclaim}{{\textsf{Reclaim}}}
+\newcommand{\Root}{{\textsf{Root}}}
 \newcommand{\SYM}{{\textsf{SYM}}}
 \newcommand{\Sample}{{\textsf{Sample}}}
 \newcommand{\SecretInput}{{\textsf{SecretInput}}}
 \newcommand{\SecretKey}{{\textsf{SecretKey}}}
 \newcommand{\SeededRng}{{\textsf{SeededRng}}}
+\newcommand{\SenderPost}{{\textsf{SenderPost}}}
 \newcommand{\Sender}{{\textsf{Sender}}}
 \newcommand{\SharedSecret}{{\textsf{SharedSecret}}}
 \newcommand{\ShieldedAddress}{{\textsf{ShieldedAddress}}}
@@ -121,6 +130,7 @@
 \newcommand{\True}{{\textsf{True}}}
 \newcommand{\Type}{{\textsf{Type}}}
 \newcommand{\UTXO}{{\textsf{UTXO}}}
+\newcommand{\VALUE}{{\textsf{value}}}
 \newcommand{\Value}{{\textsf{Value}}}
 \newcommand{\VerifyingKey}{{\textsf{VerifyingKey}}}
 \newcommand{\Verify}{{\textsf{Verify}}}
@@ -129,7 +139,10 @@
 \newcommand{\ZKPS}{{\textsf{ZKPS}}}
 \newcommand{\agree}{{\textsf{agree}}}
 \newcommand{\allocated}{{\textsf{allocated}}}
+\newcommand{\asset}{{\textsf{asset}}}
+\newcommand{\cm}{{\textsf{cm}}}
 \newcommand{\commit}{{\textsf{commit}}}
+\newcommand{\contains}{{\textsf{contains}}}
 \newcommand{\decrypt}{{\textsf{decrypt}}}
 \newcommand{\derive}{{\textsf{derive}}}
 \newcommand{\encrypt}{{\textsf{encrypt}}}
@@ -137,18 +150,25 @@
 \newcommand{\keys}{{\textsf{keys}}}
 \newcommand{\len}{{\textsf{len}}}
 \newcommand{\note}{{\textsf{note}}}
+\newcommand{\opk}{{\textsf{opk}}}
+\newcommand{\osk}{{\textsf{osk}}}
 \newcommand{\pk}{{\textsf{pk}}}
 \newcommand{\prove}{{\textsf{prove}}}
 \newcommand{\public}{{\textsf{public}}}
 \newcommand{\pub}{{\textsf{pub}}}
+\newcommand{\receiver}{{\textsf{receiver}}}
 \newcommand{\remainder}{{\textsf{remainder}}}
 \newcommand{\satisfying}{{\textsf{satisfying}}}
 \newcommand{\secret}{{\textsf{secret}}}
+\newcommand{\sender}{{\textsf{sender}}}
+\newcommand{\sink}{{\textsf{sink}}}
 \newcommand{\sk}{{\textsf{sk}}}
+\newcommand{\source}{{\textsf{source}}}
 \newcommand{\spend}{{\textsf{spend}}}
 \newcommand{\spent}{{\textsf{spent}}}
 \newcommand{\verify}{{\textsf{verify}}}
 \newcommand{\vk}{{\textsf{vk}}}
+\newcommand{\vn}{{\textsf{vn}}}
 
 \title{\textbf{\MantaPay{} Protocol Specification}\\ v0.4.0}
 \author{Shumo Chu and Brandon H. Gomes}
@@ -184,6 +204,7 @@ The following notation is used throughout this specification:
             \Some &: T \to \Option(T)
         \end{align*}
     \item We denote the \emph{type of distributions} over a type $T : \Type$ as $\mathfrak{D}(T) : \Type$. A value $x$ sampled from $\mathfrak{D}(T)$ is denoted $x \sim \mathfrak{D}(T)$ and the fact that the value $x$ belongs to the range of $\mathfrak{D}(T)$ is denoted $x \in \mathfrak{D}(T)$. So namely, $y \in \set{x \,|\, x \sim \mathfrak{D}(T)} \leftrightarrow y \in \mathfrak{D}(T)$.
+    \item Depending on the context, the notation $\abs{\,\cdot\,}$ denotes either the absolute value of a quantity, the length of a vector, the number of characters in a string, or the cardinality of a set.
 \end{itemize}
 
 \footnotetext{By \emph{type of types}, we mean the type of \emph{first-level} types in some family of type universes. Discussion of the type theory necessary to make these notions rigorous is beyond the scope of this paper.}
@@ -193,7 +214,7 @@ The following notation is used throughout this specification:
 \subsection{Assets}
 
 The \Asset{} is the fundamental currency object in the \MantaPay{} protocol. An asset $a : \Asset$ is a tuple
-\[a = (a.\textsf{id}, a.\textsf{value}) : \AssetId \times \AssetValue\]
+\[a = (a.\ID, a.\VALUE) : \AssetId \times \AssetValue\]
 The \MantaPay{} protocol is a \emph{decentralized anonymous payment} scheme which facilitiates the private ownership and private transfer of \Asset{} objects. The \AssetId{} field encodes the type of currency being used, and the \AssetValue{} encodes how many units of that currency are being used, in the standard base unit of that currency.
 
 Whenever an \Asset{} is being used in a public setting, we simply refer to it as an \Asset{}, but when the \AssetId{} and/or \AssetValue{} of a particular \Asset{} is meant to be hidden from public view, we refer to the \Asset{} as either, \emph{secret}, \emph{private}, \emph{hidden}, or \emph{shielded}.
@@ -354,10 +375,6 @@ with the following properties:
     \TODO{add message authentication}
 \end{definition}
 
-\newcommand{\Prob}[2]{\mathrm{Pr}\scalebox{0.88}{\ensuremath{
-  \left[\!\!\begin{array}{c}#1\end{array} \middle| \begin{array}{l}#2\end{array}\!\!\right]
-}}}
-
 \begin{definition}
     A \emph{non-interactive zero-knowledge proving system} $\ZKPS$ is defined by the schema:
     \begin{align*}
@@ -400,7 +417,7 @@ with the following properties:
                     w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
                 }
             \]
-        \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator$\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
+        \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
             \[
                 \Prob{
                     \satisfying(x, w) = \True \\
@@ -428,21 +445,120 @@ with the following properties:
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
-\subsubsection{\Sender{s}}
+\begin{definition}
+    A \Sender{} is the following tuple:
+    \begin{align*}
+        \sk       &: \IES.\KA.\SecretKey \times \IES.\KA.\SecretKey \\
+        \tilde{r} &: \IES.\KA.\PublicKey \\
+        \osk      &: \IES.\KA.\PublicKey \\
+        \opk      &: \IES.\KA.\PublicKey \\
+        \asset    &: \Asset \\
+        \cm       &: \COM.\Output \\
+        \cm_\ROOT &: \MerkleTree.\Root \\
+        \cm_\PATH &: \MerkleTree.\Path \\
+        \vn       &: \COM.\Output
+    \end{align*}
+\end{definition}
 
-\subsubsection{\Receiver{s}}
+\begin{definition}
+    A \SenderPost{} is the following tuple:
+    \begin{align*}
+        \cm_\ROOT &: \MerkleTree.\Root \\
+        \vn       &: \COM.\Output
+    \end{align*}
+\end{definition}
 
-\subsubsection{\Transfer{s}}
+\begin{definition}
+    A \Receiver{} is the following tuple:
+    \begin{align*}
+        \pk       &: \IES.\KA.\PublicKey \times \IES.\KA.\PublicKey \\
+        r         &: \IES.\KA.\SecretKey \\
+        \opk      &: \IES.\KA.\PublicKey \\
+        \asset    &: \Asset \\
+        \cm       &: \COM.\Output \\
+        \note     &: \IES.\Message
+    \end{align*}
+\end{definition}
 
-\subsubsection{\TransferPost{s}}
+\begin{definition}
+    A \ReceiverPost{} is the following tuple:
+    \begin{align*}
+        \cm       &: \COM.\Output \\
+        \note     &: \IES.\Message
+    \end{align*}
+\end{definition}
+
+\begin{definition}
+    A \Transfer{} is a $4$-tuple of finite sets $(T_\source, T_\sender, T_\receiver, T_\sink)$ made up of $\Source$, $\Sender$, $\Receiver$, and $\Sink$ tuples respectively. The \emph{shape} of a \Transfer{} is the $4$-tuple of cardinalities of those sets
+    \[\left(\abs{T_\source}, \abs{T_\sender}, \abs{T_\receiver}, \abs{T_\sink}\right)\]
+\end{definition}
+
+In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the following constraints:
+
+\begin{itemize}
+    \item \textbf{Same Id}: All the \AssetId{s} in the \Transfer{} must be equal.
+    \item \textbf{Balanced}: The sum of input \AssetValue{s} must be equal to the sum of output \AssetValue{s}.
+    \item \textbf{Well-formed Senders}: All of the \Sender{s} in the \Transfer{} must be constructed according to the above \Sender{} definition.
+    \item \textbf{Well-formed Receivers}: All of the \Receiver{s} in the \Transfer{} must be constructed according to the above \Receiver{} definition.
+\end{itemize}
+
+In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the ledger. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the ledger are valid. Deviation from the protocol in encryption or decryption does not reduce the security of the protocol for honest participants.
+
+\begin{definition}(\Transfer{} Validity \Statement{}) A transfer $T : \Transfer$ is considered \emph{valid} if and only if
+    \begin{enumerate}
+        \item All the \AssetId{s} in $T$ are equal:
+            \[
+                \abs{
+                    \left(\bigcup_{x \in T_\source} x.\asset.\ID \right)
+                    \cup
+                    \left(\bigcup_{S \in T_\sender} S.\asset.\ID \right)
+                    \cup
+                    \left(\bigcup_{R \in T_\receiver} R.\asset.\ID \right)
+                    \cup
+                    \left(\bigcup_{x \in T_\sink} x.\asset.\ID \right)
+                } = 1
+            \]
+        \item The sum of input \AssetValue{s} is equal to the sum of output \AssetValue{s}:
+            \[
+                \left(\sum_{x \in T_\source} x.\asset.\VALUE\right)
+                +
+                \left(\sum_{S \in T_\sender} S.\asset.\VALUE\right)
+                =
+                \left(\sum_{R \in T_\receiver} R.\asset.\VALUE\right)
+                +
+                \left(\sum_{x \in T_\sink} x.\asset.\VALUE\right)
+            \]
+        \item For all $S \in T_\sender$, $S$ is well-formed:
+            \begin{align*}
+                S.\osk &= ... \\
+                S.\cm &= \COM_{\KA.\derive(S.\osk)}(S.\asset) \\
+                S.\vn &= \COM_{...}(S.\osk) \\
+                \MerkleTree.\contains(S.\cm, S.\cm_\ROOT, S.\cm_\PATH) &= \True
+            \end{align*}
+        \item For all $(i, R) \in \Enumerate(T_\receiver)$ $R$ is well-formed at index $i$ with respect to $\FAIR$:
+            \begin{align*}
+                R.r &= \CRH(i \,||\, R.\pk \,||\, \FAIR) \\
+                R.\opk &= ... \\
+                R.\cm &= \COM_{R.\opk}(R.\asset)
+            \end{align*}
+    \end{enumerate}
+    where $\FAIR$ is the following fair randomness constant:
+    \[\FAIR := \CRH(\Concat_{S \in T_\sender}(S.\cm))\]
+\end{definition}
+
+\begin{definition}
+    A \TransferPost{} is the following tuple:
+\end{definition}
 
 \lsection{Concrete Protocol}{concrete-protocol}
 
-\subsection{Conventions}
-
 \subsection{Constants}
 
+\TODO{add constants for the protocol}
+
 \subsection{Concrete Cryptographic Schemes}
+
+\TODO{add names of cryptographic scheme implementations}
 
 \subsubsection{Commitments}
 
@@ -460,11 +576,19 @@ with the following properties:
 
 \subsection{Reusable Addresses}
 
+\TODO{compare old one-time address protocol to reusable addresses and why reusable is better}
+
 \subsection{\Transfer{} Circuit Unification}
+
+\TODO{compare new single transfer circuit to the many old circuits}
 
 \lsection{Acknowledgements}{acknowledgements}
 
+\TODO{add acknowledgements}
+
 \lsection{References}{references}
+
+\TODO{add references}
 
 \end{document}
 
