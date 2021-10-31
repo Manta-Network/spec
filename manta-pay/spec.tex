@@ -60,8 +60,10 @@
 \newcommand{\CRH}{{\textsf{CRH}}}
 \newcommand{\Charlie}{{\textsf{Charlie}}}
 \newcommand{\CheckProof}{{\textsf{CheckProof}}}
+\newcommand{\Checkpoint}{{\textsf{Checkpoint}}}
 \newcommand{\Ciphertext}{{\textsf{Ciphertext}}}
 \newcommand{\Concat}{{\textsf{Concat}}}
+\newcommand{\DCA}{{\textsf{DCA}}}
 \newcommand{\Decrypt}{{\textsf{Decrypt}}}
 \newcommand{\DerivePublic}{{\textsf{DerivePublic}}}
 \newcommand{\Derive}{{\textsf{Derive}}}
@@ -71,17 +73,20 @@
 \newcommand{\Enumerate}{{\textsf{enumerate}}}
 \newcommand{\FAIR}{{\textsf{FAIR}}}
 \newcommand{\False}{{\textsf{False}}}
+\newcommand{\FinSet}{{\textsf{FinSet}}}
 \newcommand{\GetAccumulatorAndZeroes}{{\textsf{GetAccumulatorAndZeroes}}}
 \newcommand{\GetProof}{{\textsf{GetProof}}}
 \newcommand{\HASH}{{\textsf{HASH}}}
 \newcommand{\ID}{{\textsf{id}}}
 \newcommand{\IES}{{\textsf{IES}}}
 \newcommand{\Input}{{\textsf{Input}}}
+\newcommand{\Item}{{\textsf{Item}}}
 \newcommand{\KA}{{\textsf{KA}}}
 \newcommand{\KDF}{{\textsf{KDF}}}
 \newcommand{\KDIV}{{\textsf{KDIV}}}
 \newcommand{\KeyDistribution}{{\textsf{KeyDistribution}}}
 \newcommand{\Key}{{\textsf{Key}}}
+\newcommand{\Ledger}{{\textsf{Ledger}}}
 \newcommand{\MantaDAP}{{\Manta{}_{\texttt{DAP}}}}
 \newcommand{\MantaPay}{{\textsf{MantaPay}}}
 \newcommand{\Manta}{{\textsc{Manta}}}
@@ -127,6 +132,7 @@
 \newcommand{\Some}{{\textsf{Some}}}
 \newcommand{\Source}{{\textsf{Source}}}
 \newcommand{\SpendingKey}{{\textsf{SpendingKey}}}
+\newcommand{\StateT}{{\textsf{State}}}
 \newcommand{\Statement}{{\textsf{Statement}}}
 \newcommand{\TransferPost}{{\textsf{TransferPost}}}
 \newcommand{\Transfer}{{\textsf{Transfer}}}
@@ -134,18 +140,22 @@
 \newcommand{\Trapdoor}{{\textsf{Trapdoor}}}
 \newcommand{\True}{{\textsf{True}}}
 \newcommand{\Type}{{\textsf{Type}}}
+\newcommand{\UTXOSet}{{\textsf{UTXOSet}}}
 \newcommand{\UTXO}{{\textsf{UTXO}}}
 \newcommand{\VALUE}{{\textsf{value}}}
+\newcommand{\ValidTransfer}{{\textsf{ValidTransfer}}}
 \newcommand{\Value}{{\textsf{Value}}}
 \newcommand{\VerifyingKey}{{\textsf{VerifyingKey}}}
 \newcommand{\Verify}{{\textsf{Verify}}}
 \newcommand{\ViewingKey}{{\textsf{ViewingKey}}}
+\newcommand{\VoidNumberSet}{{\textsf{VoidNumberSet}}}
 \newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
 \newcommand{\Void}{{\textsf{Void}}}
 \newcommand{\ZKPS}{{\textsf{ZKPS}}}
 \newcommand{\agree}{{\textsf{agree}}}
 \newcommand{\allocated}{{\textsf{allocated}}}
 \newcommand{\asset}{{\textsf{asset}}}
+\newcommand{\checkpoint}{{\textsf{checkpoint}}}
 \newcommand{\cm}{{\textsf{cm}}}
 \newcommand{\commit}{{\textsf{commit}}}
 \newcommand{\contains}{{\textsf{contains}}}
@@ -162,19 +172,26 @@
 \newcommand{\prove}{{\textsf{prove}}}
 \newcommand{\public}{{\textsf{public}}}
 \newcommand{\pub}{{\textsf{pub}}}
+\newcommand{\receivers}{{\textsf{receivers}}}
 \newcommand{\receiver}{{\textsf{receiver}}}
 \newcommand{\receive}{{\textsf{receive}}}
 \newcommand{\remainder}{{\textsf{remainder}}}
 \newcommand{\rk}{{\textsf{rk}}}
 \newcommand{\satisfying}{{\textsf{satisfying}}}
 \newcommand{\secret}{{\textsf{secret}}}
+\newcommand{\senders}{{\textsf{senders}}}
 \newcommand{\sender}{{\textsf{sender}}}
+\newcommand{\sinks}{{\textsf{sinks}}}
 \newcommand{\sink}{{\textsf{sink}}}
 \newcommand{\sk}{{\textsf{sk}}}
+\newcommand{\sources}{{\textsf{sources}}}
 \newcommand{\source}{{\textsf{source}}}
 \newcommand{\spend}{{\textsf{spend}}}
 \newcommand{\spent}{{\textsf{spent}}}
+\newcommand{\stateF}{{\textsf{state}}}
 \newcommand{\trapdoor}{{\textsf{trapdoor}}}
+\newcommand{\update}{{\textsf{update}}}
+\newcommand{\utxos}{{\textsf{utxos}}}
 \newcommand{\verify}{{\textsf{verify}}}
 \newcommand{\view}{{\textsf{view}}}
 \newcommand{\vk}{{\textsf{vk}}}
@@ -213,6 +230,7 @@ The following notation is used throughout this specification:
             \None &: \Option(T) \\
             \Some &: T \to \Option(T)
         \end{align*}
+    \item We denote the \emph{type of finite sets} over a type $T : \Type$ as $\FinSet(T) : \Type$. The membership predicate for a value $x : T$ in a finite set $S : \FinSet(T)$ is denoted $x \in S$.
     \item We denote the \emph{type of distributions} over a type $T : \Type$ as $\mathfrak{D}(T) : \Type$. A value $x$ sampled from $\mathfrak{D}(T)$ is denoted $x \sim \mathfrak{D}(T)$ and the fact that the value $x$ belongs to the range of $\mathfrak{D}(T)$ is denoted $x \in \mathfrak{D}(T)$. So namely, $y \in \set{x \,|\, x \sim \mathfrak{D}(T)} \leftrightarrow y \in \mathfrak{D}(T)$.
     \item Depending on the context, the notation $\abs{\,\cdot\,}$ denotes either the absolute value of a quantity, the length of a vector, the number of characters in a string, or the cardinality of a set.
 \end{itemize}
@@ -410,6 +428,20 @@ with the following properties:
 \end{definition}
 
 \begin{definition}
+    A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
+    \begin{align*}
+        \Item       &: \Type \\
+        \StateT     &: \Type \\
+        \Checkpoint &: \Type \\
+        \Proof      &: \Type \\
+        \checkpoint &: \StateT \to \Checkpoint \\
+        \update     &: \Item \times \StateT \to \StateT \\
+        \contains   &: \Item \times \StateT \to \Option(\Checkpoint \times \Proof) \\
+        \verify     &: \Item \times \Checkpoint \times \Proof \to \Bool
+    \end{align*}
+\end{definition}
+
+\begin{definition}
     A \emph{non-interactive zero-knowledge proving system} $\ZKPS$ is defined by the schema:
     \begin{align*}
         \Statement    &: \Type \\
@@ -511,32 +543,32 @@ Given a choice of $\IES$ for the \Transfer{} protocol we have the following defi
         \trapdoor &: \IES.\KA.\PublicKey \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
-        \cm_\ROOT &: \MerkleTree.\Root \\
-        \cm_\PATH &: \MerkleTree.\Path \\
+        \cm_c     &: \UTXOSet.\Checkpoint \\
+        \cm_\pi   &: \UTXOSet.\Proof \\
         \vn       &: \VoidNumber
     \end{align*}
 
-    A \Sender{} is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ by the following algorithm:
+    A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
     \begin{align*}
-        S.\sk                       &:= \sk \\
-        \tilde{d}, c                &:= \note \\
-        \Some(\asset)               &:= \IES.\decrypt(S.\sk.\view, c) \\
-        S.\asset                    &:= \asset \\
-        S.\tilde{d}                 &:= \tilde{d} \\
-        S.\trapdoor                 &:= \KA.\derive(\KDIV_{\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
-        S.\cm                       &:= \COM_{S.\trapdoor}(S.\asset) \\
-        \Some(\cm_\ROOT, \cm_\PATH) &:= \MerkleTree.\contains(S.\cm) \\
-        S.\cm_\ROOT                 &:= \cm_\ROOT \\
-        S.\cm_\PATH                 &:= \cm_\PATH \\
-        S.\vn                       &:= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
+        S.\sk                 &:= \sk \\
+        \tilde{d}, c          &:= \note \\
+        \Some(\asset)         &:= \IES.\decrypt(S.\sk.\view, c) \\
+        S.\asset              &:= \asset \\
+        S.\tilde{d}           &:= \tilde{d} \\
+        S.\trapdoor           &:= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+        S.\cm                 &:= \COM_{S.\trapdoor}(S.\asset) \\
+        \Some(\cm_c, \cm_\pi) &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
+        S.\cm_c               &:= \cm_c \\
+        S.\cm_\pi             &:= \cm_\pi \\
+        S.\vn                 &:= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
     \end{align*}
 \end{definition}
 
 \begin{definition}
-    A \SenderPost{} is the following tuple:
+    A \SenderPost{} is the following tuple extracted from a \Sender{}:
     \begin{align*}
-        \cm_\ROOT &: \MerkleTree.\Root \\
-        \vn       &: \VoidNumber
+        \cm_c &: \UTXOSet.\Checkpoint \\
+        \vn   &: \VoidNumber
     \end{align*}
 \end{definition}
 
@@ -551,7 +583,7 @@ Given a choice of $\IES$ for the \Transfer{} protocol we have the following defi
         \note     &: \EncryptedNote
     \end{align*}
     
-    A \Receiver{} is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a chosen diversifier $d : \IES.\KA.\SecretKey$ by the following algorithm:
+    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a chosen diversifier $d : \IES.\KA.\SecretKey$ with the following algorithm:
     \begin{align*}
         R.\rk       &:= \rk \\
         R.d         &:= d \\
@@ -563,7 +595,7 @@ Given a choice of $\IES$ for the \Transfer{} protocol we have the following defi
 \end{definition}
 
 \begin{definition}
-    A \ReceiverPost{} is the following tuple:
+    A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
     \begin{align*}
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
@@ -571,8 +603,19 @@ Given a choice of $\IES$ for the \Transfer{} protocol we have the following defi
 \end{definition}
 
 \begin{definition}
-    A \Transfer{} is a $4$-tuple of finite sets $(T_\source, T_\sender, T_\receiver, T_\sink)$ made up of $\Source$, $\Sender$, $\Receiver$, and $\Sink$ tuples respectively. The \emph{shape} of a \Transfer{} is the $4$-tuple of cardinalities of those sets
-    \[\left(\abs{T_\source}, \abs{T_\sender}, \abs{T_\receiver}, \abs{T_\sink}\right)\]
+    A \Source{} (or a \Sink{}) is an \Asset{} representing a public input (or output) of a \Transfer{}.
+\end{definition}
+
+\begin{definition}
+    A \Transfer{} is the following tuple:
+    \begin{align*}
+        \sources    &: \FinSet(\Asset) \\
+        \senders    &: \FinSet(\Sender) \\
+        \receivers  &: \FinSet(\Receiver) \\
+        \sinks      &: \FinSet(\Asset)
+    \end{align*}
+    The \emph{shape} of a \Transfer{} is the following $4$-tuple of cardinalities of those sets
+    \[\left(\abs{T.\sources}, \abs{T.\senders}, \abs{T.\receivers}, \abs{T.\sinks}\right)\]
 \end{definition}
 
 In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the following constraints:
@@ -591,47 +634,64 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \item All the \AssetId{s} in $T$ are equal:
             \[
                 \abs{
-                    \left(\bigcup_{x \in T_\source} x.\asset.\ID \right)
+                    \left(\bigcup_{a \in T.\sources} a.\ID \right)
                     \cup
-                    \left(\bigcup_{S \in T_\sender} S.\asset.\ID \right)
+                    \left(\bigcup_{S \in T.\senders} S.\asset.\ID \right)
                     \cup
-                    \left(\bigcup_{R \in T_\receiver} R.\asset.\ID \right)
+                    \left(\bigcup_{R \in T.\receivers} R.\asset.\ID \right)
                     \cup
-                    \left(\bigcup_{x \in T_\sink} x.\asset.\ID \right)
+                    \left(\bigcup_{a \in T.\sinks} a.\ID \right)
                 } = 1
             \]
         \item The sum of input \AssetValue{s} is equal to the sum of output \AssetValue{s}:
             \[
-                \left(\sum_{x \in T_\source} x.\asset.\VALUE\right)
+                \left(\sum_{a \in T.\sources} a.\VALUE\right)
                 +
-                \left(\sum_{S \in T_\sender} S.\asset.\VALUE\right)
+                \left(\sum_{S \in T.\senders} S.\asset.\VALUE\right)
                 =
-                \left(\sum_{R \in T_\receiver} R.\asset.\VALUE\right)
+                \left(\sum_{R \in T.\receivers} R.\asset.\VALUE\right)
                 +
-                \left(\sum_{x \in T_\sink} x.\asset.\VALUE\right)
+                \left(\sum_{a \in T.\sinks} a.\VALUE\right)
             \]
-        \item For all $S \in T_\sender$, $S$ is well-formed:
+        \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\trapdoor                                          &= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
-                S.\cm                                                &= \COM_{S.\trapdoor}(S.\asset) \\
-                S.\vn                                                &= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
-                \MerkleTree.\verify(S.\cm, S.\cm_\ROOT, S.\cm_\PATH) &= \True
+                S.\trapdoor                                 &= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+                S.\cm                                       &= \COM_{S.\trapdoor}(S.\asset) \\
+                S.\vn                                       &= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
+                \UTXOSet.\verify(S.\cm, S.\cm_c, S.\cm_\pi) &= \True
             \end{align*}
-        \item For all $(i, R) \in \Enumerate(T_\receiver)$ $R$ is well-formed at index $i$ with respect to $\FAIR$:
+        \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
                 R.d         &= \CRH(i \,||\, R.\rk.\view \,||\, R.\rk.\spend \,||\, \FAIR) \\
                 R.\trapdoor &= \KDIV_{R.d}(R.\rk.\view, R.\rk.\spend) \\
                 R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
             \end{align*}
+            where \FAIR{} is the following constant, using the ledger as a randomness oracle:
+            \[\FAIR := \CRH(\UTXOSet.\checkpoint(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
     \end{enumerate}
-    where $\FAIR$ is the following fair randomness constant:
-    \[\FAIR := \CRH(\Concat_{S \in T_\sender}(S.\cm))\]
+    \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \ZKPS{}.
 \end{definition}
-
-\TODO{The \VoidNumber{} trapdoor is not a good choice, since the range of possible trapdoor values would be publicly known (the diversifiers in this case are posted to the ledger), so it would remove the hiding property of the commitment.}
 
 \begin{definition}
     A \TransferPost{} is the following tuple:
+    \begin{align*}
+        \sources   &: \FinSet(\Asset) \\
+        \senders   &: \FinSet(\SenderPost) \\
+        \receivers &: \FinSet(\ReceiverPost) \\
+        \sinks     &: \FinSet(\Asset) \\
+        \pi        &: \ZKPS.\Proof
+    \end{align*}
+    A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \ZKPS.\ProvingKey$ and a given $T : \Transfer$:
+    \begin{align*}
+        x            &:= \Transfer.\public(T) \\
+        w            &:= \Transfer.\secret(T) \\
+        \Some(\pi)   &:= \ZKPS.\prove^\ValidTransfer_\pk(x, w) \\
+        P.\sources   &:= x.\sources \\
+        P.\senders   &:= x.\senders \\
+        P.\receivers &:= x.\receivers \\
+        P.\sinks     &:= x.\sinks \\
+        P.\pi        &:= \pi
+    \end{align*}
 \end{definition}
 
 \lsection{Concrete Protocol}{concrete-protocol}
