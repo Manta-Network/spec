@@ -65,6 +65,7 @@
 \newcommand{\Decrypt}{{\textsf{Decrypt}}}
 \newcommand{\DerivePublic}{{\textsf{DerivePublic}}}
 \newcommand{\Derive}{{\textsf{Derive}}}
+\newcommand{\EncryptedNote}{{\textsf{EncryptedNote}}}
 \newcommand{\Encrypt}{{\textsf{Encrypt}}}
 \newcommand{\EntropySource}{{\textsf{EntropySource}}}
 \newcommand{\Enumerate}{{\textsf{enumerate}}}
@@ -77,6 +78,8 @@
 \newcommand{\IES}{{\textsf{IES}}}
 \newcommand{\Input}{{\textsf{Input}}}
 \newcommand{\KA}{{\textsf{KA}}}
+\newcommand{\KDF}{{\textsf{KDF}}}
+\newcommand{\KDIV}{{\textsf{KDIV}}}
 \newcommand{\KeyDistribution}{{\textsf{KeyDistribution}}}
 \newcommand{\Key}{{\textsf{Key}}}
 \newcommand{\MantaDAP}{{\Manta{}_{\texttt{DAP}}}}
@@ -106,6 +109,7 @@
 \newcommand{\ROOT}{{\textsf{root}}}
 \newcommand{\ReceiverPost}{{\textsf{ReceiverPost}}}
 \newcommand{\Receiver}{{\textsf{Receiver}}}
+\newcommand{\ReceivingKey}{{\textsf{ReceivingKey}}}
 \newcommand{\Reclaim}{{\textsf{Reclaim}}}
 \newcommand{\Root}{{\textsf{Root}}}
 \newcommand{\SYM}{{\textsf{SYM}}}
@@ -122,6 +126,7 @@
 \newcommand{\Sink}{{\textsf{Sink}}}
 \newcommand{\Some}{{\textsf{Some}}}
 \newcommand{\Source}{{\textsf{Source}}}
+\newcommand{\SpendingKey}{{\textsf{SpendingKey}}}
 \newcommand{\Statement}{{\textsf{Statement}}}
 \newcommand{\TransferPost}{{\textsf{TransferPost}}}
 \newcommand{\Transfer}{{\textsf{Transfer}}}
@@ -134,6 +139,7 @@
 \newcommand{\Value}{{\textsf{Value}}}
 \newcommand{\VerifyingKey}{{\textsf{VerifyingKey}}}
 \newcommand{\Verify}{{\textsf{Verify}}}
+\newcommand{\ViewingKey}{{\textsf{ViewingKey}}}
 \newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
 \newcommand{\Void}{{\textsf{Void}}}
 \newcommand{\ZKPS}{{\textsf{ZKPS}}}
@@ -157,7 +163,9 @@
 \newcommand{\public}{{\textsf{public}}}
 \newcommand{\pub}{{\textsf{pub}}}
 \newcommand{\receiver}{{\textsf{receiver}}}
+\newcommand{\receive}{{\textsf{receive}}}
 \newcommand{\remainder}{{\textsf{remainder}}}
+\newcommand{\rk}{{\textsf{rk}}}
 \newcommand{\satisfying}{{\textsf{satisfying}}}
 \newcommand{\secret}{{\textsf{secret}}}
 \newcommand{\sender}{{\textsf{sender}}}
@@ -166,7 +174,9 @@
 \newcommand{\source}{{\textsf{source}}}
 \newcommand{\spend}{{\textsf{spend}}}
 \newcommand{\spent}{{\textsf{spent}}}
+\newcommand{\trapdoor}{{\textsf{trapdoor}}}
 \newcommand{\verify}{{\textsf{verify}}}
+\newcommand{\view}{{\textsf{view}}}
 \newcommand{\vk}{{\textsf{vk}}}
 \newcommand{\vn}{{\textsf{vn}}}
 
@@ -225,12 +235,12 @@ Whenever an \Asset{} is being used in a public setting, we simply refer to it as
 
 \lsubsection{Addresses}{addresses}
 
-In order for participants in the \MantaPay{} protocol to send and receive \Asset{s}, they must create secret and public \emph{addresses} according to an \emph{address scheme}. For \MantaPay{}, the address scheme consists of a \emph{spending key} $\sk$, a \emph{viewing key} $\vk$, and a \emph{public key} $\pk$. The keys have the following uses/properties:
+In order for participants in the \MantaPay{} protocol to send and receive \Asset{s}, they must create secret and public \emph{addresses} according to an \emph{address scheme}. For \MantaPay{}, the address scheme consists of a \emph{spending key} $\sk$, a \emph{viewing key} $\vk$, and a \emph{receiving key} $\rk$. The keys have the following uses/properties:
 
 \begin{itemize}
-    \item Access to a public key $\pk$ represents the ability to send \Asset{s} to the owner of the associated $\sk$.
+    \item Access to a receiving key $\rk$ represents the ability to send \Asset{s} to the owner of the associated $\sk$.
     \item Access to a viewing key $\vk$ represents the ability to reveal shielded \Asset{} information for \Asset{s} belonging to the owner of the associated $\sk$.
-    \item Access to a spending key $\sk$ represents the ability to spend \Asset{s} that were received under the associated public key $\pk$.
+    \item Access to a spending key $\sk$ represents the ability to spend \Asset{s} that were received under the associated receiving key $\rk$.
 \end{itemize}
 
 See \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, viewing, and receiving \Asset{s}.
@@ -264,7 +274,7 @@ The \ShieldedAssetPool{} is made up of four parts:
 \begin{enumerate}
     \item \ShieldedAssetPool{} Balance: The \MantaPay{} ledger contains a collection of \Asset{s} which represent the combined economic value of the \ShieldedAssetPool{} and the \PublicLedger{}. The \ShieldedAssetPool{} Balance is the subset of this total value that has been anonymized by the \MantaPay{} protocol.
     \item \autoref{sec:ledger-utxo-set} \UTXO{} Set: A collection of claims to subsets of the \ShieldedAssetPool{}, each owned by participants of the \MantaPay{} protocol.
-    \item \autoref{sec:ledger-encrypted-notes} Encrypted Notes: For each \UTXO{} there is a matching encrypted \note{} which contains information necessary to spend the \Asset{}, which is commited in the \UTXO{}, but can only be decrypted by the recipient of the \Asset{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
+    \item \autoref{sec:ledger-encrypted-notes} \EncryptedNote{s}: For each \UTXO{} there is a matching \EncryptedNote{} which contains information necessary to spend the \Asset{}, which is commited in the \UTXO{}, but can only be decrypted by the recipient of the \Asset{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
     \item \autoref{sec:ledger-void-number-set} \VoidNumber{} Set: A collection of commitments keeping track of those \UTXO{s} which have participated in exactly one instance of the \Transfer{} Protocol.
 \end{enumerate}
 
@@ -278,7 +288,7 @@ The operation of the different parts of the \ShieldedAssetPool{} is elaborated i
 
 \lsubsubsection{\UTXO{} Set}{ledger-utxo-set}
 
-\lsubsubsection{Encrypted Notes}{ledger-encrypted-notes}
+\lsubsubsection{\EncryptedNote{s}}{ledger-encrypted-notes}
 
 \lsubsubsection{\VoidNumber{} Set}{ledger-void-number-set}
 
@@ -334,7 +344,8 @@ A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
 with the following properties:
 
 \begin{itemize}
-    \item \textbf{Validity}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that $\decrypt(k, \encrypt(k, p)) = \Some(p)$.
+    \item \textbf{Validity}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
+        \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
     \item \TODO{hiding, one-time encryption security?}
 \end{itemize}
 \end{definition}
@@ -351,28 +362,51 @@ with the following properties:
     with the following properties:
 
     \begin{itemize}
-        \item \textbf{Agreement}: For all $s_1, s_2 : \SecretKey$, $\agree(s_1, \derive(s_2)) = \agree(s_2, \derive(s_1))$
+        \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
         \item \TODO{security properties}
     \end{itemize}
 \end{definition}
 
 \begin{definition}
-    An \emph{integrated encryption scheme} $\IES$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$, where $\KA.\SharedSecret = \SYM.\Key$. We can define the following encryption/decryption algorithms:
+    A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
+    \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
+\end{definition}
+
+\begin{definition}
+    An \emph{integrated encryption scheme} $\IES$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption/decryption algorithms:
     \begin{itemize}
         \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
-            \[m := (\KA.\derive(\sk), \SYM.\encrypt(\KA.\agree(\sk, \pk), p)) : \KA.\PublicKey \times \SYM.\Ciphertext\]
-        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted messaged, as above, $m := (\pk, c) : \KA.\PublicKey \times \SYM.\Ciphertext$, we can decrypt $m$, producing the plaintext,
-            \[p := \SYM.\decrypt(\KA.\agree(\sk, \pk), c) : \Option(\SYM.\Plaintext)\]
+            \[m := (\KA.\derive(\sk), \SYM.\encrypt(\KDF(\KA.\agree(\sk, \pk)), p)) : \KA.\PublicKey \times \SYM.\Ciphertext\]
+        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\pk, c) : \KA.\PublicKey \times \SYM.\Ciphertext$, we can decrypt $m$, producing the plaintext,
+            \[p := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \pk)), c) : \Option(\SYM.\Plaintext)\]
             which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
     \end{itemize}
 
     \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
     \begin{align*}
         \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
-        \decrypt &: \KA.\SecretKey \times \Message \to \Option(\SYM.\Plaintext)
+        \decrypt &: \KA.\SecretKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
-    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that these keys should be ephemeral, etc.} \\
-    \TODO{add message authentication}
+    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys should be ephemeral, etc.} \\
+    \TODO{add explicit message authentication}
+\end{definition}
+
+\begin{definition}
+    A \emph{key-diversification scheme} $\KDIV$ over a key-agreement scheme $\KA$ is defined by the schema:
+    \begin{align*}
+        \public : \KA.\SecretKey \times \KA.\PublicKey \times \KA.\PublicKey \to \KA.\PublicKey \\
+        \secret : \KA.\PublicKey \times \KA.\SecretKey \times \KA.\SecretKey \to \KA.\SecretKey
+    \end{align*}
+    \textbf{Notation}: We refer to the first argument to a $\KDIV$ function as the \emph{diversifier} and we write it as a subscript
+    \[\public_d(x, y) := \public(d, x, y) \,\,\text{and}\,\, \secret_d(x, y) := \secret(d, x, y)\]
+    For convenience we also write $\KDIV_d$ to mean $\KDIV.\public_d$ or $\KDIV.\secret_d$, when the context is clear.
+    
+    Every $\KDIV$ also has the following properties:
+    \begin{itemize}
+        \item \textbf{Derivation Invariance}: For any diversifier $d : \KA.\SecretKey$ and pair of secret keys $(\sk_1, \sk_2)$ we have
+            \[\KDIV_d(\KA.\derive(\sk_1), \KA.\derive(\sk_2)) = \KA.\derive(\KDIV_{\KA.\derive(d)}(\sk_1, \sk_2))\]
+        \item \TODO{security properties?}
+    \end{itemize}
 \end{definition}
 
 \begin{definition}
@@ -443,20 +477,58 @@ with the following properties:
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
+Given a choice of $\IES$ for the \Transfer{} protocol we have the following definitions:
+
+\begin{definition}
+    A \SpendingKey{} is the following pair of keys:
+    \begin{align*}
+        \view  &: \IES.\KA.\SecretKey \\
+        \spend &: \IES.\KA.\SecretKey
+    \end{align*}
+    The first secret key is called the \ViewingKey{}.
+\end{definition}
+
+\begin{definition}
+    A \ReceivingKey{} is the following pair of keys:
+    \begin{align*}
+        \view  &: \IES.\KA.\PublicKey \\
+        \spend &: \IES.\KA.\PublicKey
+    \end{align*}
+    which is derived from a spending key $\sk : \SpendingKey$ by deriving each component:
+    \begin{align*}
+        \rk.\view &:= \KA.\derive(\sk.\view) \\
+        \rk.\spend   &:= \KA.\derive(\sk.\spend)
+    \end{align*}
+\end{definition}
+
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
 \begin{definition}
     A \Sender{} is the following tuple:
     \begin{align*}
-        \sk       &: \IES.\KA.\SecretKey \times \IES.\KA.\SecretKey \\
-        \tilde{r} &: \IES.\KA.\PublicKey \\
-        \osk      &: \IES.\KA.\PublicKey \\
-        \opk      &: \IES.\KA.\PublicKey \\
+        \sk       &: \SpendingKey \\
+        \tilde{d} &: \IES.\KA.\PublicKey \\
+        \trapdoor &: \IES.\KA.\PublicKey \\
         \asset    &: \Asset \\
-        \cm       &: \COM.\Output \\
+        \cm       &: \UTXO \\
         \cm_\ROOT &: \MerkleTree.\Root \\
         \cm_\PATH &: \MerkleTree.\Path \\
-        \vn       &: \COM.\Output
+        \vn       &: \VoidNumber
+    \end{align*}
+
+    A \Sender{} is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ by the following algorithm:
+    \begin{align*}
+        S.\sk                       &:= \sk \\
+        \tilde{d}, c                &:= \note \\
+        \Some(\asset)               &:= \IES.\decrypt(S.\sk.\view, c) \\
+        S.\asset                    &:= \asset \\
+        S.\tilde{d}                 &:= \tilde{d} \\
+        S.\trapdoor                 &:= \KA.\derive(\KDIV_{\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+        S.\cm                       &:= \COM_{S.\trapdoor}(S.\asset) \\
+        \Some(\cm_\ROOT, \cm_\PATH) &:= \MerkleTree.\contains(S.\cm) \\
+        S.\cm_\ROOT                 &:= \cm_\ROOT \\
+        S.\cm_\PATH                 &:= \cm_\PATH \\
+        S.\vn                       &:= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
     \end{align*}
 \end{definition}
 
@@ -464,27 +536,37 @@ with the following properties:
     A \SenderPost{} is the following tuple:
     \begin{align*}
         \cm_\ROOT &: \MerkleTree.\Root \\
-        \vn       &: \COM.\Output
+        \vn       &: \VoidNumber
     \end{align*}
 \end{definition}
 
 \begin{definition}
     A \Receiver{} is the following tuple:
     \begin{align*}
-        \pk       &: \IES.\KA.\PublicKey \times \IES.\KA.\PublicKey \\
-        r         &: \IES.\KA.\SecretKey \\
-        \opk      &: \IES.\KA.\PublicKey \\
+        \rk       &: \ReceivingKey \\
+        d         &: \IES.\KA.\SecretKey \\
+        \trapdoor &: \IES.\KA.\PublicKey \\
         \asset    &: \Asset \\
-        \cm       &: \COM.\Output \\
-        \note     &: \IES.\Message
+        \cm       &: \UTXO \\
+        \note     &: \EncryptedNote
+    \end{align*}
+    
+    A \Receiver{} is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a chosen diversifier $d : \IES.\KA.\SecretKey$ by the following algorithm:
+    \begin{align*}
+        R.\rk       &:= \rk \\
+        R.d         &:= d \\
+        R.\trapdoor &:= \KDIV_{R.d}(R.\rk.\view, R.\rk.\spend) \\
+        R.\asset    &:= \asset \\
+        R.\cm       &:= \COM_{R.\trapdoor}(R.\asset) \\
+        R.\note     &:= \IES.\encrypt(R.d, R.\rk.\view, \asset)
     \end{align*}
 \end{definition}
 
 \begin{definition}
     A \ReceiverPost{} is the following tuple:
     \begin{align*}
-        \cm       &: \COM.\Output \\
-        \note     &: \IES.\Message
+        \cm       &: \UTXO \\
+        \note     &: \EncryptedNote
     \end{align*}
 \end{definition}
 
@@ -530,21 +612,23 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T_\sender$, $S$ is well-formed:
             \begin{align*}
-                S.\osk &= ... \\
-                S.\cm &= \COM_{\KA.\derive(S.\osk)}(S.\asset) \\
-                S.\vn &= \COM_{...}(S.\osk) \\
-                \MerkleTree.\contains(S.\cm, S.\cm_\ROOT, S.\cm_\PATH) &= \True
+                S.\trapdoor                                          &= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+                S.\cm                                                &= \COM_{S.\trapdoor}(S.\asset) \\
+                S.\vn                                                &= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
+                \MerkleTree.\verify(S.\cm, S.\cm_\ROOT, S.\cm_\PATH) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T_\receiver)$ $R$ is well-formed at index $i$ with respect to $\FAIR$:
             \begin{align*}
-                R.r &= \CRH(i \,||\, R.\pk \,||\, \FAIR) \\
-                R.\opk &= ... \\
-                R.\cm &= \COM_{R.\opk}(R.\asset)
+                R.d         &= \CRH(i \,||\, R.\rk.\view \,||\, R.\rk.\spend \,||\, \FAIR) \\
+                R.\trapdoor &= \KDIV_{R.d}(R.\rk.\view, R.\rk.\spend) \\
+                R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
             \end{align*}
     \end{enumerate}
     where $\FAIR$ is the following fair randomness constant:
     \[\FAIR := \CRH(\Concat_{S \in T_\sender}(S.\cm))\]
 \end{definition}
+
+\TODO{The \VoidNumber{} trapdoor is not a good choice, since the range of possible trapdoor values would be publicly known (the diversifiers in this case are posted to the ledger), so it would remove the hiding property of the commitment.}
 
 \begin{definition}
     A \TransferPost{} is the following tuple:
