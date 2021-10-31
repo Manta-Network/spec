@@ -42,14 +42,19 @@
 \floatstyle{boxed} 
 \restylefloat{figure}
 
-\newtheorem{definition}{Definition}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[subsection]
 \newtheorem*{definition*}{Definition}
+
+\newcommand{\dash}{{\textrm{--}}}
+\renewcommand{\abs}[1]{\left|#1\right|}
 
 \newcommand{\Alice}{{\textsf{Alice}}}
 \newcommand{\AssetId}{{\textsf{AssetId}}}
 \newcommand{\AssetValue}{{\textsf{AssetValue}}}
 \newcommand{\Asset}{{\textsf{Asset}}}
 \newcommand{\Bob}{{\textsf{Bob}}}
+\newcommand{\Bool}{{\textsf{Bool}}}
 \newcommand{\COM}{{\textsf{COM}}}
 \newcommand{\CRH}{{\textsf{CRH}}}
 \newcommand{\Charlie}{{\textsf{Charlie}}}
@@ -63,61 +68,87 @@
 \newcommand{\EntropySource}{{\textsf{EntropySource}}}
 \newcommand{\Enumerate}{{\textsf{enumerate}}}
 \newcommand{\FAIR}{{\textsf{FAIR}}}
+\newcommand{\False}{{\textsf{False}}}
 \newcommand{\GetAccumulatorAndZeroes}{{\textsf{GetAccumulatorAndZeroes}}}
 \newcommand{\GetProof}{{\textsf{GetProof}}}
 \newcommand{\HASH}{{\textsf{HASH}}}
+\newcommand{\IES}{{\textsf{IES}}}
 \newcommand{\Input}{{\textsf{Input}}}
+\newcommand{\KA}{{\textsf{KA}}}
+\newcommand{\KeyDistribution}{{\textsf{KeyDistribution}}}
 \newcommand{\Key}{{\textsf{Key}}}
 \newcommand{\MantaDAP}{{\Manta{}_{\texttt{DAP}}}}
 \newcommand{\MantaPay}{{\textsf{MantaPay}}}
 \newcommand{\Manta}{{\textsc{Manta}}}
+\newcommand{\Message}{{\textsf{Message}}}
 \newcommand{\Mint}{{\textsf{Mint}}}
 \newcommand{\Next}{{\textsf{Next}}}
+\newcommand{\None}{{\textsf{None}}}
 \newcommand{\Option}{{\textsf{Option}}}
 \newcommand{\Output}{{\textsf{Output}}}
 \newcommand{\PRF}{{\textsf{PRF}}}
 \newcommand{\Plaintext}{{\textsf{Plaintext}}}
 \newcommand{\PrepareZeroes}{{\textsf{PrepareZeroes}}}
 \newcommand{\PrivateTransfer}{{\textsf{PrivateTransfer}}}
+\newcommand{\Proof}{{\textsf{Proof}}}
 \newcommand{\Prop}{{\textsf{Prop}}}
 \newcommand{\Prove}{{\textsf{Prove}}}
+\newcommand{\ProvingKey}{{\textsf{ProvingKey}}}
 \newcommand{\PublicAddress}{{\textsf{PublicAddress}}}
+\newcommand{\PublicInput}{{\textsf{PublicInput}}}
+\newcommand{\PublicKey}{{\textsf{PublicKey}}}
 \newcommand{\PublicLedger}{{\textsf{PublicLedger}}}
 \newcommand{\Receiver}{{\textsf{Receiver}}}
 \newcommand{\Reclaim}{{\textsf{Reclaim}}}
+\newcommand{\SYM}{{\textsf{SYM}}}
 \newcommand{\Sample}{{\textsf{Sample}}}
+\newcommand{\SecretInput}{{\textsf{SecretInput}}}
+\newcommand{\SecretKey}{{\textsf{SecretKey}}}
 \newcommand{\SeededRng}{{\textsf{SeededRng}}}
 \newcommand{\Sender}{{\textsf{Sender}}}
+\newcommand{\SharedSecret}{{\textsf{SharedSecret}}}
 \newcommand{\ShieldedAddress}{{\textsf{ShieldedAddress}}}
 \newcommand{\ShieldedAssetPool}{{\textsf{ShieldedAssetPool}}}
 \newcommand{\ShieldedIdentity}{{\textsf{ShieldedIdentity}}}
 \newcommand{\Sink}{{\textsf{Sink}}}
 \newcommand{\Some}{{\textsf{Some}}}
 \newcommand{\Source}{{\textsf{Source}}}
-\newcommand{\Symm}{{\textsf{Symm}}}
+\newcommand{\Statement}{{\textsf{Statement}}}
 \newcommand{\TransferPost}{{\textsf{TransferPost}}}
 \newcommand{\Transfer}{{\textsf{Transfer}}}
 \newcommand{\TrapdoorDistribution}{{\textsf{TrapdoorDistribution}}}
 \newcommand{\Trapdoor}{{\textsf{Trapdoor}}}
+\newcommand{\True}{{\textsf{True}}}
 \newcommand{\Type}{{\textsf{Type}}}
 \newcommand{\UTXO}{{\textsf{UTXO}}}
 \newcommand{\Value}{{\textsf{Value}}}
+\newcommand{\VerifyingKey}{{\textsf{VerifyingKey}}}
 \newcommand{\Verify}{{\textsf{Verify}}}
 \newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
 \newcommand{\Void}{{\textsf{Void}}}
+\newcommand{\ZKPS}{{\textsf{ZKPS}}}
+\newcommand{\agree}{{\textsf{agree}}}
 \newcommand{\allocated}{{\textsf{allocated}}}
 \newcommand{\commit}{{\textsf{commit}}}
 \newcommand{\decrypt}{{\textsf{decrypt}}}
+\newcommand{\derive}{{\textsf{derive}}}
 \newcommand{\encrypt}{{\textsf{encrypt}}}
 \newcommand{\hash}{{\textsf{hash}}}
+\newcommand{\keys}{{\textsf{keys}}}
 \newcommand{\len}{{\textsf{len}}}
 \newcommand{\note}{{\textsf{note}}}
+\newcommand{\pk}{{\textsf{pk}}}
+\newcommand{\prove}{{\textsf{prove}}}
 \newcommand{\public}{{\textsf{public}}}
 \newcommand{\pub}{{\textsf{pub}}}
 \newcommand{\remainder}{{\textsf{remainder}}}
+\newcommand{\satisfying}{{\textsf{satisfying}}}
 \newcommand{\secret}{{\textsf{secret}}}
+\newcommand{\sk}{{\textsf{sk}}}
 \newcommand{\spend}{{\textsf{spend}}}
 \newcommand{\spent}{{\textsf{spent}}}
+\newcommand{\verify}{{\textsf{verify}}}
+\newcommand{\vk}{{\textsf{vk}}}
 
 \title{\textbf{\MantaPay{} Protocol Specification}\\ v0.4.0}
 \author{Shumo Chu and Brandon H. Gomes}
@@ -135,7 +166,27 @@
 
 \lsection{Introduction}{introduction}
 
+\TODO{add introductory remarks}
+
 \lsection{Notation}{notation}
+
+The following notation is used throughout this specification:
+
+\begin{itemize}
+    \item $\Type$ is the type of types\footnotemark{}.
+    \item If $x : T$ then $x$ is a value and $T$ is a type, denoted $T : \Type$, and we say that $x$ \emph{has type} $T$.
+    \item $\Bool$ is the type of booleans with values $\True$ and $\False$.
+    \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{type of functions} from $A$ to $B$ as $A \to B : \Type$.
+    \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{product type} over $A$ and $B$ as $A \times B : \Type$ with constructor $(\dash, \dash) : T \to (S \to T \times S)$.
+    \item For any type $T : \Type$, we define $\Option(T) : \Type$ as the inductive type with constructors:
+        \begin{align*}
+            \None &: \Option(T) \\
+            \Some &: T \to \Option(T)
+        \end{align*}
+    \item We denote the \emph{type of distributions} over a type $T : \Type$ as $\mathfrak{D}(T) : \Type$. A value $x$ sampled from $\mathfrak{D}(T)$ is denoted $x \sim \mathfrak{D}(T)$ and the fact that the value $x$ belongs to the range of $\mathfrak{D}(T)$ is denoted $x \in \mathfrak{D}(T)$. So namely, $y \in \set{x \,|\, x \sim \mathfrak{D}(T)} \leftrightarrow y \in \mathfrak{D}(T)$.
+\end{itemize}
+
+\footnotetext{By \emph{type of types}, we mean the type of \emph{first-level} types in some family of type universes. Discussion of the type theory necessary to make these notions rigorous is beyond the scope of this paper.}
 
 \lsection{Concepts}{concepts}
 
@@ -153,15 +204,15 @@ Whenever an \Asset{} is being used in a public setting, we simply refer to it as
 
 \lsubsection{Addresses}{addresses}
 
-In order for participants in the \MantaPay{} protocol to send and receive \Asset{s}, they must create secret and public \emph{addresses} according to an \emph{address scheme}. For \MantaPay{}, the address scheme consists of a \emph{spending key} $sk$, a \emph{viewing key} $vk$, and a \emph{public key} $pk$. The keys have the following uses/properties:
+In order for participants in the \MantaPay{} protocol to send and receive \Asset{s}, they must create secret and public \emph{addresses} according to an \emph{address scheme}. For \MantaPay{}, the address scheme consists of a \emph{spending key} $\sk$, a \emph{viewing key} $\vk$, and a \emph{public key} $\pk$. The keys have the following uses/properties:
 
 \begin{itemize}
-    \item Access to a public key $pk$ represents the ability to send \Asset{s} to the owner of the associated $sk$.
-    \item Access to a viewing key $vk$ represents the ability to reveal shielded \Asset{} information for \Asset{s} belonging to the owner of the associated $sk$.
-    \item Access to a spending key $sk$ represents the ability to spend \Asset{s} that were received under the associated public key $pk$.
+    \item Access to a public key $\pk$ represents the ability to send \Asset{s} to the owner of the associated $\sk$.
+    \item Access to a viewing key $\vk$ represents the ability to reveal shielded \Asset{} information for \Asset{s} belonging to the owner of the associated $\sk$.
+    \item Access to a spending key $\sk$ represents the ability to spend \Asset{s} that were received under the associated public key $\pk$.
 \end{itemize}
 
-See \autoref{sec:abstract-encryption} and \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, viewing, and receiving.
+See \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, viewing, and receiving \Asset{s}.
 
 \subsection{Ledger}
 
@@ -192,7 +243,7 @@ The \ShieldedAssetPool{} is made up of four parts:
 \begin{enumerate}
     \item \ShieldedAssetPool{} Balance: The \MantaPay{} ledger contains a collection of \Asset{s} which represent the combined economic value of the \ShieldedAssetPool{} and the \PublicLedger{}. The \ShieldedAssetPool{} Balance is the subset of this total value that has been anonymized by the \MantaPay{} protocol.
     \item \autoref{sec:ledger-utxo-set} \UTXO{} Set: A collection of claims to subsets of the \ShieldedAssetPool{}, each owned by participants of the \MantaPay{} protocol.
-    \item \autoref{sec:ledger-encrypted-notes} Encrypted Notes: For each \UTXO{} there is a matching encrypted \note{} which contains information necessary to spend the \Asset{}, which is commited in the \UTXO{}, but can only be decrypted by the recipient of the \Asset{}, specifically, the correct viewing key $vk$. See \autoref{sec:addresses} for more.
+    \item \autoref{sec:ledger-encrypted-notes} Encrypted Notes: For each \UTXO{} there is a matching encrypted \note{} which contains information necessary to spend the \Asset{}, which is commited in the \UTXO{}, but can only be decrypted by the recipient of the \Asset{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
     \item \autoref{sec:ledger-void-number-set} \VoidNumber{} Set: A collection of commitments keeping track of those \UTXO{s} which have participated in exactly one instance of the \Transfer{} Protocol.
 \end{enumerate}
 
@@ -214,45 +265,44 @@ The operation of the different parts of the \ShieldedAssetPool{} is elaborated i
 
 \subsection{Abstract Cryptographic Schemes}
 
-\subsubsection{Commitments}
+\begin{definition}
+    A \emph{commitment scheme} $\COM$ is defined by the schema:
+    \begin{align*}
+        \Trapdoor             &: \Type \\
+        \Input                &: \Type \\
+        \Output               &: \Type \\
+        \TrapdoorDistribution &: \mathfrak{D}(\Trapdoor) \\
+        \commit               &: \Trapdoor \times \Input \to \Output
+    \end{align*}
+    with the following properties:
 
-A \emph{commitment scheme} $\COM$ is defined by the following schema:
-\begin{align*}
-    \Trapdoor             &: \Type \\
-    \Input                &: \Type \\
-    \Output               &: \Type \\
-    \TrapdoorDistribution &: \mathcal{D}(\Trapdoor) \\
-    \commit               &: \Trapdoor \times \Input \to \Output
-\end{align*}
-with the properties:
+    \begin{itemize}
+        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Trapdoor$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
+        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
+    \end{itemize}
 
-\begin{itemize}
-    \item Binding: It is infeasible to find an $x, y : \Input$ and $r, s: \Trapdoor$ such that $x \ne y$ and $\commit(r, x) = \commit(s, y)$.
-    \item Hiding: For all $x, y : \Input$, the distributions $\set{\commit(r, x)\,|\,r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r, y)\,|\,r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
-\end{itemize}
+\textbf{Notation}: For convenience we refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
+\end{definition}
 
-\textbf{Notation}: For convenience we refer to $\COM.\commit(r, x)$ by $\COM_r(x)$.
-
-\subsubsection{Hash Functions}
-
-A \emph{hash function} $\CRH$ is defined by the following schema:
+\begin{definition}
+A \emph{hash function} $\CRH$ is defined by the schema:
 \begin{align*}
     \Input  &: \Type \\
     \Output &: \Type \\
     \hash   &: \Input \to \Output
 \end{align*}
-with the properties:
+with the following properties:
 
 \begin{itemize}
-    \item Pre-Image Resistance: For a given $y : \Output$, it is infeasible to find $x : \Input$ such that $\hash(x) = y$.
-    \item Collision Resistance: It is infeasible to find an $x_1, x_2 : \Input$ such that $x_1 \ne x_2$ and $\hash(x_1) = \hash(x_2)$.
+    \item \textbf{Pre-Image Resistance}: For a given $y : \Output$, it is infeasible to find $x : \Input$ such that $\hash(x) = y$.
+    \item \textbf{Collision Resistance}: It is infeasible to find an $x_1, x_2 : \Input$ such that $x_1 \ne x_2$ and $\hash(x_1) = \hash(x_2)$.
 \end{itemize}
 
 \textbf{Notation}: For convenience we refer to $\CRH.\hash(x)$ by $\CRH(x)$.
+\end{definition}
 
-\lsubsubsection{Encryption}{abstract-encryption}
-
-A \emph{symmetric encryption echeme} $\Symm$ is defined by the following schema:
+\begin{definition}
+A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
 \begin{align*}
     \Key &: \Type \\
     \Plaintext &: \Type \\
@@ -260,14 +310,119 @@ A \emph{symmetric encryption echeme} $\Symm$ is defined by the following schema:
     \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
     \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
 \end{align*}
-with the properties:
+with the following properties:
 
 \begin{itemize}
-    \item Valid Decryption: $\decrypt(k, \encrypt(k, p)) = \Some(p)$
-    \item \TODO{hiding? one-time encryption security?}
+    \item \textbf{Validity}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that $\decrypt(k, \encrypt(k, p)) = \Some(p)$.
+    \item \TODO{hiding, one-time encryption security?}
 \end{itemize}
+\end{definition}
 
-\subsubsection{Zero-Knowledge Proving Systems}
+\begin{definition}
+    A \emph{key-agreement scheme} $\KA$ is defined by the schema:
+    \begin{align*}
+        \PublicKey    &: \Type \\
+        \SecretKey    &: \Type \\
+        \SharedSecret &: \Type \\
+        \derive       &: \SecretKey \to \PublicKey \\
+        \agree        &: \SecretKey \times \PublicKey \to \SharedSecret
+    \end{align*}
+    with the following properties:
+
+    \begin{itemize}
+        \item \textbf{Agreement}: For all $s_1, s_2 : \SecretKey$, $\agree(s_1, \derive(s_2)) = \agree(s_2, \derive(s_1))$
+        \item \TODO{security properties}
+    \end{itemize}
+\end{definition}
+
+\begin{definition}
+    An \emph{integrated encryption scheme} $\IES$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$, where $\KA.\SharedSecret = \SYM.\Key$. We can define the following encryption/decryption algorithms:
+    \begin{itemize}
+        \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
+            \[m := (\KA.\derive(\sk), \SYM.\encrypt(\KA.\agree(\sk, \pk), p)) : \KA.\PublicKey \times \SYM.\Ciphertext\]
+        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted messaged, as above, $m := (\pk, c) : \KA.\PublicKey \times \SYM.\Ciphertext$, we can decrypt $m$, producing the plaintext,
+            \[p := \SYM.\decrypt(\KA.\agree(\sk, \pk), c) : \Option(\SYM.\Plaintext)\]
+            which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
+    \end{itemize}
+
+    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
+    \begin{align*}
+        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
+        \decrypt &: \KA.\SecretKey \times \Message \to \Option(\SYM.\Plaintext)
+    \end{align*}
+    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that these keys should be ephemeral, etc.} \\
+    \TODO{add message authentication}
+\end{definition}
+
+\newcommand{\Prob}[2]{\mathrm{Pr}\scalebox{0.88}{\ensuremath{
+  \left[\!\!\begin{array}{c}#1\end{array} \middle| \begin{array}{l}#2\end{array}\!\!\right]
+}}}
+
+\begin{definition}
+    A \emph{non-interactive zero-knowledge proving system} $\ZKPS$ is defined by the schema:
+    \begin{align*}
+        \Statement    &: \Type \\
+        \ProvingKey   &: \Type \\
+        \VerifyingKey &: \Type \\
+        \PublicInput  &: \Type \\
+        \SecretInput  &: \Type \\
+        \Proof        &: \Type \\
+        \keys         &: \Statement \to \mathfrak{D}(\ProvingKey \times \VerifyingKey) \\
+        \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}(\Option(\Proof)) \\
+        \verify       &: \VerifyingKey \times \PublicInput \times \Proof \to \Bool
+    \end{align*}
+    \textbf{Notation}: We use the following notation for a $\ZKPS$:
+    \begin{itemize}
+        \item We write the $\Statement$ and $\ProvingKey$ arguments of $\prove$ in the superscript and subscript respectively,
+            \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
+        \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
+            \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
+        \item We say that $(x, w) : \PublicInput \times \SecretInput$ has the property of being a $\satisfying$ input whenever
+            \[\satisfying(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
+    \end{itemize}
+
+    Every $\ZKPS$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
+
+    \begin{itemize}
+        \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if there exists a proof $\pi : \Proof$, such that $\Some(\pi) \in \prove^P_\pk(x, w)$, then $\verify_\vk(x, \pi) = \True$.
+        \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
+            \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\PublicInput \times \Proof)\]
+             there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
+            \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\SecretInput)\]
+            such that the following probability is negligible:
+            \[
+                \Prob{
+                    \satisfying(x, w) = \False \\
+                    \verify_\vk(x, w) = \True
+                }{
+                    (\pk, \vk) \sim \keys(P) \\
+                    (x, \pi) \sim \mathcal{A}(\pk, \vk) \\
+                    w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
+                }
+            \]
+        \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator$\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
+            \[
+                \Prob{
+                    \satisfying(x, w) = \True \\
+                    \mathcal{D}(\pi) = \True
+                }{
+                    (\pk, \vk) \sim \keys(P) \\
+                    (x, w) \sim \mathcal{D}(\pk, \vk) \\
+                    \Some(\pi) \sim \prove^P_\pk(x, w)
+                }
+                \,\,\text{and}\,\,
+                \Prob{
+                    \satisfying(x, w) = \True \\
+                    \mathcal{D}(\pi) = \True
+                }{
+                    (\pk, \vk) \sim \mathcal{S}(P) \\
+                    (x, w) \sim \mathcal{D}(\pk, \vk) \\
+                    \pi \sim \mathcal{S}(x)
+                }
+            \]
+        \item \textbf{Succinctness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\prove(P, \pk, x, w) = \Some(\pi)$, then $\abs{\pi} = \mathcal{O}(1)$, and $\verify(\vk, x, \pi)$ runs in time $\mathcal{O}(\abs{x})$.
+    \end{itemize}
+\end{definition}
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
