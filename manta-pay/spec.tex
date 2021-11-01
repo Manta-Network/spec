@@ -134,6 +134,7 @@
 \newcommand{\SpendingKey}{{\textsf{SpendingKey}}}
 \newcommand{\StateT}{{\textsf{State}}}
 \newcommand{\Statement}{{\textsf{Statement}}}
+\newcommand{\TransferConfiguration}{{\textsf{TransferConfiguration}}}
 \newcommand{\TransferPost}{{\textsf{TransferPost}}}
 \newcommand{\Transfer}{{\textsf{Transfer}}}
 \newcommand{\TrapdoorDistribution}{{\textsf{TrapdoorDistribution}}}
@@ -246,7 +247,7 @@ The following notation is used throughout this specification:
 
 The \Asset{} is the fundamental currency object in the \MantaPay{} protocol. An asset $a : \Asset$ is a tuple
 \[a = (a.\ID, a.\VALUE) : \AssetId \times \AssetValue\]
-where the \AssetId{} represents the type of currency stored in $a$ and the \AssetValue{} represents how many units of that currency are stored in $a$.  \MantaPay{} is a \emph{decentralized anonymous payment} protocol which facilitiates the private ownership and private transfer of \Asset{} objects. 
+where the \AssetId{} encodes the type of currency stored in $a$ and the \AssetValue{} encodes how many units of that currency are stored in $a$.  \MantaPay{} is a \emph{decentralized anonymous payment} protocol which facilitiates the private ownership and private transfer of \Asset{} objects. 
 
 Whenever an \Asset{} is being used in a public setting, we simply refer to it as an \Asset{}, but when the \AssetId{} and/or \AssetValue{} of a particular \Asset{} is meant to be hidden from public view, we refer to the \Asset{} as either, \emph{secret}, \emph{private}, \emph{hidden}, or \emph{shielded}.
 
@@ -290,7 +291,7 @@ Preserving the economic value of \Asset{s} requires more than just balanced tran
 The \ShieldedAssetPool{} is made up of four parts which serve to enforce the balanced transfer of \Asset{s} among anonymous participants:
 
 \begin{enumerate}
-    \item \ShieldedAssetPool{} Balance: The \Ledger{} contains a collection of \Asset{s} which represent the combined economic value of the \ShieldedAssetPool{} and the \PublicLedger{}. The \ShieldedAssetPool{} balance is the subset of this total collection that has been anonymized by the \MantaPay{} protocol. This balance is represented by a finite set of non-zero \Asset{s}.
+    \item \ShieldedAssetPool{} Balance: The \Ledger{} contains a collection of \Asset{s} which encode the combined economic value of the \ShieldedAssetPool{} and the \PublicLedger{}. The \ShieldedAssetPool{} balance is the subset of this total collection that has been anonymized by the \MantaPay{} protocol. This balance is stored as a finite set of non-zero \Asset{s}.
     \item \autoref{sec:ledger-utxo-set} \UTXOSet{}: The \UTXOSet{} is a collection of ownership claims to subsets of the \ShieldedAssetPool{} (called \UTXO{s}), each one refering to an allocated \Asset{} transfered to a participant of the protocol.
     \item \autoref{sec:ledger-encrypted-notes} \EncryptedNote{s}: For every \UTXO{} there is a matching \EncryptedNote{} which contains information necessary to spend the \Asset{}, which can be used to \emph{provably reconstruct} the \UTXO{} convincing the \Ledger{} of unique ownership. The \EncryptedNote{} can only be decrypted by the recipient of the \Asset{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
     \item \autoref{sec:ledger-void-number-set} \VoidNumberSet{}: The \VoidNumberSet{} is a collection of commitments, like \UTXO{s}, but which track the \emph{spent state} of an \Asset{} and are used to prove to the \Ledger{} that an \Asset{} is spent \emph{exactly one time}. 
@@ -514,13 +515,13 @@ with the following properties:
                     \pi \sim \mathcal{S}(x)
                 }
             \]
-        \item \textbf{Succinctness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\prove(P, \pk, x, w) = \Some(\pi)$, then $\abs{\pi} = \mathcal{O}(1)$, and $\verify(\vk, x, \pi)$ runs in time $\mathcal{O}(\abs{x})$.
+        \item \textbf{Succinctness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\Some(\pi) \sim \prove(P, \pk, x, w)$, then $\abs{\pi} = \mathcal{O}(1)$, and $\verify(\vk, x, \pi)$ runs in time $\mathcal{O}(\abs{x})$.
     \end{itemize}
 \end{definition}
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
-Given a choice of $\IES$ for the \Transfer{} protocol we have the following definitions:
+Given a choice of $\IES$ we have the following definitions:
 
 \begin{definition}
     A \SpendingKey{} is the following pair of keys:
@@ -544,14 +545,53 @@ Given a choice of $\IES$ for the \Transfer{} protocol we have the following defi
     \end{align*}
 \end{definition}
 
+A keypair $(\sk, \rk) : \SpendingKey \times \ReceivingKey$, represents the ability to spend and receive \Asset{s} as a unique \emph{representative participant} on the \Ledger. Any user of the \MantaPay{} protocol can create many such keypairs, but each one represents a different participant and \Asset{s} must be transfered between them using the \Transfer{} protocol as if they were independently owned by different users. A \ReceivingKey{} can be used to receive any number of \Asset{s} and the \SpendingKey{} can be used to spend any number of those \Asset{s}. See \autoref{sec:abstract-semantic-transactions} for the protocol used to spend a subset of \Asset{s} owned by a single user.
+
+\textbf{Important}: To every spending key $\sk : \SpendingKey$ we have an assoicated viewing key $\vk : \ViewingKey := \sk.\view$ which allows the owner to decrypt the encrypted messages associated to $\sk$, but does not contain enough information to perform a spend with those \Asset{s}. This can be used for account auditing purposes, and for removing anonymity, but sharing this key should be done with caution.
+
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
+
+The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \Asset{s} among participants while preserving their anonymity. The \Transfer{} is made up of special cryptographic constructions called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction. To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \ReceivingKey{s} from other participants for the outputs, assigning each key a subset of the input \Asset{s}, and then builds a \Transfer{} object representing the transfer they want to build. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated and stored, representing a completed state transition in the \Ledger{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{must} not be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
+
+We begin by defining the cryptographic primitives involved in the \Transfer{} protocol:
+
+\begin{definition}
+    The \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
+    \begin{itemize}
+        \item \textbf{Integrated Encryption Scheme}: $\IES$
+        \item \textbf{Commitment Scheme}: $\COM$
+        \item \textbf{Hash Function}: $\CRH$
+        \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
+        \item \textbf{Zero-Knowledge Proving System}: $\ZKPS$
+    \end{itemize}
+    with the following notational conventions:
+    \begin{align*}
+        \KA            &:= \IES.\KA \\
+        \KDIV          &:= \IES.\KDIV \\
+        \UTXO          &:= \COM.\Output \\
+        \VoidNumber    &:= \COM.\Output \\
+        \EncryptedNote &:= \IES.\EncryptedNote \\
+        \UTXOSet       &:= \DCA
+    \end{align*}
+    and the following constraints:
+    \begin{align*}
+        \COM.\Trapdoor   &= \KA.\PublicKey \\
+        \ZKPS.\Statement &= \ValidTransfer
+    \end{align*}
+    where \ValidTransfer{} is defined below.
+
+    \TODO{Add the fact that $\COM.\Input$ has a concatenation property. In general, add (de)serialization to the spec.} \\
+    \TODO{Add the fact that we have a conversion from $\CRH.\Output$ to $\KA.\SecretKey$, notably for diversifiers.}
+\end{definition}
+
+For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
 
 \begin{definition}
     A \Sender{} is the following tuple:
     \begin{align*}
         \sk       &: \SpendingKey \\
-        \tilde{d} &: \IES.\KA.\PublicKey \\
-        \trapdoor &: \IES.\KA.\PublicKey \\
+        \tilde{d} &: \KA.\PublicKey \\
+        \trapdoor &: \KA.\PublicKey \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \cm_c     &: \UTXOSet.\Checkpoint \\
@@ -581,14 +621,15 @@ Given a choice of $\IES$ for the \Transfer{} protocol we have the following defi
         \cm_c &: \UTXOSet.\Checkpoint \\
         \vn   &: \VoidNumber
     \end{align*}
+    which are the parts of a \Sender{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
 
 \begin{definition}
     A \Receiver{} is the following tuple:
     \begin{align*}
         \rk       &: \ReceivingKey \\
-        d         &: \IES.\KA.\SecretKey \\
-        \trapdoor &: \IES.\KA.\PublicKey \\
+        d         &: \KA.\SecretKey \\
+        \trapdoor &: \KA.\PublicKey \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
@@ -611,6 +652,7 @@ Given a choice of $\IES$ for the \Transfer{} protocol we have the following defi
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
     \end{align*}
+    which are the parts of a \Receiver{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
 
 \begin{definition}
@@ -638,7 +680,7 @@ In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the 
     \item \textbf{Well-formed Receivers}: All of the \Receiver{s} in the \Transfer{} must be constructed according to the above \Receiver{} definition.
 \end{itemize}
 
-In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the ledger. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the ledger are valid. Deviation from the protocol in encryption or decryption does not reduce the security of the protocol for honest participants.
+In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the \Ledger{}. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the \Ledger{} are valid. Deviation from the protocol in encryption or decryption stages does not reduce the security of the protocol for honest participants.
 
 \begin{definition}(\Transfer{} Validity \Statement{}) A transfer $T : \Transfer$ is considered \emph{valid} if and only if
     \begin{enumerate}
@@ -686,24 +728,43 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 \begin{definition}
     A \TransferPost{} is the following tuple:
     \begin{align*}
-        \sources   &: \FinSet(\Asset) \\
+        \sources   &: \FinSet(\Source) \\
         \senders   &: \FinSet(\SenderPost) \\
         \receivers &: \FinSet(\ReceiverPost) \\
-        \sinks     &: \FinSet(\Asset) \\
+        \sinks     &: \FinSet(\Sink) \\
         \pi        &: \ZKPS.\Proof
     \end{align*}
     A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \ZKPS.\ProvingKey$ and a given $T : \Transfer$:
     \begin{align*}
         x            &:= \Transfer.\public(T) \\
         w            &:= \Transfer.\secret(T) \\
-        \Some(\pi)   &:= \ZKPS.\prove^\ValidTransfer_\pk(x, w) \\
+        \Some(\pi)   &\sim \ZKPS.\prove^\ValidTransfer_\pk(x, w) \\
         P.\sources   &:= x.\sources \\
         P.\senders   &:= x.\senders \\
         P.\receivers &:= x.\receivers \\
         P.\sinks     &:= x.\sinks \\
         P.\pi        &:= \pi
     \end{align*}
+    where $\Transfer.\public$ returns \SenderPost{s} for each \Sender{} in $T$ and \ReceiverPost{s} for each \Receiver{} in $T$, keeping \Source{s} and \Sink{s} as they are, and $\Transfer.\secret$ returns all the rest of $T$ which is not part of the output of $\Transfer.\public$.
 \end{definition}
+
+Now that a participant has constructed a transfer post $P : \TransferPost$ they can send it to the \Ledger{} for verification. 
+
+\begin{definition}
+    To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
+    \begin{itemize}
+        \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
+        \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
+        \item \textbf{Current \Checkpoint{}}: The $\UTXOSet.\Checkpoint$ stored in each $P.\senders$ is equal to current checkpoint, $\UTXOSet.\checkpoint(\Ledger.\utxos())$, for the current state of the \Ledger{}.
+        \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
+        \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
+        \item \textbf{Verify \Transfer{}}: Check that $\ZKPS.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$.
+    \end{itemize}
+\end{definition}
+
+\lsubsection{Semantic Transactions}{abstract-semantic-transactions}
+
+\TODO{add semantic transactions}
 
 \lsection{Concrete Protocol}{concrete-protocol}
 
@@ -714,18 +775,6 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 \subsection{Concrete Cryptographic Schemes}
 
 \TODO{add names of cryptographic scheme implementations}
-
-\subsubsection{Commitments}
-
-\subsubsection{Hash Functions}
-
-\subsubsection{Encryption}
-
-\subsubsection{Zero-Knowledge Proving Systems}
-
-\subsubsubsection{Groth16}
-
-\subsubsubsection{PLONK}
 
 \lsection{Differences from $\MantaDAP$}{differences}
 
