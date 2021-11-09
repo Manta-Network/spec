@@ -57,6 +57,9 @@
 \newcommand{\Asset}{{\textsf{Asset}}}
 \newcommand{\Bob}{{\textsf{Bob}}}
 \newcommand{\Bool}{{\textsf{Bool}}}
+\newcommand{\BuildAccumulatorAndZeroes}{{\textsf{BuildAccumulatorAndZeroes}}}
+\newcommand{\BuildReceiver}{{\textsf{BuildReceiver}}}
+\newcommand{\BuildSenders}{{\textsf{BuildSenders}}}
 \newcommand{\COM}{{\textsf{COM}}}
 \newcommand{\CRH}{{\textsf{CRH}}}
 \newcommand{\Charlie}{{\textsf{Charlie}}}
@@ -75,7 +78,6 @@
 \newcommand{\FAIR}{{\textsf{FAIR}}}
 \newcommand{\False}{{\textsf{False}}}
 \newcommand{\FinSet}{{\textsf{FinSet}}}
-\newcommand{\GetAccumulatorAndZeroes}{{\textsf{GetAccumulatorAndZeroes}}}
 \newcommand{\GetProof}{{\textsf{GetProof}}}
 \newcommand{\HASH}{{\textsf{HASH}}}
 \newcommand{\ID}{{\textsf{id}}}
@@ -88,6 +90,7 @@
 \newcommand{\KeyDistribution}{{\textsf{KeyDistribution}}}
 \newcommand{\Key}{{\textsf{Key}}}
 \newcommand{\Ledger}{{\textsf{Ledger}}}
+\newcommand{\List}{{\textsf{List}}}
 \newcommand{\MantaDAP}{{\Manta{}_{\texttt{DAP}}}}
 \newcommand{\MantaPay}{{\textsf{MantaPay}}}
 \newcommand{\Manta}{{\textsc{Manta}}}
@@ -194,6 +197,7 @@
 \newcommand{\spend}{{\textsf{spend}}}
 \newcommand{\spent}{{\textsf{spent}}}
 \newcommand{\stateF}{{\textsf{state}}}
+\newcommand{\total}{{\textsf{total}}}
 \newcommand{\trapdoor}{{\textsf{trapdoor}}}
 \newcommand{\update}{{\textsf{update}}}
 \newcommand{\utxos}{{\textsf{utxos}}}
@@ -236,8 +240,9 @@ The following notation is used throughout this specification:
             \Some &: T \to \Option(T)
         \end{align*}
     \item We denote the \emph{type of finite sets} over a type $T : \Type$ as $\FinSet(T) : \Type$. The membership predicate for a value $x : T$ in a finite set $S : \FinSet(T)$ is denoted $x \in S$.
+    \item We denote the \emph{type of finite ordered sets} over a type $T : \Type$ as $\List(T) : \Type$. This can either be defined by an inductive type or as a $\FinSet(T)$ with a fixed ordering. We denote the constructor for a list as $[\,\dots\,]$ for an arbitrary set of elements.
     \item We denote the \emph{type of distributions} over a type $T : \Type$ as $\mathfrak{D}(T) : \Type$. A value $x$ sampled from $\mathfrak{D}(T)$ is denoted $x \sim \mathfrak{D}(T)$ and the fact that the value $x$ belongs to the range of $\mathfrak{D}(T)$ is denoted $x \in \mathfrak{D}(T)$. So namely, $y \in \set{x \,|\, x \sim \mathfrak{D}(T)} \leftrightarrow y \in \mathfrak{D}(T)$.
-    \item Depending on the context, the notation $\abs{\,\cdot\,}$ denotes either the absolute value of a quantity, the length of a vector, the number of characters in a string, or the cardinality of a set.
+    \item Depending on the context, the notation $\abs{\,\cdot\,}$ denotes either the absolute value of a quantity, the length of a list, the number of characters in a string, or the cardinality of a set.
 \end{itemize}
 
 \footnotetext{By \emph{type of types}, we mean the type of \emph{first-level} types in some family of type universes. Discussion of the type theory necessary to make these notions rigorous is beyond the scope of this paper.}
@@ -320,7 +325,7 @@ Once the ability to spend an \Asset{} is extracted from a $(\UTXO, \EncryptedNot
 
 \subsection{Abstract Cryptographic Schemes}
 
-In the following section, we outline the formal specifications for all of the \emph{cryptographic primitives} used in the \MantaPay{} protocol.
+In the following section, we outline the formal specifications for all of the \emph{cryptographic schemes} used in the \MantaPay{} protocol.
 
 \begin{definition}[Commitment Scheme]
     A \emph{commitment scheme} $\COM$ is defined by the schema:
@@ -448,10 +453,10 @@ In the following section, we outline the formal specifications for all of the \e
     \end{align*}
     with the following properties:
     \begin{itemize}
-        \item \textbf{Unique Checkpoints}: For any initial state $s : \StateT$ and any finite set of items $I : \FinSet(\Item)$ with some chosen ordering $I_i$, we can generate the sequence of states:
+        \item \textbf{Unique Checkpoints}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
             Then, if we collect the checkpoints for these states, $c_i := \checkpoint(s_i)$, there should be exactly $\abs{I}$-many checkpoints, one for each state update.
-        \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any finite set of items $I : \FinSet(\Item)$ with some chosen ordering $I_i$, we can generate the sequences of states:
+        \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
             \[\Some(c, \pi) := \contains(t, s), \,\,\,\,\, \verify(t, c, \pi) = \True\]
@@ -671,10 +676,10 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Object]
     A \Transfer{} is the following tuple:
     \begin{align*}
-        \sources    &: \FinSet(\Asset) \\
-        \senders    &: \FinSet(\Sender) \\
-        \receivers  &: \FinSet(\Receiver) \\
-        \sinks      &: \FinSet(\Asset)
+        \sources    &: \List(\Asset) \\
+        \senders    &: \List(\Sender) \\
+        \receivers  &: \List(\Receiver) \\
+        \sinks      &: \List(\Asset)
     \end{align*}
     The \emph{shape} of a \Transfer{} is the following $4$-tuple of cardinalities of those sets
     \[\left(\abs{T.\sources}, \abs{T.\senders}, \abs{T.\receivers}, \abs{T.\sinks}\right)\]
@@ -738,10 +743,10 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 \begin{definition}[\Transfer{} Post]
     A \TransferPost{} is the following tuple:
     \begin{align*}
-        \sources   &: \FinSet(\Source) \\
-        \senders   &: \FinSet(\SenderPost) \\
-        \receivers &: \FinSet(\ReceiverPost) \\
-        \sinks     &: \FinSet(\Sink) \\
+        \sources   &: \List(\Source) \\
+        \senders   &: \List(\SenderPost) \\
+        \receivers &: \List(\ReceiverPost) \\
+        \sinks     &: \List(\Sink) \\
         \pi        &: \ZKPS.\Proof
     \end{align*}
     A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \ZKPS.\ProvingKey$ and a given $T : \Transfer$:
@@ -788,11 +793,42 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 
 For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their shielded assets and use them to build \TransferPost{s} to send to the \Ledger{}. The \emph{shielded balance} of any participant is the sum of the balances of their shielded assets, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their shielded balance, the participant would need to accumulate all of the relevant fragments into a large enough \emph{shielded asset} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
 
-Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$. 
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
 
 \footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
 
-\TODO{add algorithm}
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of diversifier-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
+\[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \rk)\]
+to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\rk$.
+
+\begin{algorithm*}
+\caption{Semantic Transaction Algorithm}
+\begin{algorithmic}
+    \Procedure {BuildTransaction}{$\sk$, $\mathcal{B}$, $\total$, $\rk$}
+        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples pairs from $\mathcal{B}$ that total at least $\total$}
+        \If{$\len(B) = 0$}
+            \State \textsf{return} $[\,]$ \Comment{Insufficient Balance}
+        \EndIf
+        \State $P \gets [\,]$ \Comment{Allocate a new list for \TransferPost{s}}
+        \While{$\len(B) > N$} \Comment{While there are enough pairs to make another \Transfer}
+            \State $A \gets [\,]$
+            \For{$b \in \next(B, N)$} \Comment{Get the next $N$ pairs from $B$}
+                \State $S \gets \BuildSenders_\sk(b)$
+                \State $[acc, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$ \Comment{Build a new accumulator and zeroes}
+                \State $P \gets P + \TransferPost(\Transfer([], S, [acc, zs...], []))$
+                \State $(A, Z) \gets (A + (acc.\tilde{d}, acc.\asset.\VALUE), Z + zs)$ \Comment{Save $acc$ for the next loop, $zs$ for the end}
+            \EndFor
+            \State $B \gets A + \remainder(B, N)$
+        \EndWhile
+        \State $S \gets \PrepareZeroes_\sk(N, B, Z, P)$ \Comment{Use $Z$ and \Mint{s} to make $B$ go up to $N$ in size.}
+        \State $R \gets \BuildReceiver_\sk(\rk, S)$
+        \State $[c, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$
+        \State \textsf{return} $P + \TransferPost(\Transfer([], S, [R, c, zs...], []))$
+    \EndProcedure
+\end{algorithmic}
+\end{algorithm*}
+
+If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathcal{B}$ should be updated accordingly, removing all of the pairs which were used in the \Transfer{}.
 
 \lsection{Concrete Protocol}{concrete-protocol}
 
