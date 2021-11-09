@@ -31,6 +31,7 @@
 \def\subsectionautorefname{$\S$}
 \def\subsubsectionautorefname{$\S$}
 \def\subsubsubsectionautorefname{$\S$}
+\def\definitionautorefname{Def}
 
 \newcommand{\lsection}[2]{\def\sectionlabel{#2} \section{#1}\label{sec:#2}}
 \newcommand{\lsubsection}[2]{\def\sectionlabel{#2} \subsection{#1}\label{sec:#2}}
@@ -228,7 +229,7 @@ The following notation is used throughout this specification:
     \item If $x : T$ then $x$ is a value and $T$ is a type, denoted $T : \Type$, and we say that $x$ \emph{has type} $T$.
     \item $\Bool$ is the type of booleans with values $\True$ and $\False$.
     \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{type of functions} from $A$ to $B$ as $A \to B : \Type$.
-    \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{product type} over $A$ and $B$ as $A \times B : \Type$ with constructor $(\dash, \dash) : T \to (S \to T \times S)$.
+    \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{product type} over $A$ and $B$ as $A \times B : \Type$ with constructor $(\dash, \dash) : A \to (B \to A \times B)$.
     \item For any type $T : \Type$, we define $\Option(T) : \Type$ as the inductive type with constructors:
         \begin{align*}
             \None &: \Option(T) \\
@@ -277,7 +278,7 @@ Participants in \MantaPay{} are represented by their addresses, but they are not
     \begin{tikzcd}
         && \UTXOSet \arrow[ld, "\spend" description, bend right] \\
         \PublicLedger \arrow[r, "\mint"', bend right]
-        & \Transfer \arrow[l, "\reclaim"', bend right]
+        & \textbf{\Transfer} \arrow[l, "\reclaim"', bend right]
         \arrow[rd, "\spend" description]
         \arrow[ru, "\allocate" description, bend right] & \\
         && \VoidNumberSet
@@ -286,7 +287,7 @@ Participants in \MantaPay{} are represented by their addresses, but they are not
     \caption{Lifecycle of an \Asset{}.}
 \end{wrapfigure}
 
-Preserving the economic value of \Asset{s} requires more than just balanced transfers. It also requires that \Asset{s} are owned by exactly one address at a time, namely, that the ability to spend an \Asset{} can be proved before a transfer and revoked after a transfer. It is not simply the \emph{information-content} of an \Asset{} that should be transfered, but the \emph{ability to spend the asset in the future}, which should be transfered. Enforcing this second invariant can be solved by using a public ledger\footnotemark{} that keeps track of the movement of \Asset{s} from one participant to another. Unfortunately, using a public ledger alone does not allow participants to remain anonymous, so \MantaPay{} extends the public ledger by adding a special account called the \emph{shielded asset pool} which is responsible for keeping track of the \Asset{s} which have been anonymized by the protocol. We denote the three ledger types in the protocol as follows: the public ledger as \PublicLedger{}, the shielded asset pool as \ShieldedAssetPool{}, and the combined ledger we denote \Ledger{}.
+Preserving the economic value of \Asset{s} requires more than just balanced transfers. It also requires that \Asset{s} are owned by exactly one address at a time, namely, that the ability to spend an \Asset{} can be proved before a transfer and revoked after a transfer. It is not simply the \emph{information-content} of an \Asset{} that should be transfered, but the \emph{ability to spend the asset in the future}, which should be transfered. To enforce this second invariant we can use a public ledger\footnotemark{} that keeps track of the movement of \Asset{s} from one participant to another. Unfortunately, using a public ledger alone does not allow participants to remain anonymous, so \MantaPay{} extends the public ledger by adding a special account called the \emph{shielded asset pool} which is responsible for keeping track of the \Asset{s} which have been anonymized by the protocol. We denote the three ledger types in the protocol as follows: the public ledger as \PublicLedger{}, the shielded asset pool as \ShieldedAssetPool{}, and the combined ledger we denote \Ledger{}.
 
 The \ShieldedAssetPool{} is made up of four parts which serve to enforce the balanced transfer of \Asset{s} among anonymous participants:
 
@@ -301,7 +302,7 @@ The operation of these different parts of the \ShieldedAssetPool{} is elaborated
 
 \endgroup
 
-\footnotetext{A public (or private) ledger is not enough to solve the \emph{provable-ownership problem} or the \emph{double-spending problem}. A \emph{consensus mechanism} is also required to ensure that all participants agree on the current state of the ledger. The \emph{consensus mechanism} that secures the \MantaPay{} ledger is beyond the scope of this paper.}
+\footnotetext{A public (or private) ledger is not enough to solve the \emph{provable-ownership problem} or the \emph{double-spending problem}. A \emph{consensus mechanism} is also required to ensure that all participants agree on the current state of the ledger. The design and specification of the consensus mechanism that secures the \MantaPay{} ledger is beyond the scope of this paper.}
 
 \lsubsubsection{\UTXO{s} and the \UTXOSet{}}{ledger-utxo-set}
 
@@ -321,7 +322,7 @@ Once the ability to spend an \Asset{} is extracted from a $(\UTXO, \EncryptedNot
 
 In the following section, we outline the formal specifications for all of the \emph{cryptographic primitives} used in the \MantaPay{} protocol.
 
-\begin{definition}
+\begin{definition}[Commitment Scheme]
     A \emph{commitment scheme} $\COM$ is defined by the schema:
     \begin{align*}
         \Trapdoor             &: \Type \\
@@ -331,51 +332,48 @@ In the following section, we outline the formal specifications for all of the \e
         \commit               &: \Trapdoor \times \Input \to \Output
     \end{align*}
     with the following properties:
-
     \begin{itemize}
         \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Trapdoor$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
         \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
     \end{itemize}
 
-\textbf{Notation}: For convenience we refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
+    \textbf{Notation}: For convenience, we refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
 \end{definition}
 
-\begin{definition}
-A \emph{hash function} $\CRH$ is defined by the schema:
-\begin{align*}
-    \Input  &: \Type \\
-    \Output &: \Type \\
-    \hash   &: \Input \to \Output
-\end{align*}
-with the following properties:
+\begin{definition}[Hash Function]
+    A \emph{hash function} $\CRH$ is defined by the schema:
+    \begin{align*}
+        \Input  &: \Type \\
+        \Output &: \Type \\
+        \hash   &: \Input \to \Output
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Pre-Image Resistance}: For a given $y : \Output$, it is infeasible to find $x : \Input$ such that $\hash(x) = y$.
+        \item \textbf{Collision Resistance}: It is infeasible to find an $x_1, x_2 : \Input$ such that $x_1 \ne x_2$ and $\hash(x_1) = \hash(x_2)$.
+    \end{itemize}
 
-\begin{itemize}
-    \item \textbf{Pre-Image Resistance}: For a given $y : \Output$, it is infeasible to find $x : \Input$ such that $\hash(x) = y$.
-    \item \textbf{Collision Resistance}: It is infeasible to find an $x_1, x_2 : \Input$ such that $x_1 \ne x_2$ and $\hash(x_1) = \hash(x_2)$.
-\end{itemize}
-
-\textbf{Notation}: For convenience we refer to $\CRH.\hash(x)$ by $\CRH(x)$.
+    \textbf{Notation}: For convenience, we refer to $\CRH.\hash(x)$ by $\CRH(x)$.
 \end{definition}
 
-\begin{definition}
-A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
-\begin{align*}
-    \Key &: \Type \\
-    \Plaintext &: \Type \\
-    \Ciphertext &: \Type \\
-    \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
-    \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
-\end{align*}
-with the following properties:
-
-\begin{itemize}
-    \item \textbf{Validity}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
-        \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
-    \item \TODO{hiding, one-time encryption security?}
-\end{itemize}
+\begin{definition}[Symmetric-Key Encryption Scheme]
+    A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
+    \begin{align*}
+        \Key &: \Type \\
+        \Plaintext &: \Type \\
+        \Ciphertext &: \Type \\
+        \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
+        \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Validity}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
+            \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
+        \item \TODO{hiding, one-time encryption security?}
+    \end{itemize}
 \end{definition}
 
-\begin{definition}
+\begin{definition}[Key-Agreement Scheme]
     A \emph{key-agreement scheme} $\KA$ is defined by the schema:
     \begin{align*}
         \PublicKey    &: \Type \\
@@ -385,38 +383,13 @@ with the following properties:
         \agree        &: \SecretKey \times \PublicKey \to \SharedSecret
     \end{align*}
     with the following properties:
-
     \begin{itemize}
         \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
         \item \TODO{security properties}
     \end{itemize}
 \end{definition}
 
-\begin{definition}
-    A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
-    \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
-\end{definition}
-
-\begin{definition}
-    An \emph{integrated encryption scheme} $\IES$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption/decryption algorithms:
-    \begin{itemize}
-        \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
-            \[m := (\KA.\derive(\sk), \SYM.\encrypt(\KDF(\KA.\agree(\sk, \pk)), p)) : \KA.\PublicKey \times \SYM.\Ciphertext\]
-        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\pk, c) : \KA.\PublicKey \times \SYM.\Ciphertext$, we can decrypt $m$, producing the plaintext,
-            \[p := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \pk)), c) : \Option(\SYM.\Plaintext)\]
-            which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
-    \end{itemize}
-
-    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
-    \begin{align*}
-        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
-        \decrypt &: \KA.\SecretKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
-    \end{align*}
-    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys should be ephemeral, etc.} \\
-    \TODO{add explicit message authentication}
-\end{definition}
-
-\begin{definition}
+\begin{definition}[Key-Diversification Scheme]
     A \emph{key-diversification scheme} $\KDIV$ over a key-agreement scheme $\KA$ is defined by the schema:
     \begin{align*}
         \public : \KA.\SecretKey \times \KA.\PublicKey \times \KA.\PublicKey \to \KA.\PublicKey \\
@@ -424,7 +397,7 @@ with the following properties:
     \end{align*}
     \textbf{Notation}: We refer to the first argument to a $\KDIV$ function as the \emph{diversifier} and we write it as a subscript
     \[\public_d(x, y) := \public(d, x, y) \,\,\text{and}\,\, \secret_d(x, y) := \secret(d, x, y)\]
-    For convenience we also write $\KDIV_d$ to mean $\KDIV.\public_d$ or $\KDIV.\secret_d$, when the context is clear.
+    For convenience, we also write $\KDIV_d$ to mean $\KDIV.\public_d$ or $\KDIV.\secret_d$, when the context is clear.
     
     Every $\KDIV$ also has the following properties:
     \begin{itemize}
@@ -434,7 +407,34 @@ with the following properties:
     \end{itemize}
 \end{definition}
 
-\begin{definition}
+\begin{definition}[Key-Derivation Function]
+    A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
+    \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
+    with the following properties:
+    \begin{itemize}
+        \item \TODO{security properties}
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[Integrated Encryption Scheme]
+    An \emph{integrated encryption scheme} $\IES$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption/decryption algorithms:
+    \begin{itemize}
+        \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
+            \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\sk), \SYM.\encrypt(\KDF(\KA.\agree(\sk, \pk)), p)\right)\]
+        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\pk, c)$, we can decrypt $m$, producing the plaintext,
+            \[p : \Option(\SYM.\Plaintext) := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \pk)), c)\]
+            which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
+    \end{itemize}
+
+    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
+    \begin{align*}
+        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
+        \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
+    \end{align*}
+    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys should be ephemeral, etc.} \\
+\end{definition}
+
+\begin{definition}[Dynamic Cryptographic Accumulator]
     A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
     \begin{align*}
         \Item       &: \Type \\
@@ -448,12 +448,19 @@ with the following properties:
     \end{align*}
     with the following properties:
     \begin{itemize}
-        \item \TODO{add checkpoint, update, contains, and verify properties}
+        \item \textbf{Unique Checkpoints}: For any initial state $s : \StateT$ and any finite set of items $I : \FinSet(\Item)$ with some chosen ordering $I_i$, we can generate the sequence of states:
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
+            Then, if we collect the checkpoints for these states, $c_i := \checkpoint(s_i)$, there should be exactly $\abs{I}$-many checkpoints, one for each state update.
+        \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any finite set of items $I : \FinSet(\Item)$ with some chosen ordering $I_i$, we can generate the sequences of states:
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
+            Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
+            \[\Some(c, \pi) := \contains(t, s), \,\,\,\,\, \verify(t, c, \pi) = \True\]
         \item \TODO{security properties}
     \end{itemize}
+    \item \TODO{add finite capacity constraint}
 \end{definition}
 
-\begin{definition}
+\begin{definition}[Non-Interactive Zero-Knowledge Proving System]
     A \emph{non-interactive zero-knowledge proving system} $\ZKPS$ is defined by the schema:
     \begin{align*}
         \Statement    &: \Type \\
@@ -473,13 +480,13 @@ with the following properties:
         \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
             \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
         \item We say that $(x, w) : \PublicInput \times \SecretInput$ has the property of being a $\satisfying$ input whenever
-            \[\satisfying(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
+            \[\satisfying^P_\pk(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
     \end{itemize}
 
     Every $\ZKPS$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
 
     \begin{itemize}
-        \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if there exists a proof $\pi : \Proof$, such that $\Some(\pi) \in \prove^P_\pk(x, w)$, then $\verify_\vk(x, \pi) = \True$.
+        \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
         \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
             \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\PublicInput \times \Proof)\]
              there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
@@ -487,7 +494,7 @@ with the following properties:
             such that the following probability is negligible:
             \[
                 \Prob{
-                    \satisfying(x, w) = \False \\
+                    \satisfying^P_\pk(x, w) = \False \\
                     \verify_\vk(x, w) = \True
                 }{
                     (\pk, \vk) \sim \keys(P) \\
@@ -498,7 +505,7 @@ with the following properties:
         \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
             \[
                 \Prob{
-                    \satisfying(x, w) = \True \\
+                    \satisfying^P_\pk(x, w) = \True \\
                     \mathcal{D}(\pi) = \True
                 }{
                     (\pk, \vk) \sim \keys(P) \\
@@ -507,7 +514,7 @@ with the following properties:
                 }
                 \,\,\text{and}\,\,
                 \Prob{
-                    \satisfying(x, w) = \True \\
+                    \satisfying^P_\pk(x, w) = \True \\
                     \mathcal{D}(\pi) = \True
                 }{
                     (\pk, \vk) \sim \mathcal{S}(P) \\
@@ -523,7 +530,7 @@ with the following properties:
 
 Given a choice of $\IES$ we have the following definitions:
 
-\begin{definition}
+\begin{definition}[Spending Key]
     A \SpendingKey{} is the following pair of keys:
     \begin{align*}
         \view  &: \IES.\KA.\SecretKey \\
@@ -532,7 +539,7 @@ Given a choice of $\IES$ we have the following definitions:
     The first secret key, $\view$, is called the \ViewingKey{}.
 \end{definition}
 
-\begin{definition}
+\begin{definition}[Receiving Key]
     A \ReceivingKey{} is the following pair of keys:
     \begin{align*}
         \view  &: \IES.\KA.\PublicKey \\
@@ -540,8 +547,8 @@ Given a choice of $\IES$ we have the following definitions:
     \end{align*}
     which is derived from a spending key $\sk : \SpendingKey$ by deriving each component:
     \begin{align*}
-        \rk.\view &:= \KA.\derive(\sk.\view) \\
-        \rk.\spend   &:= \KA.\derive(\sk.\spend)
+        \rk.\view  &:= \KA.\derive(\sk.\view) \\
+        \rk.\spend &:= \KA.\derive(\sk.\spend)
     \end{align*}
 \end{definition}
 
@@ -555,8 +562,8 @@ The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facil
 
 We begin by defining the cryptographic primitives involved in the \Transfer{} protocol:
 
-\begin{definition}
-    The \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
+\begin{definition}[Transfer Configuration]
+    A \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
     \begin{itemize}
         \item \textbf{Integrated Encryption Scheme}: $\IES$
         \item \textbf{Commitment Scheme}: $\COM$
@@ -570,7 +577,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
         \KDIV          &:= \IES.\KDIV \\
         \UTXO          &:= \COM.\Output \\
         \VoidNumber    &:= \COM.\Output \\
-        \EncryptedNote &:= \IES.\EncryptedNote \\
+        \EncryptedNote &:= \IES.\Message \\
         \UTXOSet       &:= \DCA
     \end{align*}
     and the following constraints:
@@ -586,7 +593,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
 
-\begin{definition}
+\begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
     \begin{align*}
         \sk       &: \SpendingKey \\
@@ -603,7 +610,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         S.\sk                 &:= \sk \\
         \tilde{d}, c          &:= \note \\
-        \Some(\asset)         &:= \IES.\decrypt(S.\sk.\view, c) \\
+        \Some(\asset)         &:= \IES.\decrypt(S.\sk.\view, \tilde{d}, c) \\
         S.\asset              &:= \asset \\
         S.\tilde{d}           &:= \tilde{d} \\
         S.\trapdoor           &:= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
@@ -615,7 +622,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \end{align*}
 \end{definition}
 
-\begin{definition}
+\begin{definition}[\Transfer{} Sender Post]
     A \SenderPost{} is the following tuple extracted from a \Sender{}:
     \begin{align*}
         \cm_c &: \UTXOSet.\Checkpoint \\
@@ -624,7 +631,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     which are the parts of a \Sender{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
 
-\begin{definition}
+\begin{definition}[\Transfer{} Receiver]
     A \Receiver{} is the following tuple:
     \begin{align*}
         \rk       &: \ReceivingKey \\
@@ -635,7 +642,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \note     &: \EncryptedNote
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a chosen diversifier $d : \IES.\KA.\SecretKey$ with the following algorithm:
+    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a given\footnotemark{} diversifier $d : \IES.\KA.\SecretKey$ with the following algorithm:
     \begin{align*}
         R.\rk       &:= \rk \\
         R.d         &:= d \\
@@ -646,7 +653,9 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \end{align*}
 \end{definition}
 
-\begin{definition}
+\footnotetext{The key-diversifier is not chosen by the ledger participants building the \Transfer{}. Instead, it is derived from other \Transfer{} data and the current state of the ledger. See \autoref{def:transfer-validity-statement} for more.}
+
+\begin{definition}[\Transfer{} Receiver Post]
     A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
     \begin{align*}
         \cm       &: \UTXO \\
@@ -655,11 +664,11 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     which are the parts of a \Receiver{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
 
-\begin{definition}
+\begin{definition}[\Transfer{} Sources and Sinks]
     A \Source{} (or a \Sink{}) is an \Asset{} representing a public input (or output) of a \Transfer{}.
 \end{definition}
 
-\begin{definition}
+\begin{definition}[\Transfer{} Object]
     A \Transfer{} is the following tuple:
     \begin{align*}
         \sources    &: \FinSet(\Asset) \\
@@ -682,7 +691,8 @@ In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the 
 
 In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the \Ledger{}. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the \Ledger{} are valid. Deviation from the protocol in encryption or decryption stages does not reduce the security of the protocol for honest participants.
 
-\begin{definition}(\Transfer{} Validity \Statement{}) A transfer $T : \Transfer$ is considered \emph{valid} if and only if
+\begin{definition}[\Transfer{} Validity \Statement{}]\label{def:transfer-validity-statement}
+    A transfer $T : \Transfer$ is considered \emph{valid} if and only if
     \begin{enumerate}
         \item All the \AssetId{s} in $T$ are equal:
             \[
@@ -725,7 +735,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \ZKPS{}.
 \end{definition}
 
-\begin{definition}
+\begin{definition}[\Transfer{} Post]
     A \TransferPost{} is the following tuple:
     \begin{align*}
         \sources   &: \FinSet(\Source) \\
@@ -750,7 +760,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 
 Now that a participant has constructed a transfer post $P : \TransferPost$ they can send it to the \Ledger{} for verification. 
 
-\begin{definition}
+\begin{definition}[\Ledger{}-side \Transfer{} Validity]
     To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
     \begin{itemize}
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
@@ -762,19 +772,38 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
     \end{itemize}
 \end{definition}
 
+\begin{definition}[\Ledger{} \Transfer{} Update]
+    After checking that a given \TransferPost{} $P$ is valid, the \Ledger{} updates its state by performing the following changes:
+    \begin{itemize}
+        \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances.
+        \item \textbf{Pool Update}: The \ShieldedAssetPool{} balance is updated to reflect the new shielded balances, increasing by the amount:
+            \[\left(\sum_{a \in P.\sources} a.\VALUE\right) - \left(\sum_{a \in P.\sinks} a.\VALUE\right)\]
+        \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
+        \item \textbf{\VoidNumberSet{} Update}: The new \VoidNumber{s} are appended to the \VoidNumberSet{}.
+    \end{itemize}
+\end{definition}
+
 \lsubsection{Semantic Transactions}{abstract-semantic-transactions}
 
 \TODO{add semantic transactions}
 
 \lsection{Concrete Protocol}{concrete-protocol}
 
-\subsection{Constants}
-
-\TODO{add constants for the protocol}
+\TODO{other than cryptographic schemes, are there any implementation details we want to include here?}
 
 \subsection{Concrete Cryptographic Schemes}
 
-\TODO{add names of cryptographic scheme implementations}
+\begin{itemize}
+    \item \TODO{commitment scheme: Pedersen}
+    \item \TODO{hash function: Pedersen}
+    \item \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
+    \item \TODO{key-agreement scheme: x25519 elliptic curve Diffie-Hellman key exchange}
+    \item \TODO{key-diversification scheme: extension of key-agreement}
+    \item \TODO{key-derivation function: Blake2s with magic-number salt}
+    \item \TODO{integrated encryption scheme: combination of above encryption protocols}
+    \item \TODO{dynamic cryptographic accumulator: Incremental Merkle Tree with Pedersen hashes}
+    \item \TODO{non-interactive zero-knowledge proving system: Groth16 and/or PLONK}
+\end{itemize}
 
 \lsection{Differences from $\MantaDAP$}{differences}
 
