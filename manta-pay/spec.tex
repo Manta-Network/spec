@@ -582,13 +582,13 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \COM.\Trapdoor   &= \KA.\PublicKey \\
-        \ZKPS.\Statement &= \ValidTransfer
+        \COM.\Trapdoor &= \KA.\PublicKey \\
+        \ValidTransfer &: \ZKPS.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
 
     \TODO{Add the fact that $\COM.\Input$ has a concatenation property. In general, add (de)serialization to the spec.} \\
-    \TODO{Add the fact that we have a conversion from $\CRH.\Output$ to $\KA.\SecretKey$, notably for diversifiers.}
+    \TODO{Add the fact that we have a conversion from $\CRH.\Output$ to $\KA.\SecretKey$, notably for diversifiers, i.e. serialize the output and then deserialize into a secret key (need to match the size)}
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -765,6 +765,7 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
     \begin{itemize}
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
+        \item \textbf{Shielded Withdraw}: The total balance in $P.\sinks$ does not exceed the amount in the $\ShieldedAssetPool{}$ balance.
         \item \textbf{Current \Checkpoint{}}: The $\UTXOSet.\Checkpoint$ stored in each $P.\senders$ is equal to current checkpoint, $\UTXOSet.\checkpoint(\Ledger.\utxos())$, for the current state of the \Ledger{}.
         \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
         \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
@@ -775,7 +776,7 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 \begin{definition}[\Ledger{} \Transfer{} Update]
     After checking that a given \TransferPost{} $P$ is valid, the \Ledger{} updates its state by performing the following changes:
     \begin{itemize}
-        \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances.
+        \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances using the \Source{s} and \Sink{s} present in $P$.
         \item \textbf{Pool Update}: The \ShieldedAssetPool{} balance is updated to reflect the new shielded balances, increasing by the amount:
             \[\left(\sum_{a \in P.\sources} a.\VALUE\right) - \left(\sum_{a \in P.\sinks} a.\VALUE\right)\]
         \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
@@ -785,7 +786,13 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 
 \lsubsection{Semantic Transactions}{abstract-semantic-transactions}
 
-\TODO{add semantic transactions}
+For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their shielded assets and use them to build \TransferPost{s} to send to the \Ledger{}. The \emph{shielded balance} of any participant is the sum of the balances of their shielded assets, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their shielded balance, the participant would need to accumulate all of the relevant fragments into a large enough \emph{shielded asset} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
+
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$. 
+
+\footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
+
+\TODO{add algorithm}
 
 \lsection{Concrete Protocol}{concrete-protocol}
 
@@ -793,17 +800,55 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 
 \subsection{Concrete Cryptographic Schemes}
 
-\begin{itemize}
-    \item \TODO{commitment scheme: Pedersen}
-    \item \TODO{hash function: Pedersen}
-    \item \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
-    \item \TODO{key-agreement scheme: x25519 elliptic curve Diffie-Hellman key exchange}
-    \item \TODO{key-diversification scheme: extension of key-agreement}
-    \item \TODO{key-derivation function: Blake2s with magic-number salt}
-    \item \TODO{integrated encryption scheme: combination of above encryption protocols}
-    \item \TODO{dynamic cryptographic accumulator: Incremental Merkle Tree with Pedersen hashes}
-    \item \TODO{non-interactive zero-knowledge proving system: Groth16 and/or PLONK}
-\end{itemize}
+\begin{definition}[Commitment Scheme]
+    For $\COM$, we use the \emph{Pedersen Commitment Scheme} with $256$ windows of size $4$ each.
+\end{definition}
+
+\begin{definition}[Hash Function]
+    For $\CRH$, we use the \emph{Pedersen Hash Function} with $256$ windows of size $4$ each.
+\end{definition}
+
+\begin{definition}[Symmetric-Key Encryption Scheme]
+    For $\SYM$, we use
+
+    \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
+\end{definition}
+
+\begin{definition}[Key-Agreement Scheme]
+    For $\KA$, we use
+
+    \TODO{key-agreement scheme: x25519 elliptic curve Diffie-Hellman key exchange}
+\end{definition}
+
+\begin{definition}[Key-Diversification Scheme]
+    For $\KDIV$, we use
+
+    \TODO{key-diversification scheme: extension of key-agreement}
+\end{definition}
+
+\begin{definition}[Key-Derivation Function]
+    For $\KDF$, we use
+
+    \TODO{key-derivation function: Blake2s with magic-number salt}
+\end{definition}
+
+\begin{definition}[Integrated Encryption Scheme]
+    For $\IES$, we use
+
+    \TODO{integrated encryption scheme: combination of above encryption protocols}
+\end{definition}
+
+\begin{definition}[Dynamic Cryptographic Accumulator]
+    For $\DCA$, we use
+
+    \TODO{dynamic cryptographic accumulator: Incremental Merkle Tree with Pedersen hashes}
+\end{definition}
+
+\begin{definition}[Non-Interactive Zero-Knowledge Proving System]
+    For $\ZKPS$, we use
+
+    \TODO{non-interactive zero-knowledge proving system: Groth16 and/or PLONK}
+\end{definition}
 
 \lsection{Differences from $\MantaDAP$}{differences}
 
