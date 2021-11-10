@@ -61,7 +61,6 @@
 \newcommand{\BuildReceiver}{{\textsf{BuildReceiver}}}
 \newcommand{\BuildSenders}{{\textsf{BuildSenders}}}
 \newcommand{\COM}{{\textsf{COM}}}
-\newcommand{\CRH}{{\textsf{CRH}}}
 \newcommand{\Charlie}{{\textsf{Charlie}}}
 \newcommand{\CheckProof}{{\textsf{CheckProof}}}
 \newcommand{\Checkpoint}{{\textsf{Checkpoint}}}
@@ -345,22 +344,6 @@ In the following section, we outline the formal specifications for all of the \e
     \textbf{Notation}: For convenience, we refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
 \end{definition}
 
-\begin{definition}[Hash Function]
-    A \emph{hash function} $\CRH$ is defined by the schema:
-    \begin{align*}
-        \Input  &: \Type \\
-        \Output &: \Type \\
-        \hash   &: \Input \to \Output
-    \end{align*}
-    with the following properties:
-    \begin{itemize}
-        \item \textbf{Pre-Image Resistance}: For a given $y : \Output$, it is infeasible to find $x : \Input$ such that $\hash(x) = y$.
-        \item \textbf{Collision Resistance}: It is infeasible to find an $x_1, x_2 : \Input$ such that $x_1 \ne x_2$ and $\hash(x_1) = \hash(x_2)$.
-    \end{itemize}
-
-    \textbf{Notation}: For convenience, we refer to $\CRH.\hash(x)$ by $\CRH(x)$.
-\end{definition}
-
 \begin{definition}[Symmetric-Key Encryption Scheme]
     A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
     \begin{align*}
@@ -572,7 +555,6 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \begin{itemize}
         \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
         \item \textbf{Commitment Scheme}: $\COM$
-        \item \textbf{Hash Function}: $\CRH$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
@@ -593,7 +575,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     where \ValidTransfer{} is defined below.
 
     \TODO{Add the fact that $\COM.\Input$ has a concatenation property. In general, add (de)serialization to the spec.} \\
-    \TODO{Add the fact that we have a conversion from $\CRH.\Output$ to $\KA.\SecretKey$, notably for diversifiers, i.e. serialize the output and then deserialize into a secret key (need to match the size)}
+    \TODO{Add the fact that we have a conversion from $\COM.\Output$ to $\KA.\SecretKey$, notably for diversifiers, i.e. serialize the output and then deserialize into a secret key (need to match the size)}
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -658,7 +640,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \end{align*}
 \end{definition}
 
-\footnotetext{The key-diversifier is not chosen by the ledger participants building the \Transfer{}. Instead, it is derived from other \Transfer{} data and the current state of the ledger. See \autoref{def:transfer-validity-statement} for more.}
+\footnotetext{The key-diversifier is not directly chosen by the ledger participants building the \Transfer{}. Instead, it is derived from other \Transfer{} data and the current state of the ledger. See \autoref{def:transfer-validity-statement} for more.}
 
 \begin{definition}[\Transfer{} Receiver Post]
     A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
@@ -730,12 +712,13 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.d         &= \CRH(i \,||\, R.\rk.\view \,||\, R.\rk.\spend \,||\, \FAIR) \\
+                R.d         &= \COM_{\FAIR}(i \,||\, R.\rk.\view \,||\, R.\rk.\spend) \\
                 R.\trapdoor &= \KDIV_{R.d}(R.\rk.\view, R.\rk.\spend) \\
                 R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
             \end{align*}
-            where \FAIR{} is the following constant, using the ledger as a randomness oracle:
-            \[\FAIR := \CRH(\UTXOSet.\checkpoint(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
+            where \FAIR{} is the following constant, binding the new diversifiers to the current state of the ledger:
+            \[\FAIR := \COM_f(\UTXOSet.\checkpoint(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
+            and $f \sim \COM.\TrapdoorDistribution$ is a randomly chosen trapdoor.
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
 \end{definition}
@@ -838,10 +821,6 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
 
 \begin{definition}[Commitment Scheme]
     For $\COM$, we use the \emph{Pedersen Commitment Scheme} with $256$ windows of size $4$ each.
-\end{definition}
-
-\begin{definition}[Hash Function]
-    For $\CRH$, we use the \emph{Pedersen Hash Function} with $256$ windows of size $4$ each.
 \end{definition}
 
 \begin{definition}[Symmetric-Key Encryption Scheme]
