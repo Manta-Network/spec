@@ -21,7 +21,6 @@
 \usepackage{parskip}
 \usepackage{tikz-cd}
 \usepackage{wrapfig}
-\usepackage{hyperref}
 
 \newcommand{\subsubsubsection}[1]{\paragraph{#1}}
 \newcommand{\subsubsubsubsection}[1]{\subparagraph{#1}}
@@ -98,9 +97,9 @@
 \newcommand{\MerkleTree}{{\textsf{MerkleTree}}}
 \newcommand{\Message}{{\textsf{Message}}}
 \newcommand{\Mint}{{\textsf{Mint}}}
+\newcommand{\NIZK}{{\textsf{NIZK}}}
 \newcommand{\Next}{{\textsf{Next}}}
 \newcommand{\None}{{\textsf{None}}}
-\newcommand{\NIZK}{{\textsf{NIZK}}}
 \newcommand{\Option}{{\textsf{Option}}}
 \newcommand{\Output}{{\textsf{Output}}}
 \newcommand{\PATH}{{\textsf{path}}}
@@ -423,7 +422,7 @@ In the following section, we outline the formal specifications for all of the \e
 \end{definition}
 
 \begin{definition}[Hybrid Public Key Encryption]
-    An \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption/decryption algorithms:
+    A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
     \begin{itemize}
         \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
             \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\sk), \SYM.\encrypt(\KDF(\KA.\agree(\sk, \pk)), p)\right)\]
