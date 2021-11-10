@@ -21,6 +21,7 @@
 \usepackage{parskip}
 \usepackage{tikz-cd}
 \usepackage{wrapfig}
+\usepackage{hyperref}
 
 \newcommand{\subsubsubsection}[1]{\paragraph{#1}}
 \newcommand{\subsubsubsubsection}[1]{\subparagraph{#1}}
@@ -80,8 +81,8 @@
 \newcommand{\FinSet}{{\textsf{FinSet}}}
 \newcommand{\GetProof}{{\textsf{GetProof}}}
 \newcommand{\HASH}{{\textsf{HASH}}}
+\newcommand{\HPKE}{{\textsf{HPKE}}}
 \newcommand{\ID}{{\textsf{id}}}
-\newcommand{\IES}{{\textsf{IES}}}
 \newcommand{\Input}{{\textsf{Input}}}
 \newcommand{\Item}{{\textsf{Item}}}
 \newcommand{\KA}{{\textsf{KA}}}
@@ -99,6 +100,7 @@
 \newcommand{\Mint}{{\textsf{Mint}}}
 \newcommand{\Next}{{\textsf{Next}}}
 \newcommand{\None}{{\textsf{None}}}
+\newcommand{\NIZK}{{\textsf{NIZK}}}
 \newcommand{\Option}{{\textsf{Option}}}
 \newcommand{\Output}{{\textsf{Output}}}
 \newcommand{\PATH}{{\textsf{path}}}
@@ -156,7 +158,6 @@
 \newcommand{\VoidNumberSet}{{\textsf{VoidNumberSet}}}
 \newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
 \newcommand{\Void}{{\textsf{Void}}}
-\newcommand{\ZKPS}{{\textsf{ZKPS}}}
 \newcommand{\agree}{{\textsf{agree}}}
 \newcommand{\allocated}{{\textsf{allocated}}}
 \newcommand{\allocate}{{\textsf{allocate}}}
@@ -421,8 +422,8 @@ In the following section, we outline the formal specifications for all of the \e
     \end{itemize}
 \end{definition}
 
-\begin{definition}[Integrated Encryption Scheme]
-    An \emph{integrated encryption scheme} $\IES$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption/decryption algorithms:
+\begin{definition}[Hybrid Public Key Encryption]
+    An \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is a hybrid encryption scheme made of up a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption/decryption algorithms:
     \begin{itemize}
         \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
             \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\sk), \SYM.\encrypt(\KDF(\KA.\agree(\sk, \pk)), p)\right)\]
@@ -466,7 +467,7 @@ In the following section, we outline the formal specifications for all of the \e
 \end{definition}
 
 \begin{definition}[Non-Interactive Zero-Knowledge Proving System]
-    A \emph{non-interactive zero-knowledge proving system} $\ZKPS$ is defined by the schema:
+    A \emph{non-interactive zero-knowledge proving system} $\NIZK$ is defined by the schema:
     \begin{align*}
         \Statement    &: \Type \\
         \ProvingKey   &: \Type \\
@@ -478,7 +479,7 @@ In the following section, we outline the formal specifications for all of the \e
         \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}(\Option(\Proof)) \\
         \verify       &: \VerifyingKey \times \PublicInput \times \Proof \to \Bool
     \end{align*}
-    \textbf{Notation}: We use the following notation for a $\ZKPS$:
+    \textbf{Notation}: We use the following notation for a $\NIZK$:
     \begin{itemize}
         \item We write the $\Statement$ and $\ProvingKey$ arguments of $\prove$ in the superscript and subscript respectively,
             \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
@@ -488,7 +489,7 @@ In the following section, we outline the formal specifications for all of the \e
             \[\satisfying^P_\pk(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
     \end{itemize}
 
-    Every $\ZKPS$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
+    Every $\NIZK$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
 
     \begin{itemize}
         \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
@@ -533,13 +534,13 @@ In the following section, we outline the formal specifications for all of the \e
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
-Given a choice of $\IES$ we have the following definitions:
+Given a choice of $\HPKE$ we have the following definitions:
 
 \begin{definition}[Spending Key]
     A \SpendingKey{} is the following pair of keys:
     \begin{align*}
-        \view  &: \IES.\KA.\SecretKey \\
-        \spend &: \IES.\KA.\SecretKey
+        \view  &: \HPKE.\KA.\SecretKey \\
+        \spend &: \HPKE.\KA.\SecretKey
     \end{align*}
     The first secret key, $\view$, is called the \ViewingKey{}.
 \end{definition}
@@ -547,8 +548,8 @@ Given a choice of $\IES$ we have the following definitions:
 \begin{definition}[Receiving Key]
     A \ReceivingKey{} is the following pair of keys:
     \begin{align*}
-        \view  &: \IES.\KA.\PublicKey \\
-        \spend &: \IES.\KA.\PublicKey
+        \view  &: \HPKE.\KA.\PublicKey \\
+        \spend &: \HPKE.\KA.\PublicKey
     \end{align*}
     which is derived from a spending key $\sk : \SpendingKey$ by deriving each component:
     \begin{align*}
@@ -570,25 +571,25 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
 \begin{definition}[Transfer Configuration]
     A \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
     \begin{itemize}
-        \item \textbf{Integrated Encryption Scheme}: $\IES$
+        \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
         \item \textbf{Commitment Scheme}: $\COM$
         \item \textbf{Hash Function}: $\CRH$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
-        \item \textbf{Zero-Knowledge Proving System}: $\ZKPS$
+        \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
-        \KA            &:= \IES.\KA \\
-        \KDIV          &:= \IES.\KDIV \\
+        \KA            &:= \HPKE.\KA \\
+        \KDIV          &:= \HPKE.\KDIV \\
         \UTXO          &:= \COM.\Output \\
         \VoidNumber    &:= \COM.\Output \\
-        \EncryptedNote &:= \IES.\Message \\
+        \EncryptedNote &:= \HPKE.\Message \\
         \UTXOSet       &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
         \COM.\Trapdoor &= \KA.\PublicKey \\
-        \ValidTransfer &: \ZKPS.\Statement
+        \ValidTransfer &: \NIZK.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
 
@@ -615,7 +616,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         S.\sk                 &:= \sk \\
         \tilde{d}, c          &:= \note \\
-        \Some(\asset)         &:= \IES.\decrypt(S.\sk.\view, \tilde{d}, c) \\
+        \Some(\asset)         &:= \HPKE.\decrypt(S.\sk.\view, \tilde{d}, c) \\
         S.\asset              &:= \asset \\
         S.\tilde{d}           &:= \tilde{d} \\
         S.\trapdoor           &:= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
@@ -647,14 +648,14 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \note     &: \EncryptedNote
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a given\footnotemark{} diversifier $d : \IES.\KA.\SecretKey$ with the following algorithm:
+    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a given\footnotemark{} diversifier $d : \HPKE.\KA.\SecretKey$ with the following algorithm:
     \begin{align*}
         R.\rk       &:= \rk \\
         R.d         &:= d \\
         R.\trapdoor &:= \KDIV_{R.d}(R.\rk.\view, R.\rk.\spend) \\
         R.\asset    &:= \asset \\
         R.\cm       &:= \COM_{R.\trapdoor}(R.\asset) \\
-        R.\note     &:= \IES.\encrypt(R.d, R.\rk.\view, \asset)
+        R.\note     &:= \HPKE.\encrypt(R.d, R.\rk.\view, \asset)
     \end{align*}
 \end{definition}
 
@@ -737,7 +738,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             where \FAIR{} is the following constant, using the ledger as a randomness oracle:
             \[\FAIR := \CRH(\UTXOSet.\checkpoint(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
     \end{enumerate}
-    \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \ZKPS{}.
+    \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
 \end{definition}
 
 \begin{definition}[\Transfer{} Post]
@@ -747,13 +748,13 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \senders   &: \List(\SenderPost) \\
         \receivers &: \List(\ReceiverPost) \\
         \sinks     &: \List(\Sink) \\
-        \pi        &: \ZKPS.\Proof
+        \pi        &: \NIZK.\Proof
     \end{align*}
-    A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \ZKPS.\ProvingKey$ and a given $T : \Transfer$:
+    A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \NIZK.\ProvingKey$ and a given $T : \Transfer$:
     \begin{align*}
         x            &:= \Transfer.\public(T) \\
         w            &:= \Transfer.\secret(T) \\
-        \Some(\pi)   &\sim \ZKPS.\prove^\ValidTransfer_\pk(x, w) \\
+        \Some(\pi)   &\sim \NIZK.\prove^\ValidTransfer_\pk(x, w) \\
         P.\sources   &:= x.\sources \\
         P.\senders   &:= x.\senders \\
         P.\receivers &:= x.\receivers \\
@@ -774,7 +775,7 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
         \item \textbf{Current \Checkpoint{}}: The $\UTXOSet.\Checkpoint$ stored in each $P.\senders$ is equal to current checkpoint, $\UTXOSet.\checkpoint(\Ledger.\utxos())$, for the current state of the \Ledger{}.
         \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
         \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
-        \item \textbf{Verify \Transfer{}}: Check that $\ZKPS.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$.
+        \item \textbf{Verify \Transfer{}}: Check that $\NIZK.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$.
     \end{itemize}
 \end{definition}
 
@@ -868,8 +869,8 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
     \TODO{key-derivation function: Blake2s with magic-number salt}
 \end{definition}
 
-\begin{definition}[Integrated Encryption Scheme]
-    For $\IES$, we use
+\begin{definition}[Hybrid Public Key Encryption]
+    For $\HPKE$, we use
 
     \TODO{integrated encryption scheme: combination of above encryption protocols}
 \end{definition}
@@ -880,8 +881,8 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
     \TODO{dynamic cryptographic accumulator: Merkle Tree with Pedersen hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the checkpoint as values are accumulated)}
 \end{definition}
 
-\begin{definition}[Non-Interactive Zero-Knowledge Proving System]
-    For $\ZKPS$, we use
+\begin{definition}[Non-Interactive Zero-Knowledge Proofs]
+    For $\NIZK$, we use
 
     \TODO{non-interactive zero-knowledge proving system: Groth16 and/or PLONK}
 \end{definition}
@@ -901,8 +902,8 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
 \TODO{add acknowledgements}
 
 \lsection{References}{references}
-
-\TODO{add references}
+\bibliographystyle{plain}
+\bibliography{ref}
 
 \end{document}
 
