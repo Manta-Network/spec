@@ -455,14 +455,14 @@ In the following section, we outline the formal specifications for all of the \e
     \begin{itemize}
         \item \textbf{Unique Checkpoints}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
-            Then, if we collect the checkpoints for these states, $c_i := \checkpoint(s_i)$, there should be exactly $\abs{I}$-many checkpoints, one for each state update.
+            Then, if we collect the checkpoints for these states, $c_i := \checkpoint(s_i)$, there should be exactly $\abs{I}$-many unique checkpoints, one for each state update.
         \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
             \[\Some(c, \pi) := \contains(t, s), \,\,\,\,\, \verify(t, c, \pi) = \True\]
         \item \TODO{security properties}
     \end{itemize}
-    \item \TODO{add finite capacity constraint}
+    \TODO{add finite capacity constraint, something like $\update : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
 \end{definition}
 
 \begin{definition}[Non-Interactive Zero-Knowledge Proving System]
@@ -877,7 +877,7 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
 \begin{definition}[Dynamic Cryptographic Accumulator]
     For $\DCA$, we use
 
-    \TODO{dynamic cryptographic accumulator: Incremental Merkle Tree with Pedersen hashes}
+    \TODO{dynamic cryptographic accumulator: Merkle Tree with Pedersen hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the checkpoint as values are accumulated)}
 \end{definition}
 
 \begin{definition}[Non-Interactive Zero-Knowledge Proving System]
