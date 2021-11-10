@@ -40,6 +40,10 @@
 \newcommand{\lsubsubsubsubsection}[2]{\def\sectionlabel{#2} \subsubsubsubsection{#1}\label{sec:#2}}
 \newcommand{\TODO}[1]{{\color{red}\textbf{TODO}}: #1}
 
+\newcommand{\counttosubsubsec}{\arabic{section}.\arabic{subsection}.\arabic{subsubsection}}
+\newcommand{\adddefcontentsline}[1]{\stepcounter{subsubsection}\addcontentsline{toc}{subsubsection}{\counttosubsubsec \quad #1}}
+\newenvironment{definitiontoc}[1]{\adddefcontentsline{#1}\begin{definition}[#1]}{\end{definition}}
+
 \floatstyle{boxed} 
 \restylefloat{figure}
 
@@ -326,7 +330,7 @@ Once the ability to spend an \Asset{} is extracted from a $(\UTXO, \EncryptedNot
 
 In the following section, we outline the formal specifications for all of the \emph{cryptographic schemes} used in the \MantaPay{} protocol.
 
-\begin{definition}[Commitment Scheme]
+\begin{definitiontoc}{Commitment Scheme}
     A \emph{commitment scheme} $\COM$ is defined by the schema:
     \begin{align*}
         \Trapdoor             &: \Type \\
@@ -342,9 +346,9 @@ In the following section, we outline the formal specifications for all of the \e
     \end{itemize}
 
     \textbf{Notation}: For convenience, we refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}[Symmetric-Key Encryption Scheme]
+\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
     A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
     \begin{align*}
         \Key &: \Type \\
@@ -359,9 +363,9 @@ In the following section, we outline the formal specifications for all of the \e
             \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
         \item \TODO{hiding, one-time encryption security?}
     \end{itemize}
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}[Key-Agreement Scheme]
+\begin{definitiontoc}{Key-Agreement Scheme}
     A \emph{key-agreement scheme} $\KA$ is defined by the schema:
     \begin{align*}
         \PublicKey    &: \Type \\
@@ -375,9 +379,9 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
         \item \TODO{security properties}
     \end{itemize}
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}[Key-Diversification Scheme]
+\begin{definitiontoc}{Key-Diversification Scheme}
     A \emph{key-diversification scheme} $\KDIV$ over a key-agreement scheme $\KA$ is defined by the schema:
     \begin{align*}
         \public : \KA.\SecretKey \times \KA.\PublicKey \times \KA.\PublicKey \to \KA.\PublicKey \\
@@ -393,18 +397,18 @@ In the following section, we outline the formal specifications for all of the \e
             \[\KDIV_d(\KA.\derive(\sk_1), \KA.\derive(\sk_2)) = \KA.\derive(\KDIV_{\KA.\derive(d)}(\sk_1, \sk_2))\]
         \item \TODO{security properties?}
     \end{itemize}
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}[Key-Derivation Function]
+\begin{definitiontoc}{Key-Derivation Function}
     A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
     \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
     with the following properties:
     \begin{itemize}
         \item \TODO{security properties}
     \end{itemize}
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}[Hybrid Public Key Encryption]
+\begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
     A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
     \begin{itemize}
         \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
@@ -420,9 +424,9 @@ In the following section, we outline the formal specifications for all of the \e
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
     \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys should be ephemeral, etc.} \\
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}[Dynamic Cryptographic Accumulator]
+\begin{definitiontoc}{Dynamic Cryptographic Accumulator}
     A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
     \begin{align*}
         \Item       &: \Type \\
@@ -446,9 +450,9 @@ In the following section, we outline the formal specifications for all of the \e
         \item \TODO{security properties}
     \end{itemize}
     \TODO{add finite capacity constraint, something like $\update : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}[Non-Interactive Zero-Knowledge Proving System]
+\begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
     A \emph{non-interactive zero-knowledge proving system} $\NIZK$ is defined by the schema:
     \begin{align*}
         \Statement    &: \Type \\
@@ -512,7 +516,7 @@ In the following section, we outline the formal specifications for all of the \e
             \]
         \item \textbf{Succinctness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\Some(\pi) \sim \prove(P, \pk, x, w)$, then $\abs{\pi} = \mathcal{O}(1)$, and $\verify(\vk, x, \pi)$ runs in time $\mathcal{O}(\abs{x})$.
     \end{itemize}
-\end{definition}
+\end{definitiontoc}
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
