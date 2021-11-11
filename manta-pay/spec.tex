@@ -350,28 +350,11 @@ In the following section, we outline the formal specifications for all of the \e
     \textbf{Notation}: For convenience, we refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
 \end{definitiontoc}
 
-\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
-    A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
-    \begin{align*}
-        \Key &: \Type \\
-        \Plaintext &: \Type \\
-        \Ciphertext &: \Type \\
-        \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
-        \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
-    \end{align*}
-    with the following properties:
-    \begin{itemize}
-        \item \textbf{Validity}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
-            \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
-        \item \TODO{hiding, one-time encryption security?}
-    \end{itemize}
-\end{definitiontoc}
-
 \begin{definitiontoc}{Key-Agreement Scheme}
     A \emph{key-agreement scheme} $\KA$ is defined by the schema:
     \begin{align*}
-        \PublicKey    &: \Type \\
         \SecretKey    &: \Type \\
+        \PublicKey    &: \Type \\
         \SharedSecret &: \Type \\
         \derive       &: \SecretKey \to \PublicKey \\
         \agree        &: \SecretKey \times \PublicKey \to \SharedSecret
@@ -398,6 +381,23 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Derivation Invariance}: For any diversifier $d : \KA.\SecretKey$ and pair of secret keys $(\sk_1, \sk_2)$ we have
             \[\KDIV_d(\KA.\derive(\sk_1), \KA.\derive(\sk_2)) = \KA.\derive(\KDIV_{\KA.\derive(d)}(\sk_1, \sk_2))\]
         \item \TODO{security properties?}
+    \end{itemize}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
+    A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
+    \begin{align*}
+        \Key &: \Type \\
+        \Plaintext &: \Type \\
+        \Ciphertext &: \Type \\
+        \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
+        \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Invertibility}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
+            \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
+        \item \TODO{hiding, one-time encryption security?}
     \end{itemize}
 \end{definitiontoc}
 
@@ -829,12 +829,6 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
     For $\COM$, we use the \emph{Pedersen Commitment Scheme} with $256$ windows of size $4$ each.
 \end{definition}
 
-\begin{definition}[Symmetric-Key Encryption Scheme]
-    For $\SYM$, we use
-
-    \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
-\end{definition}
-
 \begin{definition}[Key-Agreement Scheme]
     For $\KA$, we use
 
@@ -845,6 +839,12 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
     For $\KDIV$, we use
 
     \TODO{key-diversification scheme: extension of key-agreement}
+\end{definition}
+
+\begin{definition}[Symmetric-Key Encryption Scheme]
+    For $\SYM$, we use
+
+    \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
 \end{definition}
 
 \begin{definition}[Key-Derivation Function]
