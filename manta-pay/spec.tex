@@ -172,6 +172,8 @@
 \newcommand{\decrypt}{{\textsf{decrypt}}}
 \newcommand{\derive}{{\textsf{derive}}}
 \newcommand{\encrypt}{{\textsf{encrypt}}}
+\newcommand{\epk}{{\textsf{epk}}}
+\newcommand{\esk}{{\textsf{esk}}}
 \newcommand{\hash}{{\textsf{hash}}}
 \newcommand{\insertF}{{\textsf{insert}}}
 \newcommand{\keys}{{\textsf{keys}}}
@@ -320,7 +322,7 @@ An \emph{unspent transaction output}, or \UTXO{} for short, represents a claim t
 
 \lsubsubsection{\EncryptedNote{s}}{ledger-encrypted-notes}
 
-In order to find out what \Asset{} a \UTXO{} is connected to, every \UTXO{} comes with an associated \EncryptedNote{} which stores two pieces of information, the underlying \Asset{}, and a key diversifier, a value which allows the new owner of the \Asset{} to reconstruct the \UTXO{}. Being able to \emph{provably reconstruct} a correct \UTXO{} is a prerequisite to ownership and the ability to spend the \Asset{} in the future. Once a participant spends an \Asset{} that they can decrypt, they build a new \EncryptedNote{} for the next participant that they sent their \Asset{s} to, so that they can then spend it, and so on. This is called the \emph{in-band secret distribution}.
+In order to find out what \Asset{} a \UTXO{} is connected to, every \UTXO{} comes with an associated \EncryptedNote{} which stores two pieces of information, the underlying \Asset{}, and an ephemeral public key, a value which allows the new owner of the \Asset{} to reconstruct the \UTXO{}. Being able to \emph{provably reconstruct} a correct \UTXO{} is a prerequisite to ownership and the ability to spend the \Asset{} in the future. Once a participant spends an \Asset{} that they can decrypt, they build a new \EncryptedNote{} for the next participant that they sent their \Asset{s} to, so that they can then spend it, and so on. This is called the \emph{in-band secret distribution}.
 
 \lsubsubsection{\VoidNumber{s} and the \VoidNumberSet{}}{ledger-void-number-set}
 
@@ -366,24 +368,6 @@ In the following section, we outline the formal specifications for all of the \e
     \end{itemize}
 \end{definitiontoc}
 
-\begin{definitiontoc}{Key-Diversification Scheme}
-    A \emph{key-diversification scheme} $\KDIV$ over a key-agreement scheme $\KA$ is defined by the schema:
-    \begin{align*}
-        \public : \KA.\SecretKey \times \KA.\PublicKey \times \KA.\PublicKey \to \KA.\PublicKey \\
-        \secret : \KA.\PublicKey \times \KA.\SecretKey \times \KA.\SecretKey \to \KA.\SecretKey
-    \end{align*}
-    \textbf{Notation}: We refer to the first argument to a $\KDIV$ function as the \emph{diversifier} and we write it as a subscript
-    \[\public_d(x, y) := \public(d, x, y) \,\,\text{and}\,\, \secret_d(x, y) := \secret(d, x, y)\]
-    For convenience, we also write $\KDIV_d$ to mean $\KDIV.\public_d$ or $\KDIV.\secret_d$, when the context is clear.
-    
-    Every $\KDIV$ also has the following properties:
-    \begin{itemize}
-        \item \textbf{Derivation Invariance}: For any diversifier $d : \KA.\SecretKey$ and pair of secret keys $(\sk_1, \sk_2)$ we have
-            \[\KDIV_d(\KA.\derive(\sk_1), \KA.\derive(\sk_2)) = \KA.\derive(\KDIV_{\KA.\derive(d)}(\sk_1, \sk_2))\]
-        \item \TODO{security properties?}
-    \end{itemize}
-\end{definitiontoc}
-
 \begin{definitiontoc}{Symmetric-Key Encryption Scheme}
     A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
     \begin{align*}
@@ -413,19 +397,19 @@ In the following section, we outline the formal specifications for all of the \e
 \begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
     A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
     \begin{itemize}
-        \item Encryption: Given a secret key $\sk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
-            \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\sk), \SYM.\encrypt(\KDF(\KA.\agree(\sk, \pk)), p)\right)\]
-        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\pk, c)$, we can decrypt $m$, producing the plaintext,
-            \[p : \Option(\SYM.\Plaintext) := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \pk)), c)\]
+        \item Encryption: Given an ephemeral secret key $\esk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
+            \[m : \SYM.\Ciphertext \times \KA.\PublicKey := \left(\SYM.\encrypt(\KDF(\KA.\agree(\esk, \pk)), p), \KA.\derive(\esk)\right)\]
+        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (c, \epk)$, we can decrypt $m$, producing the plaintext,
+            \[p : \Option(\SYM.\Plaintext) := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \epk)), c)\]
             which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
     \end{itemize}
 
-    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
+    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \SYM.\Ciphertext \times \KA.\PublicKey$, and the above two algorithms by
     \begin{align*}
-        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
+        \encrypt &: \KA.\PublicKey \times \KA.\SecretKey \times \SYM.\Plaintext \to \Message \\
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
-    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys should be ephemeral, etc.} \\
+    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys are ephemeral, etc.} \\
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
@@ -524,26 +508,15 @@ In the following section, we outline the formal specifications for all of the \e
 
 Given a choice of $\HPKE$ we have the following definitions:
 
-\begin{definition}[Spending Key]
+\begin{definition}[Key Components]
     A \SpendingKey{} is the following pair of keys:
     \begin{align*}
         \view  &: \HPKE.\KA.\SecretKey \\
         \spend &: \HPKE.\KA.\SecretKey
     \end{align*}
     The first secret key, $\view$, is called the \ViewingKey{}.
-\end{definition}
 
-\begin{definition}[Receiving Key]
-    A \ReceivingKey{} is the following pair of keys:
-    \begin{align*}
-        \view  &: \HPKE.\KA.\PublicKey \\
-        \spend &: \HPKE.\KA.\PublicKey
-    \end{align*}
-    which is derived from a spending key $\sk : \SpendingKey$ by deriving each component:
-    \begin{align*}
-        \rk.\view  &:= \KA.\derive(\sk.\view) \\
-        \rk.\spend &:= \KA.\derive(\sk.\spend)
-    \end{align*}
+    If we derive the associated public key to $\view$, i.e. $\KA.\derive(\view)$, we get a public key called the \ReceivingKey{}.
 \end{definition}
 
 A keypair $(\sk, \rk) : \SpendingKey \times \ReceivingKey$, represents the ability to spend and receive \Asset{s} as a unique \emph{representative participant} on the \Ledger. Any user of the \MantaPay{} protocol can create many such keypairs, but each one represents a different participant and \Asset{s} must be transfered between them using the \Transfer{} protocol as if they were independently owned by different users. A \ReceivingKey{} can be used to receive any number of \Asset{s} and the \SpendingKey{} can be used to spend any number of those \Asset{s}. See \autoref{sec:abstract-semantic-transactions} for the protocol used to spend a subset of \Asset{s} owned by a single user.
@@ -575,13 +548,13 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \COM.\Trapdoor &= \KA.\PublicKey \\
+        \COM.\Trapdoor &= \KA.\SharedSecret \\
         \ValidTransfer &: \NIZK.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
 
     \TODO{Add the fact that $\COM.\Input$ has a concatenation property. In general, add (de)serialization to the spec.} \\
-    \TODO{Add the fact that we have a conversion from $\COM.\Output$ to $\KA.\SecretKey$, notably for diversifiers, i.e. serialize the output and then deserialize into a secret key (need to match the size)}
+    \TODO{Add the fact that we have a conversion from $\COM.\Output$ to $\KA.\SecretKey$, notably for ephemeral key, i.e. serialize the output and then deserialize into a secret key (need to match the size)}
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -590,28 +563,28 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \Sender{} is the following tuple:
     \begin{align*}
         \sk       &: \SpendingKey \\
-        \tilde{d} &: \KA.\PublicKey \\
-        \trapdoor &: \KA.\PublicKey \\
+        \epk      &: \KA.\PublicKey \\
+        \trapdoor &: \KA.\SharedSecret \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \cm_c     &: \UTXOSet.\Checkpoint \\
-        \cm_w   &: \UTXOSet.\Witness \\
+        \cm_w     &: \UTXOSet.\Witness \\
         \vn       &: \VoidNumber
     \end{align*}
 
     A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
     \begin{align*}
         S.\sk                &:= \sk \\
-        \tilde{d}, c         &:= \note \\
-        \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \tilde{d}, c) \\
+        c, \epk              &:= \note \\
+        \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
         S.\asset             &:= \asset \\
-        S.\tilde{d}          &:= \tilde{d} \\
-        S.\trapdoor          &:= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+        S.\epk               &:= \epk \\
+        S.\trapdoor          &:= \KA.\agree(S.\sk.\view, S.\epk) \\
         S.\cm                &:= \COM_{S.\trapdoor}(S.\asset) \\
         \Some(\cm_c, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
         S.\cm_c              &:= \cm_c \\
         S.\cm_w              &:= \cm_w \\
-        S.\vn                &:= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
+        S.\vn                &:= \COM_{S.\epk}(S.\sk.\spend) \\
     \end{align*}
 \end{definition}
 
@@ -628,25 +601,25 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \Receiver{} is the following tuple:
     \begin{align*}
         \rk       &: \ReceivingKey \\
-        d         &: \KA.\SecretKey \\
-        \trapdoor &: \KA.\PublicKey \\
+        \esk      &: \KA.\SecretKey \\
+        \trapdoor &: \KA.\SharedSecret \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a given\footnotemark{} diversifier $d : \HPKE.\KA.\SecretKey$ with the following algorithm:
+    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a given\footnotemark{} ephemeral secret key $\esk : \HPKE.\KA.\SecretKey$ with the following algorithm:
     \begin{align*}
         R.\rk       &:= \rk \\
-        R.d         &:= d \\
-        R.\trapdoor &:= \KDIV_{R.d}(R.\rk.\view, R.\rk.\spend) \\
+        R.\esk      &:= \esk \\
+        R.\trapdoor &:= \KA.\agree(R.d, R.\rk) \\
         R.\asset    &:= \asset \\
         R.\cm       &:= \COM_{R.\trapdoor}(R.\asset) \\
-        R.\note     &:= \HPKE.\encrypt(R.d, R.\rk.\view, \asset)
+        R.\note     &:= \HPKE.\encrypt(R.\rk, R.\esk, \asset)
     \end{align*}
 \end{definition}
 
-\footnotetext{The key-diversifier is not directly chosen by the ledger participants building the \Transfer{}. Instead, it is derived from other \Transfer{} data and the current state of the ledger. See \autoref{def:transfer-validity-statement} for more.}
+\footnotetext{The ephemeral secret key is not directly chosen by the ledger participants building the \Transfer{}. Instead, it is derived from other \Transfer{} data and the current state of the ledger. See \autoref{def:transfer-validity-statement} for more.}
 
 \begin{definition}[\Transfer{} Receiver Post]
     A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
@@ -711,18 +684,18 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\trapdoor                               &= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+                S.\trapdoor                               &= \KA.\agree(S.\sk.\view, S.\epk) \\
                 S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset) \\
-                S.\vn                                     &= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
+                S.\vn                                     &= \COM_{S.\epk}(S.\sk.\spend) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_c, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.d         &= \COM_{\FAIR}(i \,||\, R.\rk.\view \,||\, R.\rk.\spend) \\
-                R.\trapdoor &= \KDIV_{R.d}(R.\rk.\view, R.\rk.\spend) \\
+                R.\esk      &= \COM_{\FAIR}(i \,||\, R.\rk.\view) \\
+                R.\trapdoor &= \KA.\agree(R.\esk, R.\rk.\view) \\
                 R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
             \end{align*}
-            where \FAIR{} is the following constant, binding the new diversifiers to the current state of the ledger:
+            where \FAIR{} is the following constant, binding the new ephemeral secret keys to the current state of the ledger:
             \[\FAIR := \COM_f(\UTXOSet.\checkpoint(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
             and $f \sim \COM.\TrapdoorDistribution$ is a randomly chosen trapdoor.
     \end{enumerate}
@@ -786,7 +759,7 @@ Any wallet implementation should see that their users need not keep track of thi
 
 \footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
 
-For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of diversifier-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of key-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
 \[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \rk)\]
 to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\rk$.
 
@@ -833,12 +806,6 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
     For $\KA$, we use
 
     \TODO{key-agreement scheme: x25519 elliptic curve Diffie-Hellman key exchange}
-\end{definition}
-
-\begin{definition}[Key-Diversification Scheme]
-    For $\KDIV$, we use
-
-    \TODO{key-diversification scheme: extension of key-agreement}
 \end{definition}
 
 \begin{definition}[Symmetric-Key Encryption Scheme]
