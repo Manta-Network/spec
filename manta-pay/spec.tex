@@ -511,22 +511,22 @@ Given a choice of $\HPKE$ we have the following definitions:
 \begin{definition}[Spending Key]
     A \SpendingKey{} is the following pair of keys:
     \begin{align*}
-        \view  &: \HPKE.\KA.\SecretKey \\
-        \spend &: \HPKE.\KA.\SecretKey
+        \spend &: \HPKE.\KA.\SecretKey \\
+        \view  &: \HPKE.\KA.\SecretKey
     \end{align*}
-    The first secret key, $\view$, is called the \ViewingKey{}.
+    The second secret key, $\view$, is called the \ViewingKey{}.
 \end{definition}
 
 \begin{definition}[Receiving Key]
     A \ReceivingKey{} is the following pair of keys:
     \begin{align*}
-        \view  &: \HPKE.\KA.\PublicKey \\
-        \spend &: \HPKE.\KA.\PublicKey
+        \spend &: \HPKE.\KA.\PublicKey \\
+        \view  &: \HPKE.\KA.\PublicKey
     \end{align*}
     which is derived from a spending key $\sk : \SpendingKey$ with the following algorithm:
     \begin{align*}
-        \rk.\view  &:= \KA.\derive(\sk.\view) \\
-        \rk.\spend &:= \KA.\derive(\sk.\spend)
+        \rk.\spend &:= \KA.\derive(\sk.\spend) \\
+        \rk.\view  &:= \KA.\derive(\sk.\view) 
     \end{align*}
 \end{definition}
 
