@@ -508,20 +508,33 @@ In the following section, we outline the formal specifications for all of the \e
 
 Given a choice of $\HPKE$ we have the following definitions:
 
-\begin{definition}[Key Components]
+\begin{definition}[Spending Key]
     A \SpendingKey{} is the following pair of keys:
     \begin{align*}
         \view  &: \HPKE.\KA.\SecretKey \\
         \spend &: \HPKE.\KA.\SecretKey
     \end{align*}
     The first secret key, $\view$, is called the \ViewingKey{}.
+\end{definition}
 
-    If we derive the associated public key to $\view$, i.e. $\KA.\derive(\view)$, we get a public key called the \ReceivingKey{}.
+\begin{definition}[Receiving Key]
+    A \ReceivingKey{} is the following pair of keys:
+    \begin{align*}
+        \view  &: \HPKE.\KA.\PublicKey \\
+        \spend &: \HPKE.\KA.\PublicKey
+    \end{align*}
+    which is derived from a spending key $\sk : \SpendingKey$ with the following algorithm:
+    \begin{align*}
+        \rk.\view  &:= \KA.\derive(\sk.\view) \\
+        \rk.\spend &:= \KA.\derive(\sk.\spend)
+    \end{align*}
 \end{definition}
 
 A keypair $(\sk, \rk) : \SpendingKey \times \ReceivingKey$, represents the ability to spend and receive \Asset{s} as a unique \emph{representative participant} on the \Ledger. Any user of the \MantaPay{} protocol can create many such keypairs, but each one represents a different participant and \Asset{s} must be transfered between them using the \Transfer{} protocol as if they were independently owned by different users. A \ReceivingKey{} can be used to receive any number of \Asset{s} and the \SpendingKey{} can be used to spend any number of those \Asset{s}. See \autoref{sec:abstract-semantic-transactions} for the protocol used to spend a subset of \Asset{s} owned by a single user.
 
 \textbf{Important}: To every spending key $\sk : \SpendingKey$ we have an assoicated viewing key $\vk : \ViewingKey := \sk.\view$ which allows the owner to decrypt the encrypted messages associated to $\sk$, but does not contain enough information to perform a spend with those \Asset{s}. This can be used for account auditing purposes, and for removing anonymity, but sharing this key should be done with caution.
+
+In general, one may have a collection of viewing keys which can be used to separate the encrypted notes into different sets, by key. This way only certain transactions can be de-anonymized by certain parties.
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
@@ -554,7 +567,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     where \ValidTransfer{} is defined below.
 
     \TODO{Add the fact that $\COM.\Input$ has a concatenation property. In general, add (de)serialization to the spec.} \\
-    \TODO{Add the fact that we have a conversion from $\COM.\Output$ to $\KA.\SecretKey$, notably for ephemeral key, i.e. serialize the output and then deserialize into a secret key (need to match the size)}
+    \TODO{Add the fact that we have a conversion from $\COM.\Output$ to $\KA.\SecretKey$ and $\COM.\Trapdoor$, we should serialize the output and then deserialize into the correct type}
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -579,12 +592,12 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
         S.\asset             &:= \asset \\
         S.\epk               &:= \epk \\
-        S.\trapdoor          &:= \KA.\agree(S.\sk.\view, S.\epk) \\
+        S.\trapdoor          &:= \KA.\agree(S.\sk.\spend, S.\epk) \\
         S.\cm                &:= \COM_{S.\trapdoor}(S.\asset) \\
         \Some(\cm_c, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
         S.\cm_c              &:= \cm_c \\
         S.\cm_w              &:= \cm_w \\
-        S.\vn                &:= \COM_{S.\epk}(S.\sk.\spend) \\
+        S.\vn                &:= \COM_{S.\trapdoor}(S.\sk.\spend) \\
     \end{align*}
 \end{definition}
 
@@ -612,10 +625,10 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         R.\rk       &:= \rk \\
         R.\esk      &:= \esk \\
-        R.\trapdoor &:= \KA.\agree(R.d, R.\rk) \\
+        R.\trapdoor &:= \KA.\agree(R.\esk, R.\rk.\spend) \\
         R.\asset    &:= \asset \\
         R.\cm       &:= \COM_{R.\trapdoor}(R.\asset) \\
-        R.\note     &:= \HPKE.\encrypt(R.\rk, R.\esk, \asset)
+        R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, \asset)
     \end{align*}
 \end{definition}
 
@@ -684,15 +697,15 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\trapdoor                               &= \KA.\agree(S.\sk.\view, S.\epk) \\
+                S.\trapdoor                               &= \KA.\agree(S.\sk.\spend, S.\epk) \\
                 S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset) \\
-                S.\vn                                     &= \COM_{S.\epk}(S.\sk.\spend) \\
+                S.\vn                                     &= \COM_{S.\trapdoor}(S.\sk.\spend) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_c, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.\esk      &= \COM_{\FAIR}(i \,||\, R.\rk.\view) \\
-                R.\trapdoor &= \KA.\agree(R.\esk, R.\rk.\view) \\
+                R.\esk      &= \COM_{\FAIR}(i \,||\, R.\rk.\spend) \\
+                R.\trapdoor &= \KA.\agree(R.\esk, R.\rk.\spend) \\
                 R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
             \end{align*}
             where \FAIR{} is the following constant, binding the new ephemeral secret keys to the current state of the ledger:
