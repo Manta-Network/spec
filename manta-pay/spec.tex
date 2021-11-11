@@ -160,6 +160,7 @@
 \newcommand{\VoidNumberSet}{{\textsf{VoidNumberSet}}}
 \newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
 \newcommand{\Void}{{\textsf{Void}}}
+\newcommand{\Witness}{{\textsf{Witness}}}
 \newcommand{\agree}{{\textsf{agree}}}
 \newcommand{\allocated}{{\textsf{allocated}}}
 \newcommand{\allocate}{{\textsf{allocate}}}
@@ -172,6 +173,7 @@
 \newcommand{\derive}{{\textsf{derive}}}
 \newcommand{\encrypt}{{\textsf{encrypt}}}
 \newcommand{\hash}{{\textsf{hash}}}
+\newcommand{\insertF}{{\textsf{insert}}}
 \newcommand{\keys}{{\textsf{keys}}}
 \newcommand{\len}{{\textsf{len}}}
 \newcommand{\mint}{{\textsf{mint}}}
@@ -432,24 +434,24 @@ In the following section, we outline the formal specifications for all of the \e
         \Item       &: \Type \\
         \StateT     &: \Type \\
         \Checkpoint &: \Type \\
-        \Proof      &: \Type \\
+        \Witness    &: \Type \\
         \checkpoint &: \StateT \to \Checkpoint \\
-        \update     &: \Item \times \StateT \to \StateT \\
-        \contains   &: \Item \times \StateT \to \Option(\Checkpoint \times \Proof) \\
-        \verify     &: \Item \times \Checkpoint \times \Proof \to \Bool
+        \insertF    &: \Item \times \StateT \to \StateT \\
+        \contains   &: \Item \times \StateT \to \Option(\Checkpoint \times \Witness) \\
+        \verify     &: \Item \times \Checkpoint \times \Witness \to \Bool
     \end{align*}
     with the following properties:
     \begin{itemize}
         \item \textbf{Unique Checkpoints}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
-            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
             Then, if we collect the checkpoints for these states, $c_i := \checkpoint(s_i)$, there should be exactly $\abs{I}$-many unique checkpoints, one for each state update.
         \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
-            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \update(I_i, s_i)\]
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
-            \[\Some(c, \pi) := \contains(t, s), \,\,\,\,\, \verify(t, c, \pi) = \True\]
+            \[\Some(c, w) := \contains(t, s), \,\,\,\,\, \verify(t, c, w) = \True\]
         \item \TODO{security properties}
     \end{itemize}
-    \TODO{add finite capacity constraint, something like $\update : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
+    \TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
@@ -593,23 +595,23 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \cm_c     &: \UTXOSet.\Checkpoint \\
-        \cm_\pi   &: \UTXOSet.\Proof \\
+        \cm_w   &: \UTXOSet.\Witness \\
         \vn       &: \VoidNumber
     \end{align*}
 
     A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
     \begin{align*}
-        S.\sk                 &:= \sk \\
-        \tilde{d}, c          &:= \note \\
-        \Some(\asset)         &:= \HPKE.\decrypt(S.\sk.\view, \tilde{d}, c) \\
-        S.\asset              &:= \asset \\
-        S.\tilde{d}           &:= \tilde{d} \\
-        S.\trapdoor           &:= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
-        S.\cm                 &:= \COM_{S.\trapdoor}(S.\asset) \\
-        \Some(\cm_c, \cm_\pi) &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
-        S.\cm_c               &:= \cm_c \\
-        S.\cm_\pi             &:= \cm_\pi \\
-        S.\vn                 &:= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
+        S.\sk                &:= \sk \\
+        \tilde{d}, c         &:= \note \\
+        \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \tilde{d}, c) \\
+        S.\asset             &:= \asset \\
+        S.\tilde{d}          &:= \tilde{d} \\
+        S.\trapdoor          &:= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+        S.\cm                &:= \COM_{S.\trapdoor}(S.\asset) \\
+        \Some(\cm_c, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
+        S.\cm_c              &:= \cm_c \\
+        S.\cm_w              &:= \cm_w \\
+        S.\vn                &:= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
     \end{align*}
 \end{definition}
 
@@ -709,10 +711,10 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\trapdoor                                 &= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
-                S.\cm                                       &= \COM_{S.\trapdoor}(S.\asset) \\
-                S.\vn                                       &= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
-                \UTXOSet.\verify(S.\cm, S.\cm_c, S.\cm_\pi) &= \True
+                S.\trapdoor                               &= \KA.\derive(\KDIV_{S.\tilde{d}}(S.\sk.\view, S.\sk.\spend)) \\
+                S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset) \\
+                S.\vn                                     &= \COM_{S.\tilde{d}}(S.\sk.\view \,||\, S.\sk.\spend) \\
+                \UTXOSet.\verify(S.\cm, S.\cm_c, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
