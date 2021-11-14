@@ -67,7 +67,6 @@
 \newcommand{\COM}{{\textsf{COM}}}
 \newcommand{\Charlie}{{\textsf{Charlie}}}
 \newcommand{\CheckProof}{{\textsf{CheckProof}}}
-\newcommand{\Checkpoint}{{\textsf{Checkpoint}}}
 \newcommand{\Ciphertext}{{\textsf{Ciphertext}}}
 \newcommand{\Concat}{{\textsf{Concat}}}
 \newcommand{\DCA}{{\textsf{DCA}}}
@@ -165,10 +164,10 @@
 \newcommand{\allocated}{{\textsf{allocated}}}
 \newcommand{\allocate}{{\textsf{allocate}}}
 \newcommand{\asset}{{\textsf{asset}}}
-\newcommand{\checkpoint}{{\textsf{checkpoint}}}
 \newcommand{\cm}{{\textsf{cm}}}
 \newcommand{\commit}{{\textsf{commit}}}
 \newcommand{\contains}{{\textsf{contains}}}
+\newcommand{\current}{{\textsf{current}}}
 \newcommand{\decrypt}{{\textsf{decrypt}}}
 \newcommand{\derive}{{\textsf{derive}}}
 \newcommand{\encrypt}{{\textsf{encrypt}}}
@@ -415,24 +414,24 @@ In the following section, we outline the formal specifications for all of the \e
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
     A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
     \begin{align*}
-        \Item       &: \Type \\
-        \StateT     &: \Type \\
-        \Checkpoint &: \Type \\
-        \Witness    &: \Type \\
-        \checkpoint &: \StateT \to \Checkpoint \\
-        \insertF    &: \Item \times \StateT \to \StateT \\
-        \contains   &: \Item \times \StateT \to \Option(\Checkpoint \times \Witness) \\
-        \verify     &: \Item \times \Checkpoint \times \Witness \to \Bool
+        \Item     &: \Type \\
+        \Output   &: \Type \\
+        \Witness  &: \Type \\
+        \StateT   &: \Type \\
+        \current  &: \StateT \to \Output \\
+        \insertF  &: \Item \times \StateT \to \StateT \\
+        \contains &: \Item \times \StateT \to \Option(\Output \times \Witness) \\
+        \verify   &: \Item \times \Output \times \Witness \to \Bool
     \end{align*}
     with the following properties:
     \begin{itemize}
-        \item \textbf{Unique Checkpoints}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
+        \item \textbf{Unique Accumulated Values}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
-            Then, if we collect the checkpoints for these states, $c_i := \checkpoint(s_i)$, there should be exactly $\abs{I}$-many unique checkpoints, one for each state update.
+            Then, if we collect the accumulated values for these states, $z_i := \current(s_i)$, there should be exactly $\abs{I}$-many unique values, one for each state update.
         \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
-            \[\Some(c, w) := \contains(t, s), \,\,\,\,\, \verify(t, c, w) = \True\]
+            \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
         \item \TODO{security properties}
     \end{itemize}
     \TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
@@ -580,7 +579,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \trapdoor &: \KA.\SharedSecret \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
-        \cm_c     &: \UTXOSet.\Checkpoint \\
+        \cm_z     &: \UTXOSet.\Output \\
         \cm_w     &: \UTXOSet.\Witness \\
         \vn       &: \VoidNumber
     \end{align*}
@@ -594,8 +593,8 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         S.\epk               &:= \epk \\
         S.\trapdoor          &:= \KA.\agree(S.\sk.\spend, S.\epk) \\
         S.\cm                &:= \COM_{S.\trapdoor}(S.\asset) \\
-        \Some(\cm_c, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
-        S.\cm_c              &:= \cm_c \\
+        \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
+        S.\cm_z              &:= \cm_z \\
         S.\cm_w              &:= \cm_w \\
         S.\vn                &:= \COM_{S.\trapdoor}(S.\sk.\spend) \\
     \end{align*}
@@ -604,7 +603,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Sender Post]
     A \SenderPost{} is the following tuple extracted from a \Sender{}:
     \begin{align*}
-        \cm_c &: \UTXOSet.\Checkpoint \\
+        \cm_z &: \UTXOSet.\Output \\
         \vn   &: \VoidNumber
     \end{align*}
     which are the parts of a \Sender{} which should be \emph{posted} to the \Ledger{}.
@@ -700,7 +699,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 S.\trapdoor                               &= \KA.\agree(S.\sk.\spend, S.\epk) \\
                 S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset) \\
                 S.\vn                                     &= \COM_{S.\trapdoor}(S.\sk.\spend) \\
-                \UTXOSet.\verify(S.\cm, S.\cm_c, S.\cm_w) &= \True
+                \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
@@ -709,7 +708,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
             \end{align*}
             where \FAIR{} is the following constant, binding the new ephemeral secret keys to the current state of the ledger:
-            \[\FAIR := \COM_f(\UTXOSet.\checkpoint(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
+            \[\FAIR := \COM_f(\UTXOSet.\current(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
             and $f \sim \COM.\TrapdoorDistribution$ is a randomly chosen trapdoor.
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
@@ -746,7 +745,7 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
         \item \textbf{Shielded Withdraw}: The total balance in $P.\sinks$ does not exceed the amount in the $\ShieldedAssetPool{}$ balance.
-        \item \textbf{Current \Checkpoint{}}: The $\UTXOSet.\Checkpoint$ stored in each $P.\senders$ is equal to current checkpoint, $\UTXOSet.\checkpoint(\Ledger.\utxos())$, for the current state of the \Ledger{}.
+        \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
         \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
         \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
         \item \textbf{Verify \Transfer{}}: Check that $\NIZK.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$.
@@ -842,7 +841,7 @@ If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathc
 \begin{definition}[Dynamic Cryptographic Accumulator]
     For $\DCA$, we use
 
-    \TODO{dynamic cryptographic accumulator: Merkle Tree with Pedersen hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the checkpoint as values are accumulated)}
+    \TODO{dynamic cryptographic accumulator: Merkle Tree with Pedersen hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the accumulated value)}
 \end{definition}
 
 \begin{definition}[Non-Interactive Zero-Knowledge Proofs]
