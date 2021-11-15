@@ -67,6 +67,7 @@
 \newcommand{\COM}{{\textsf{COM}}}
 \newcommand{\Charlie}{{\textsf{Charlie}}}
 \newcommand{\CheckProof}{{\textsf{CheckProof}}}
+\newcommand{\Checkpoint}{{\textsf{Checkpoint}}}
 \newcommand{\Ciphertext}{{\textsf{Ciphertext}}}
 \newcommand{\Concat}{{\textsf{Concat}}}
 \newcommand{\DCA}{{\textsf{DCA}}}
@@ -592,7 +593,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         S.\asset             &:= \asset \\
         S.\epk               &:= \epk \\
         S.\trapdoor          &:= \KA.\agree(S.\sk.\spend, S.\epk) \\
-        S.\cm                &:= \COM_{S.\trapdoor}(S.\asset) \\
+        S.\cm                &:= \COM_{S.\trapdoor}(S.\asset.\ID \,||\, S.\asset.\VALUE) \\
         \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
         S.\cm_z              &:= \cm_z \\
         S.\cm_w              &:= \cm_w \\
@@ -626,8 +627,8 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         R.\esk      &:= \esk \\
         R.\trapdoor &:= \KA.\agree(R.\esk, R.\rk.\spend) \\
         R.\asset    &:= \asset \\
-        R.\cm       &:= \COM_{R.\trapdoor}(R.\asset) \\
-        R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, \asset)
+        R.\cm       &:= \COM_{R.\trapdoor}(R.\asset.\ID \,||\, R.\asset.\VALUE) \\
+        R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, R.\asset)
     \end{align*}
 \end{definition}
 
@@ -697,19 +698,17 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
                 S.\trapdoor                               &= \KA.\agree(S.\sk.\spend, S.\epk) \\
-                S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset) \\
+                S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset.\ID \,||\, S.\asset.\VALUE) \\
                 S.\vn                                     &= \COM_{S.\trapdoor}(S.\sk.\spend) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.\esk      &= \COM_{\FAIR}(i \,||\, R.\rk.\spend) \\
+                R.\esk      &= \COM_{\tau}(\mathcal{L} \,||\, i \,||\, R.\rk.\spend) \\
                 R.\trapdoor &= \KA.\agree(R.\esk, R.\rk.\spend) \\
-                R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
+                R.\cm       &= \COM_{R.\trapdoor}(R.\asset.\ID \,||\, R.\asset.\VALUE)
             \end{align*}
-            where \FAIR{} is the following constant, binding the new ephemeral secret keys to the current state of the ledger:
-            \[\FAIR := \COM_f(\UTXOSet.\current(\Ledger.\utxos()) \,||\, \Concat_{S \in T.\senders}(S.\sk.\spend))\]
-            and $f \sim \COM.\TrapdoorDistribution$ is a randomly chosen trapdoor.
+            where $\tau \sim \COM.\TrapdoorDistribution$ is a randomly chosen trapdoor and $\mathcal{L}$ is the ledger checkpoint, a constant determined by the current state of the ledger.
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
 \end{definition}
@@ -717,22 +716,24 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 \begin{definition}[\Transfer{} Post]
     A \TransferPost{} is the following tuple:
     \begin{align*}
-        \sources   &: \List(\Source) \\
-        \senders   &: \List(\SenderPost) \\
-        \receivers &: \List(\ReceiverPost) \\
-        \sinks     &: \List(\Sink) \\
-        \pi        &: \NIZK.\Proof
+        \mathcal{L} &: \Ledger.\Checkpoint \\
+        \sources    &: \List(\Source) \\
+        \senders    &: \List(\SenderPost) \\
+        \receivers  &: \List(\ReceiverPost) \\
+        \sinks      &: \List(\Sink) \\
+        \pi         &: \NIZK.\Proof 
     \end{align*}
     A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \NIZK.\ProvingKey$ and a given $T : \Transfer$:
     \begin{align*}
-        x            &:= \Transfer.\public(T) \\
-        w            &:= \Transfer.\secret(T) \\
-        \Some(\pi)   &\sim \NIZK.\prove^\ValidTransfer_\pk(x, w) \\
-        P.\sources   &:= x.\sources \\
-        P.\senders   &:= x.\senders \\
-        P.\receivers &:= x.\receivers \\
-        P.\sinks     &:= x.\sinks \\
-        P.\pi        &:= \pi
+        x             &:= \Transfer.\public(T) \\
+        w             &:= \Transfer.\secret(T) \\
+        \Some(\pi)    &\sim \NIZK.\prove^\ValidTransfer_\pk(x, w) \\
+        P.\mathcal{L} &:= x.\mathcal{L} \\
+        P.\sources    &:= x.\sources \\
+        P.\senders    &:= x.\senders \\
+        P.\receivers  &:= x.\receivers \\
+        P.\sinks      &:= x.\sinks \\
+        P.\pi         &:= \pi
     \end{align*}
     where $\Transfer.\public$ returns \SenderPost{s} for each \Sender{} in $T$ and \ReceiverPost{s} for each \Receiver{} in $T$, keeping \Source{s} and \Sink{s} as they are, and $\Transfer.\secret$ returns all the rest of $T$ which is not part of the output of $\Transfer.\public$.
 \end{definition}
@@ -742,6 +743,7 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 \begin{definition}[\Ledger{}-side \Transfer{} Validity]
     To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
     \begin{itemize}
+        \item \textbf{Valid Checkpoint}: The checkpoint $P.\mathcal{L}$ is valid and matches the checkpoint of the current ledger state.
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
         \item \textbf{Shielded Withdraw}: The total balance in $P.\sinks$ does not exceed the amount in the $\ShieldedAssetPool{}$ balance.
