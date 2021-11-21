@@ -74,6 +74,7 @@
 \newcommand{\Decrypt}{{\textsf{Decrypt}}}
 \newcommand{\DerivePublic}{{\textsf{DerivePublic}}}
 \newcommand{\Derive}{{\textsf{Derive}}}
+\newcommand{\EK}{{\textsf{EK}}}
 \newcommand{\EncryptedNote}{{\textsf{EncryptedNote}}}
 \newcommand{\Encrypt}{{\textsf{Encrypt}}}
 \newcommand{\EntropySource}{{\textsf{EntropySource}}}
@@ -89,7 +90,6 @@
 \newcommand{\Item}{{\textsf{Item}}}
 \newcommand{\KA}{{\textsf{KA}}}
 \newcommand{\KDF}{{\textsf{KDF}}}
-\newcommand{\KDIV}{{\textsf{KDIV}}}
 \newcommand{\KeyDistribution}{{\textsf{KeyDistribution}}}
 \newcommand{\Key}{{\textsf{Key}}}
 \newcommand{\Ledger}{{\textsf{Ledger}}}
@@ -546,14 +546,15 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     A \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
     \begin{itemize}
         \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
+        \item \textbf{Ephemeral-Key Commitment Scheme}: $\COM^{\EK}$
         \item \textbf{Commitment Scheme}: $\COM$
+        \item \textbf{Trapdoor Derivation Function}: $\KDF^{\Trapdoor}$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
         \KA            &:= \HPKE.\KA \\
-        \KDIV          &:= \HPKE.\KDIV \\
         \UTXO          &:= \COM.\Output \\
         \VoidNumber    &:= \COM.\Output \\
         \EncryptedNote &:= \HPKE.\Message \\
@@ -561,13 +562,13 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \COM.\Trapdoor &= \KA.\SharedSecret \\
-        \ValidTransfer &: \NIZK.\Statement
+        \KDF^{\Trapdoor} &: \KA.\SharedSecret \to \COM.\Trapdoor \\
+        \UTXOSet.\Item   &: \UTXO \\
+        \ValidTransfer   &: \NIZK.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
 
     \TODO{Add the fact that $\COM.\Input$ has a concatenation property. In general, add (de)serialization to the spec.} \\
-    \TODO{Add the fact that we have a conversion from $\COM.\Output$ to $\KA.\SecretKey$ and $\COM.\Trapdoor$, we should serialize the output and then deserialize into the correct type}
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -577,7 +578,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         \sk       &: \SpendingKey \\
         \epk      &: \KA.\PublicKey \\
-        \trapdoor &: \KA.\SharedSecret \\
+        \trapdoor &: \COM.\Trapdoor \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \cm_z     &: \UTXOSet.\Output \\
@@ -592,7 +593,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
         S.\asset             &:= \asset \\
         S.\epk               &:= \epk \\
-        S.\trapdoor          &:= \KA.\agree(S.\sk.\spend, S.\epk) \\
+        S.\trapdoor          &:= \KDF^{\Trapdoor}\left(\KA.\agree(S.\sk.\spend, S.\epk)\right) \\
         S.\cm                &:= \COM_{S.\trapdoor}(S.\asset.\ID \,||\, S.\asset.\VALUE) \\
         \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
         S.\cm_z              &:= \cm_z \\
@@ -615,7 +616,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         \rk       &: \ReceivingKey \\
         \esk      &: \KA.\SecretKey \\
-        \trapdoor &: \KA.\SharedSecret \\
+        \trapdoor &: \COM.\Trapdoor \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
@@ -625,7 +626,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         R.\rk       &:= \rk \\
         R.\esk      &:= \esk \\
-        R.\trapdoor &:= \KA.\agree(R.\esk, R.\rk.\spend) \\
+        R.\trapdoor &:= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
         R.\asset    &:= \asset \\
         R.\cm       &:= \COM_{R.\trapdoor}(R.\asset.\ID \,||\, R.\asset.\VALUE) \\
         R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, R.\asset)
@@ -697,18 +698,18 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\trapdoor                               &= \KA.\agree(S.\sk.\spend, S.\epk) \\
+                S.\trapdoor                               &= \KDF^{\Trapdoor}\left(\KA.\agree(S.\sk.\spend, S.\epk)\right) \\
                 S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset.\ID \,||\, S.\asset.\VALUE) \\
                 S.\vn                                     &= \COM_{S.\trapdoor}(S.\sk.\spend) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.\esk      &= \COM_{\tau}(\mathcal{L} \,||\, i \,||\, R.\rk.\spend) \\
-                R.\trapdoor &= \KA.\agree(R.\esk, R.\rk.\spend) \\
+                R.\esk      &= \COM^{\EK}_{\tau}(\mathcal{L} \,||\, i \,||\, R.\rk.\spend) \\
+                R.\trapdoor &= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
                 R.\cm       &= \COM_{R.\trapdoor}(R.\asset.\ID \,||\, R.\asset.\VALUE)
             \end{align*}
-            where $\tau \sim \COM.\TrapdoorDistribution$ is a randomly chosen trapdoor and $\mathcal{L}$ is the ledger checkpoint, a constant determined by the current state of the ledger.
+            where $\tau \sim \COM^{\EK}.\TrapdoorDistribution$ is a randomly chosen trapdoor and $\mathcal{L}$ is the ledger checkpoint, a constant determined by the current state of the ledger.
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
 \end{definition}
