@@ -19,7 +19,7 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
     \end{itemize}
 
-    \textbf{Notation}: For convenience, we refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
+    \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Agreement Scheme}
@@ -217,7 +217,8 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \begin{itemize}
         \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
         \item \textbf{Ephemeral-Key Commitment Scheme}: $\COM^{\EK}$
-        \item \textbf{Commitment Scheme}: $\COM$
+        \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
+        \item \textbf{Void Number Commitment Scheme}: $\COM^{\VN}$
         \item \textbf{Trapdoor Derivation Function}: $\KDF^{\Trapdoor}$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
@@ -225,30 +226,33 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     with the following notational conventions:
     \begin{align*}
         \KA            &:= \HPKE.\KA \\
-        \UTXO          &:= \COM.\Output \\
-        \VoidNumber    &:= \COM.\Output \\
+        \Trapdoor      &:= \COM^{\UTXO}.\Trapdoor \\
+        \UTXO          &:= \COM^{\UTXO}.\Output \\
+        \VoidNumber    &:= \COM^{\VN}.\Output \\
         \EncryptedNote &:= \HPKE.\Message \\
         \UTXOSet       &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \KDF^{\Trapdoor} &: \KA.\SharedSecret \to \COM.\Trapdoor \\
-        \UTXOSet.\Item   &: \UTXO \\
-        \ValidTransfer   &: \NIZK.\Statement
+        \COM^{\EK}.\Input      &= \Asset \\
+        \COM^{\UTXO}.\Trapdoor &= \COM^{\VN}.\Trapdoor \\
+        \COM^{\UTXO}.\Input    &= \Asset \\
+        \COM^{\VN}.\Input      &= \KA.\SecretKey \\
+        \UTXOSet.\Item         &= \UTXO \\
+        \KDF^{\Trapdoor}       &: \KA.\SharedSecret \to \Trapdoor \\
+        \ValidTransfer         &: \NIZK.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
-
-    \TODO{Add the fact that $\COM.\Input$ has a concatenation property. In general, add (de)serialization to the spec.} \\
 \end{definition}
 
-For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlines above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
+For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
 
 \begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
     \begin{align*}
         \sk       &: \SpendingKey \\
         \epk      &: \KA.\PublicKey \\
-        \trapdoor &: \COM.\Trapdoor \\
+        \trapdoor &: \Trapdoor \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \cm_z     &: \UTXOSet.\Output \\
@@ -264,11 +268,11 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         S.\asset             &:= \asset \\
         S.\epk               &:= \epk \\
         S.\trapdoor          &:= \KDF^{\Trapdoor}\left(\KA.\agree(S.\sk.\spend, S.\epk)\right) \\
-        S.\cm                &:= \COM_{S.\trapdoor}(S.\asset) \\
+        S.\cm                &:= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
         \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
         S.\cm_z              &:= \cm_z \\
         S.\cm_w              &:= \cm_w \\
-        S.\vn                &:= \COM_{S.\trapdoor}(S.\sk.\spend) \\
+        S.\vn                &:= \COM^{\VN}(S.\trapdoor, S.\sk.\spend) \\
     \end{align*}
 \end{definition}
 
@@ -286,7 +290,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         \rk       &: \ReceivingKey \\
         \esk      &: \KA.\SecretKey \\
-        \trapdoor &: \COM.\Trapdoor \\
+        \trapdoor &: \Trapdoor \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
@@ -298,12 +302,12 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         R.\esk      &:= \esk \\
         R.\trapdoor &:= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
         R.\asset    &:= \asset \\
-        R.\cm       &:= \COM_{R.\trapdoor}(R.\asset.\ID) \\
+        R.\cm       &:= \COM^{\UTXO}(R.\trapdoor, R.\asset) \\
         R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, R.\asset)
     \end{align*}
 \end{definition}
 
-\footnotetext{The ephemeral secret key is not directly chosen by the ledger participants building the \Transfer{}. Instead, it is derived from other \Transfer{} data and the current state of the ledger. See \autoref{def:transfer-validity-statement} for more.}
+\footnotetext{The ephemeral secret key is not directly chosen by the ledger participants building the \Transfer{}. Instead, it is derived from other \Transfer{} data. See \autoref{def:transfer-validity-statement} for more.}
 
 \begin{definition}[\Transfer{} Receiver Post]
     A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
@@ -369,17 +373,17 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
                 S.\trapdoor                               &= \KDF^{\Trapdoor}\left(\KA.\agree(S.\sk.\spend, S.\epk)\right) \\
-                S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset) \\
-                S.\vn                                     &= \COM_{S.\trapdoor}(S.\sk.\spend) \\
+                S.\cm                                     &= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
+                S.\vn                                     &= \COM^{\VN}(S.\trapdoor, S.\sk.\spend) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.\esk      &= \COM^{\EK}_{\tau}(i \,||\, R.\rk.\spend \,||\, R.\asset) \\
+                R.\esk      &= \COM^{\EK}(\tau_i, R.\asset) \\
                 R.\trapdoor &= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
-                R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
+                R.\cm       &= \COM^{\UTXO}(R.\trapdoor, R.\asset)
             \end{align*}
-            where $\tau \sim \COM^{\EK}.\TrapdoorDistribution$ is a randomly chosen trapdoor.
+            where $\tau_i \sim \COM^{\EK}.\TrapdoorDistribution$ are randomly chosen trapdoors.
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
 \end{definition}
