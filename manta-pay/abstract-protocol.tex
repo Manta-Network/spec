@@ -264,7 +264,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         S.\asset             &:= \asset \\
         S.\epk               &:= \epk \\
         S.\trapdoor          &:= \KDF^{\Trapdoor}\left(\KA.\agree(S.\sk.\spend, S.\epk)\right) \\
-        S.\cm                &:= \COM_{S.\trapdoor}(S.\asset.\ID \,||\, S.\asset.\VALUE) \\
+        S.\cm                &:= \COM_{S.\trapdoor}(S.\asset) \\
         \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
         S.\cm_z              &:= \cm_z \\
         S.\cm_w              &:= \cm_w \\
@@ -298,7 +298,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         R.\esk      &:= \esk \\
         R.\trapdoor &:= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
         R.\asset    &:= \asset \\
-        R.\cm       &:= \COM_{R.\trapdoor}(R.\asset.\ID \,||\, R.\asset.\VALUE) \\
+        R.\cm       &:= \COM_{R.\trapdoor}(R.\asset.\ID) \\
         R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, R.\asset)
     \end{align*}
 \end{definition}
@@ -369,17 +369,17 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
                 S.\trapdoor                               &= \KDF^{\Trapdoor}\left(\KA.\agree(S.\sk.\spend, S.\epk)\right) \\
-                S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset.\ID \,||\, S.\asset.\VALUE) \\
+                S.\cm                                     &= \COM_{S.\trapdoor}(S.\asset) \\
                 S.\vn                                     &= \COM_{S.\trapdoor}(S.\sk.\spend) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.\esk      &= \COM^{\EK}_{\tau}(\mathcal{L} \,||\, i \,||\, R.\rk.\spend) \\
+                R.\esk      &= \COM^{\EK}_{\tau}(i \,||\, R.\rk.\spend \,||\, R.\asset) \\
                 R.\trapdoor &= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
-                R.\cm       &= \COM_{R.\trapdoor}(R.\asset.\ID \,||\, R.\asset.\VALUE)
+                R.\cm       &= \COM_{R.\trapdoor}(R.\asset)
             \end{align*}
-            where $\tau \sim \COM^{\EK}.\TrapdoorDistribution$ is a randomly chosen trapdoor and $\mathcal{L}$ is the ledger checkpoint, a constant determined by the current state of the ledger.
+            where $\tau \sim \COM^{\EK}.\TrapdoorDistribution$ is a randomly chosen trapdoor.
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
 \end{definition}
@@ -387,7 +387,6 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 \begin{definition}[\Transfer{} Post]
     A \TransferPost{} is the following tuple:
     \begin{align*}
-        \mathcal{L} &: \Ledger.\Checkpoint \\
         \sources    &: \List(\Source) \\
         \senders    &: \List(\SenderPost) \\
         \receivers  &: \List(\ReceiverPost) \\
@@ -399,7 +398,6 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         x             &:= \Transfer.\public(T) \\
         w             &:= \Transfer.\secret(T) \\
         \Some(\pi)    &\sim \NIZK.\prove^\ValidTransfer_\pk(x, w) \\
-        P.\mathcal{L} &:= x.\mathcal{L} \\
         P.\sources    &:= x.\sources \\
         P.\senders    &:= x.\senders \\
         P.\receivers  &:= x.\receivers \\
@@ -414,7 +412,6 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 \begin{definition}[\Ledger{}-side \Transfer{} Validity]
     To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
     \begin{itemize}
-        \item \textbf{Valid Checkpoint}: The checkpoint $P.\mathcal{L}$ is valid and matches the checkpoint of the current ledger state.
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
         \item \textbf{Shielded Withdraw}: The total balance in $P.\sinks$ does not exceed the amount in the $\ShieldedAssetPool{}$ balance.

@@ -1,0 +1,64 @@
+\lsection{Concrete Protocol}{concrete-protocol}
+
+\TODO{other than cryptographic schemes, are there any implementation details we want to include here?}
+
+\subsection{Concrete Cryptographic Schemes}
+
+Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. The ZKP system we use is based on elliptic-curve cryptography so we will notate a fixed elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following constructions. See \autoref{def:concrete-zkp} for more.
+
+\begin{definitiontoc}{Commitment Schemes}
+    Commitment schemes are used for constructing the ephemeral secret key and for constructing \UTXO{s} and \VoidNumber{s}.
+
+    For the ephemeral key, $\COM^{\EK}$, we use \emph{Poseidon-Sponge Commitments} ... \TODO{specify this better}
+
+    For the \UTXO{} and \VoidNumber{}, $\COM$, we use \emph{Pedersen Commitments} over $(\mathbb{G}, \mathbb{F})$:
+
+    \[\COM_r(x) : \mathbb{F} \times \mathbb{F} \to \mathbb{G} := (r \cdot G) + (x \cdot H)\]
+
+    where $G,\,H \in \mathbb{G}$ are fixed public points. For arbitrarily long inputs, we use a hash function to compute the right-hand point and then blind it with $G$:
+
+    \[\COM_r(x) : \mathbb{F} \times \mathbb{B}^n \to \mathbb{G} := (r \cdot G) + \HASH(x)\]
+
+    where \HASH{} is a \emph{Pedersen Hash}.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Key-Agreement Scheme}
+    For $\KA$, we use a Diffie-Hellman Key Exchange over $(\mathbb{G}, \mathbb{F})$:
+    \begin{align*}
+        \KA.\derive(x)   &: \mathbb{F} \to \mathbb{G}                   := x \cdot G \\
+        \KA.\agree(x, y) &: \mathbb{F} \times \mathbb{G} \to \mathbb{G} := x \cdot y
+    \end{align*}
+
+    where $G$ is a fixed public point.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
+    For $\SYM$, we use
+
+    \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Key-Derivation Function}
+    For $\KDF$, we use
+
+    \TODO{key-derivation function: Blake2s with magic-number salt}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Hybrid Public Key Encryption}
+    For $\HPKE$, we use
+
+    \TODO{integrated encryption scheme: combination of above encryption protocols}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Dynamic Cryptographic Accumulator}
+    For $\DCA$, we use
+
+    \TODO{dynamic cryptographic accumulator: Merkle Tree with Poseidon (?) hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the accumulated value)}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System} \label{def:concrete-zkp}
+    For $\NIZK$, we use
+
+    \TODO{non-interactive zero-knowledge proving system: Groth16 and/or PLONK}
+\end{definitiontoc}
+

@@ -23,10 +23,9 @@
 \usepackage{tikz-cd}
 \usepackage{wrapfig}
 
+\input{prelude}
 
-\input{defs}
-
-\title{\textbf{\MantaPay{} Protocol Specification}\\ v0.4.0}
+\title{\textbf{\MantaPay{} Protocol Specification}\\ v\input{version}}
 \author{Shumo Chu and Brandon H. Gomes}
 \date{\today}
 
@@ -41,15 +40,13 @@
 \tableofcontents
 \newpage
 
-\input{intro}
+\input{introduction}
 \input{notation}
 \input{concepts}
-\input{absprotocol}
-\input{concrete}
-\input{diff}
-
-\lsection{Acknowledgements}{acknowledgements}
-\TODO{add acknowledgements}
+\input{abstract-protocol}
+\input{concrete-protocol}
+\input{differences}
+\input{acknowledgements}
 
 \lsection{References}{references}
 \bibliographystyle{plain}
