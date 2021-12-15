@@ -68,15 +68,15 @@ In the following section, we outline the formal specifications for all of the \e
     A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
     \begin{itemize}
         \item Encryption: Given an ephemeral secret key $\esk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
-            \[m : \SYM.\Ciphertext \times \KA.\PublicKey := \left(\SYM.\encrypt(\KDF(\KA.\agree(\esk, \pk)), p), \KA.\derive(\esk)\right)\]
-        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (c, \epk)$, we can decrypt $m$, producing the plaintext,
+            \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\esk), \SYM.\encrypt(\KDF(\KA.\agree(\esk, \pk)), p)\right)\]
+        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\epk, c)$, we can decrypt $m$, producing the plaintext,
             \[p : \Option(\SYM.\Plaintext) := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \epk)), c)\]
             which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
     \end{itemize}
 
     \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \SYM.\Ciphertext \times \KA.\PublicKey$, and the above two algorithms by
     \begin{align*}
-        \encrypt &: \KA.\PublicKey \times \KA.\SecretKey \times \SYM.\Plaintext \to \Message \\
+        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
     \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys are ephemeral, etc.} \\
@@ -263,7 +263,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
     \begin{align*}
         S.\sk                &:= \sk \\
-        c, \epk              &:= \note \\
+        \epk, c              &:= \note \\
         \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
         S.\asset             &:= \asset \\
         S.\epk               &:= \epk \\
@@ -379,9 +379,10 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \end{align*}
         \item For all $(i, R) \in \Enumerate(T.\receivers)$, the \Receiver{} $R$ is well-formed at index $i$ with respect to \FAIR{}:
             \begin{align*}
-                R.\esk      &= \COM^{\EK}(\tau_i, R.\asset) \\
-                R.\trapdoor &= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
-                R.\cm       &= \COM^{\UTXO}(R.\trapdoor, R.\asset)
+                R.\esk       &= \COM^{\EK}(\tau_i, R.\asset) \\
+                R.\note.\epk &= \KA.\derive(R.\esk) \\
+                R.\trapdoor  &= \KDF^{\Trapdoor}\left(\KA.\agree(R.\esk, R.\rk.\spend)\right) \\
+                R.\cm        &= \COM^{\UTXO}(R.\trapdoor, R.\asset)
             \end{align*}
             where $\tau_i \sim \COM^{\EK}.\TrapdoorDistribution$ are randomly chosen trapdoors.
     \end{enumerate}
