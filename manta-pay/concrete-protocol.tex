@@ -9,11 +9,13 @@ Since we use a Zero-Knowledge Proving System, we want the cryptographic construc
 \begin{definitiontoc}{Commitment Schemes}
     Commitment schemes are used for constructing the ephemeral secret key and for constructing \UTXO{s} and \VoidNumber{s}.
 
-    For $\COM^{\EK}$, $\COM^{\UTXO}$, and $\COM^{\VN}$, we use \emph{Pedersen Commitments} over $(\mathbb{G}, \mathbb{F})$:
+    For $\COM^{\EK}$ we use a Poseidon Sponge Commitment ... \TODO{elaborate on this construction}
+
+    For $\COM^{\UTXO}$ and $\COM^{\VN}$, we use \emph{Pedersen Commitments} over $(\mathbb{G}, \mathbb{F})$:
 
     \[\COM_r(x) : \mathbb{F} \times \mathbb{F} \to \mathbb{G} := (r \cdot G) + (x \cdot H)\]
 
-    where $G,\,H \in \mathbb{G}$ are fixed public points, different for each of the three commitment schemes.
+    where $G,\,H \in \mathbb{G}$ are fixed public points, different for each of the two commitment schemes.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Agreement Scheme}

@@ -235,6 +235,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     and the following constraints:
     \begin{align*}
         \COM^{\EK}.\Input      &= \Asset \\
+        \COM^{\EK}.\Output     &= \KA.\SecretKey \\
         \COM^{\UTXO}.\Trapdoor &= \COM^{\VN}.\Trapdoor \\
         \COM^{\UTXO}.\Input    &= \Asset \\
         \COM^{\VN}.\Input      &= \KA.\SecretKey \\
