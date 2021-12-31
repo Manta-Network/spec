@@ -4,18 +4,10 @@
 
 \subsection{Concrete Cryptographic Schemes}
 
-Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. The ZKP system we use is based on elliptic-curve cryptography so we will notate a fixed elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following constructions. See \autoref{def:concrete-zkp} for more.
+Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. The ZKP system we use is based on elliptic-curve cryptography so we will notate a fixed embedded elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following constructions. See \autoref{def:concrete-zkp} for more.
 
-\begin{definitiontoc}{Commitment Schemes}
-    Commitment schemes are used for constructing the ephemeral secret key and for constructing \UTXO{s} and \VoidNumber{s}.
-
-    For $\COM^{\EK}$ we use a Poseidon Sponge Commitment ... \TODO{elaborate on this construction}
-
-    For $\COM^{\UTXO}$ and $\COM^{\VN}$, we use \emph{Pedersen Commitments} over $(\mathbb{G}, \mathbb{F})$:
-
-    \[\COM_r(x) : \mathbb{F} \times \mathbb{F} \to \mathbb{G} := (r \cdot G) + (x \cdot H)\]
-
-    where $G,\,H \in \mathbb{G}$ are fixed public points, different for each of the two commitment schemes.
+\begin{definitiontoc}{Commitment Schemes and Hash Functions}
+    \TODO{Poseidon hash for \UTXO{} commitment (arity-4) or Pedersen Commitment variant and Poseidon hash for \VN{} hash (arity-2)}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Agreement Scheme}
@@ -34,21 +26,13 @@ Since we use a Zero-Knowledge Proving System, we want the cryptographic construc
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Derivation Functions}
-    For $\KDF^{\Trapdoor}$, we use ... \TODO{for hashing: ?}
-
-    For $\KDF$, we use ... \TODO{for encryption: Blake2s with magic-number salt}
-\end{definitiontoc}
-
-\begin{definitiontoc}{Hybrid Public Key Encryption}
-    For $\HPKE$, we use
-
-    \TODO{integrated encryption scheme: combination of above encryption protocols}
+    For $\KDF$, we use ... \TODO{Blake2s with magic-number salt}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
     For $\DCA$, we use
 
-    \TODO{dynamic cryptographic accumulator: Merkle Tree with Poseidon (?) hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the accumulated value)}
+    \TODO{dynamic cryptographic accumulator: Merkle Tree with Poseidon hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the accumulated value)}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System} \label{def:concrete-zkp}
