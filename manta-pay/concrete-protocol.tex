@@ -1,0 +1,43 @@
+\lsection{Concrete Protocol}{concrete-protocol}
+
+\TODO{other than cryptographic schemes, are there any implementation details we want to include here?}
+
+\subsection{Concrete Cryptographic Schemes}
+
+Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. The ZKP system we use is based on elliptic-curve cryptography so we will notate a fixed embedded elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following constructions. See \autoref{def:concrete-zkp} for more.
+
+\begin{definitiontoc}{Commitment Schemes and Hash Functions}
+    \TODO{Poseidon hash for \UTXO{} commitment (arity-4) or Pedersen Commitment variant and Poseidon hash for \VN{} hash (arity-2)}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Key-Agreement Scheme}
+    For $\KA$, we use a Diffie-Hellman Key Exchange over $(\mathbb{G}, \mathbb{F})$:
+    \begin{align*}
+        \KA.\derive(x)   &: \mathbb{F} \to \mathbb{G}                   := x \cdot G \\
+        \KA.\agree(x, y) &: \mathbb{F} \times \mathbb{G} \to \mathbb{G} := x \cdot y
+    \end{align*}
+    where $G$ is a fixed public point.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
+    For $\SYM$, we use
+
+    \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Key-Derivation Functions}
+    For $\KDF$, we use ... \TODO{Blake2s with magic-number salt}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Dynamic Cryptographic Accumulator}
+    For $\DCA$, we use
+
+    \TODO{dynamic cryptographic accumulator: Merkle Tree with Poseidon hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the accumulated value)}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System} \label{def:concrete-zkp}
+    For $\NIZK$, we use
+
+    \TODO{non-interactive zero-knowledge proving system: Groth16 and/or PLONK}
+\end{definitiontoc}
+

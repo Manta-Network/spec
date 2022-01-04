@@ -1,0 +1,33 @@
+\documentclass{article}
+
+\input{prelude}
+
+\title{\textbf{\MantaPay{} Protocol Specification}\\ v\input{version}}
+\author{Shumo Chu and Brandon H. Gomes}
+\date{\today}
+
+\begin{document}
+    
+\maketitle
+
+\begin{abstract}
+    \MantaPay{} is an implementation of a \emph{decentralized anonymous payment} scheme based on the $\MantaDAP$ protocol outlined in the original \href{https://eprint.iacr.org/2021/743.pdf}{\Manta{} whitepaper}.
+\end{abstract}
+    
+\tableofcontents
+\newpage
+
+\input{introduction}
+\input{notation}
+\input{concepts}
+\input{abstract-protocol}
+\input{concrete-protocol}
+\input{differences}
+\input{acknowledgements}
+
+\lsection{References}{references}
+\bibliographystyle{plain}
+\bibliography{ref}
+
+\end{document}
+

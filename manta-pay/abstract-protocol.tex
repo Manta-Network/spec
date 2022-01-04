@@ -1,0 +1,487 @@
+\lsection{Abstract Protocol}{abstract-protocol}
+
+\subsection{Abstract Cryptographic Schemes}
+
+In the following section, we outline the formal specifications for all of the \emph{cryptographic schemes} used in the \MantaPay{} protocol.
+
+\begin{definitiontoc}{Commitment Scheme}
+    A \emph{commitment scheme} $\COM$ is defined by the schema:
+    \begin{align*}
+        \Trapdoor             &: \Type \\
+        \Input                &: \Type \\
+        \Output               &: \Type \\
+        \TrapdoorDistribution &: \mathfrak{D}(\Trapdoor) \\
+        \commit               &: \Trapdoor \times \Input \to \Output
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Trapdoor$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
+        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
+    \end{itemize}
+
+    \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Hash Function}
+    A \emph{hash function} $\HASH$ is defined by the schema:
+    \begin{align*}
+        \Input  &: \Type \\
+        \Output &: \Type \\
+        \hash   &: \Input \to \Output
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Collision Resistance}: It is infeasible to find $a, b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
+        \item \textbf{Pre-Image Resistance}: Given $y : \Output$, it is infeasible to find an $x : \Input$ such that $\hash(x) = y$.
+        \item \textbf{Second Pre-Image Resistance}: Given $a : \Input$, it is infeasible to find another $b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
+    \end{itemize}
+
+    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into two parts.
+
+    \textbf{Notation}: For convenience, we may refer to $\HASH.\hash(x)$ by $\HASH(x)$.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Key-Agreement Scheme}
+    A \emph{key-agreement scheme} $\KA$ is defined by the schema:
+    \begin{align*}
+        \SecretKey    &: \Type \\
+        \PublicKey    &: \Type \\
+        \SharedSecret &: \Type \\
+        \derive       &: \SecretKey \to \PublicKey \\
+        \agree        &: \SecretKey \times \PublicKey \to \SharedSecret
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
+        \item \TODO{security properties}
+    \end{itemize}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
+    A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
+    \begin{align*}
+        \Key &: \Type \\
+        \Plaintext &: \Type \\
+        \Ciphertext &: \Type \\
+        \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
+        \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Invertibility}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
+            \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
+        \item \TODO{hiding, one-time encryption security?}
+    \end{itemize}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Key-Derivation Function}
+    A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
+    \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
+    with the following properties:
+    \begin{itemize}
+        \item \TODO{security properties}
+    \end{itemize}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
+    A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
+    \begin{itemize}
+        \item Encryption: Given an ephemeral secret key $\esk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
+            \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\esk), \SYM.\encrypt(\KDF(\KA.\agree(\esk, \pk)), p)\right)\]
+        \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\epk, c)$, we can decrypt $m$, producing the plaintext,
+            \[p : \Option(\SYM.\Plaintext) := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \epk)), c)\]
+            which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
+    \end{itemize}
+
+    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \SYM.\Ciphertext \times \KA.\PublicKey$, and the above two algorithms by
+    \begin{align*}
+        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
+        \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
+    \end{align*}
+    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys are ephemeral, etc.} \\
+\end{definitiontoc}
+
+\begin{definitiontoc}{Dynamic Cryptographic Accumulator}
+    A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
+    \begin{align*}
+        \Item     &: \Type \\
+        \Output   &: \Type \\
+        \Witness  &: \Type \\
+        \StateT   &: \Type \\
+        \current  &: \StateT \to \Output \\
+        \insertF  &: \Item \times \StateT \to \StateT \\
+        \contains &: \Item \times \StateT \to \Option(\Output \times \Witness) \\
+        \verify   &: \Item \times \Output \times \Witness \to \Bool
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Unique Accumulated Values}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
+            Then, if we collect the accumulated values for these states, $z_i := \current(s_i)$, there should be exactly $\abs{I}$-many unique values, one for each state update.
+        \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
+            Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
+            \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
+        \item \TODO{security properties}
+    \end{itemize}
+    \TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
+    A \emph{non-interactive zero-knowledge proving system} $\NIZK$ is defined by the schema:
+    \begin{align*}
+        \Statement    &: \Type \\
+        \ProvingKey   &: \Type \\
+        \VerifyingKey &: \Type \\
+        \PublicInput  &: \Type \\
+        \SecretInput  &: \Type \\
+        \Proof        &: \Type \\
+        \keys         &: \Statement \to \mathfrak{D}(\ProvingKey \times \VerifyingKey) \\
+        \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}(\Option(\Proof)) \\
+        \verify       &: \VerifyingKey \times \PublicInput \times \Proof \to \Bool
+    \end{align*}
+    \textbf{Notation}: We use the following notation for a $\NIZK$:
+    \begin{itemize}
+        \item We write the $\Statement$ and $\ProvingKey$ arguments of $\prove$ in the superscript and subscript respectively,
+            \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
+        \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
+            \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
+        \item We say that $(x, w) : \PublicInput \times \SecretInput$ has the property of being a $\satisfying$ input whenever
+            \[\satisfying^P_\pk(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
+    \end{itemize}
+
+    Every $\NIZK$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
+
+    \begin{itemize}
+        \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
+        \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
+            \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\PublicInput \times \Proof)\]
+             there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
+            \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\SecretInput)\]
+            such that the following probability is negligible:
+            \[
+                \Prob{
+                    \satisfying^P_\pk(x, w) = \False \\
+                    \verify_\vk(x, w) = \True
+                }{
+                    (\pk, \vk) \sim \keys(P) \\
+                    (x, \pi) \sim \mathcal{A}(\pk, \vk) \\
+                    w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
+                }
+            \]
+        \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
+            \[
+                \Prob{
+                    \satisfying^P_\pk(x, w) = \True \\
+                    \mathcal{D}(\pi) = \True
+                }{
+                    (\pk, \vk) \sim \keys(P) \\
+                    (x, w) \sim \mathcal{D}(\pk, \vk) \\
+                    \Some(\pi) \sim \prove^P_\pk(x, w)
+                }
+                \,\,\text{and}\,\,
+                \Prob{
+                    \satisfying^P_\pk(x, w) = \True \\
+                    \mathcal{D}(\pi) = \True
+                }{
+                    (\pk, \vk) \sim \mathcal{S}(P) \\
+                    (x, w) \sim \mathcal{D}(\pk, \vk) \\
+                    \pi \sim \mathcal{S}(x)
+                }
+            \]
+        \item \textbf{Succinctness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\Some(\pi) \sim \prove(P, \pk, x, w)$, then $\abs{\pi} = \mathcal{O}(1)$, and $\verify(\vk, x, \pi)$ runs in time $\mathcal{O}(\abs{x})$.
+    \end{itemize}
+\end{definitiontoc}
+
+\lsubsection{Addresses and Key Components}{addresses-and-key-components}
+
+Given a choice of $\HPKE$ we have the following definitions:
+
+\begin{definition}[Spending Key]
+    A \SpendingKey{} is the following pair of keys:
+    \begin{align*}
+        \spend &: \HPKE.\KA.\SecretKey \\
+        \view  &: \HPKE.\KA.\SecretKey
+    \end{align*}
+    The second secret key, $\view$, is called the \ViewingKey{}.
+\end{definition}
+
+\begin{definition}[Receiving Key]
+    A \ReceivingKey{} is the following pair of keys:
+    \begin{align*}
+        \spend &: \HPKE.\KA.\PublicKey \\
+        \view  &: \HPKE.\KA.\PublicKey
+    \end{align*}
+    which is derived from a spending key $\sk : \SpendingKey$ with the following algorithm:
+    \begin{align*}
+        \rk.\spend &:= \KA.\derive(\sk.\spend) \\
+        \rk.\view  &:= \KA.\derive(\sk.\view) 
+    \end{align*}
+\end{definition}
+
+A keypair $(\sk, \rk) : \SpendingKey \times \ReceivingKey$, represents the ability to spend and receive \Asset{s} as a unique \emph{representative participant} on the \Ledger. Any user of the \MantaPay{} protocol can create many such keypairs, but each one represents a different participant and \Asset{s} must be transfered between them using the \Transfer{} protocol as if they were independently owned by different users. A \ReceivingKey{} can be used to receive any number of \Asset{s} and the \SpendingKey{} can be used to spend any number of those \Asset{s}. See \autoref{sec:abstract-semantic-transactions} for the protocol used to spend a subset of \Asset{s} owned by a single user.
+
+\textbf{Important}: To every spending key $\sk : \SpendingKey$ we have an assoicated viewing key $\vk : \ViewingKey := \sk.\view$ which allows the owner to decrypt the encrypted messages associated to $\sk$, but does not contain enough information to perform a spend with those \Asset{s}. This can be used for account auditing purposes, and for removing anonymity, but sharing this key should be done with caution.
+
+In general, one may have a collection of viewing keys which can be used to separate the encrypted notes into different sets, by key. This way only certain transactions can be de-anonymized by certain parties.
+
+\lsubsection{\Transfer{} Protocol}{transfer-protocol}
+
+The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \Asset{s} among participants while preserving their anonymity. The \Transfer{} is made up of special cryptographic constructions called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction. To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \ReceivingKey{s} from other participants for the outputs, assigning each key a subset of the input \Asset{s}, and then builds a \Transfer{} object representing the transfer they want to build. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated and stored, representing a completed state transition in the \Ledger{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{must} not be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
+
+We begin by defining the cryptographic primitives involved in the \Transfer{} protocol:
+
+\begin{definition}[Transfer Configuration]
+    A \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
+    \begin{itemize}
+        \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
+        \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
+        \item \textbf{Void Number Hash}: $\HASH^{\VN}$
+        \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
+        \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
+    \end{itemize}
+    with the following notational conventions:
+    \begin{align*}
+        \KA            &:= \HPKE.\KA \\
+        \Trapdoor      &:= \COM^{\UTXO}.\Trapdoor \\
+        \UTXO          &:= \COM^{\UTXO}.\Output \\
+        \VoidNumber    &:= \HASH^{\VN}.\Output \\
+        \EncryptedNote &:= \HPKE.\Message \\
+        \UTXOSet       &:= \DCA
+    \end{align*}
+    and the following constraints:
+    \begin{align*}
+        \COM^{\UTXO}.\Input    &= \Asset \\
+        \HASH^{\VN}.\Input     &= \UTXO \times \KA.\SecretKey \\
+        \UTXOSet.\Item         &= \UTXO \\
+        \ValidTransfer         &: \NIZK.\Statement
+    \end{align*}
+    where \ValidTransfer{} is defined below.
+\end{definition}
+
+For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
+
+\begin{definition}[\Transfer{} Sender]
+    A \Sender{} is the following tuple:
+    \begin{align*}
+        \sk       &: \SpendingKey \\
+        \epk      &: \KA.\PublicKey \\
+        \trapdoor &: \Trapdoor \\
+        \asset    &: \Asset \\
+        \cm       &: \UTXO \\
+        \cm_z     &: \UTXOSet.\Output \\
+        \cm_w     &: \UTXOSet.\Witness \\
+        \vn       &: \VoidNumber
+    \end{align*}
+
+    A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
+    \begin{align*}
+        S.\sk                &:= \sk \\
+        \epk, c              &:= \note \\
+        \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
+        S.\asset             &:= \asset \\
+        S.\epk               &:= \epk \\
+        S.\trapdoor          &:= \KA.\agree(S.\sk.\spend, S.\epk) \\
+        S.\cm                &:= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
+        \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
+        S.\cm_z              &:= \cm_z \\
+        S.\cm_w              &:= \cm_w \\
+        S.\vn                &:= \HASH^{\VN}(S.\cm, S.\sk.\spend) \\
+    \end{align*}
+\end{definition}
+
+\begin{definition}[\Transfer{} Sender Post]
+    A \SenderPost{} is the following tuple extracted from a \Sender{}:
+    \begin{align*}
+        \cm_z &: \UTXOSet.\Output \\
+        \vn   &: \VoidNumber
+    \end{align*}
+    which are the parts of a \Sender{} which should be \emph{posted} to the \Ledger{}.
+\end{definition}
+
+\begin{definition}[\Transfer{} Receiver]
+    A \Receiver{} is the following tuple:
+    \begin{align*}
+        \rk       &: \ReceivingKey \\
+        \esk      &: \KA.\SecretKey \\
+        \trapdoor &: \Trapdoor \\
+        \asset    &: \Asset \\
+        \cm       &: \UTXO \\
+        \note     &: \EncryptedNote
+    \end{align*}
+    
+    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a random ephemeral secret key $\esk : \HPKE.\KA.\SecretKey$ with the following algorithm:
+    \begin{align*}
+        R.\rk       &:= \rk \\
+        R.\esk      &:= \esk \\
+        R.\trapdoor &:= \KA.\agree(R.\esk, R.\rk.\spend) \\
+        R.\asset    &:= \asset \\
+        R.\cm       &:= \COM^{\UTXO}(R.\trapdoor, R.\asset) \\
+        R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, R.\asset)
+    \end{align*}
+\end{definition}
+
+\begin{definition}[\Transfer{} Receiver Post]
+    A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
+    \begin{align*}
+        \cm       &: \UTXO \\
+        \note     &: \EncryptedNote
+    \end{align*}
+    which are the parts of a \Receiver{} which should be \emph{posted} to the \Ledger{}.
+\end{definition}
+
+\begin{definition}[\Transfer{} Sources and Sinks]
+    A \Source{} (or a \Sink{}) is an \Asset{} representing a public input (or output) of a \Transfer{}.
+\end{definition}
+
+\begin{definition}[\Transfer{} Object]
+    A \Transfer{} is the following tuple:
+    \begin{align*}
+        \sources    &: \List(\Asset) \\
+        \senders    &: \List(\Sender) \\
+        \receivers  &: \List(\Receiver) \\
+        \sinks      &: \List(\Asset)
+    \end{align*}
+    The \emph{shape} of a \Transfer{} is the following $4$-tuple of cardinalities of those sets
+    \[\left(\abs{T.\sources}, \abs{T.\senders}, \abs{T.\receivers}, \abs{T.\sinks}\right)\]
+\end{definition}
+
+In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the following constraints:
+
+\begin{itemize}
+    \item \textbf{Same Id}: All the \AssetId{s} in the \Transfer{} must be equal.
+    \item \textbf{Balanced}: The sum of input \AssetValue{s} must be equal to the sum of output \AssetValue{s}.
+    \item \textbf{Well-formed Senders}: All of the \Sender{s} in the \Transfer{} must be constructed according to the above \Sender{} definition.
+    \item \textbf{Well-formed Receivers}: All of the \Receiver{s} in the \Transfer{} must be constructed according to the above \Receiver{} definition.
+\end{itemize}
+
+In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the \Ledger{}. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the \Ledger{} are valid. Deviation from the protocol in encryption or decryption stages does not reduce the security of the protocol for honest participants, it only makes certain assets inaccessible to honest receivers if they are not aware of the devation, since they cannot decrypt assets normally. This does not effect the \emph{balanced transfer} or \emph{ownership} invariants of the protocol for the existing assets of ledger participants.
+
+\begin{definition}[\Transfer{} Validity \Statement{}]\label{def:transfer-validity-statement}
+    A transfer $T : \Transfer$ is considered \emph{valid} if and only if
+    \begin{enumerate}
+        \item All the \AssetId{s} in $T$ are equal:
+            \[
+                \abs{
+                    \left(\bigcup_{a \in T.\sources} a.\ID \right)
+                    \cup
+                    \left(\bigcup_{S \in T.\senders} S.\asset.\ID \right)
+                    \cup
+                    \left(\bigcup_{R \in T.\receivers} R.\asset.\ID \right)
+                    \cup
+                    \left(\bigcup_{a \in T.\sinks} a.\ID \right)
+                } = 1
+            \]
+        \item The sum of input \AssetValue{s} is equal to the sum of output \AssetValue{s}:
+            \[
+                \left(\sum_{a \in T.\sources} a.\VALUE\right)
+                +
+                \left(\sum_{S \in T.\senders} S.\asset.\VALUE\right)
+                =
+                \left(\sum_{R \in T.\receivers} R.\asset.\VALUE\right)
+                +
+                \left(\sum_{a \in T.\sinks} a.\VALUE\right)
+            \]
+        \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
+            \begin{align*}
+                S.\trapdoor                               &= \KA.\agree(S.\sk.\spend, S.\epk) \\
+                S.\cm                                     &= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
+                S.\vn                                     &= \HASH^{\VN}(S.\cm, S.\sk.\spend) \\
+                \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
+            \end{align*}
+        \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
+            \begin{align*}
+                R.\note.\epk &= \KA.\derive(R.\esk) \\
+                R.\trapdoor  &= \KA.\agree(R.\esk, R.\rk.\spend) \\
+                R.\cm        &= \COM^{\UTXO}(R.\trapdoor, R.\asset)
+            \end{align*}
+    \end{enumerate}
+    \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
+\end{definition}
+
+\begin{definition}[\Transfer{} Post]
+    A \TransferPost{} is the following tuple:
+    \begin{align*}
+        \sources    &: \List(\Source) \\
+        \senders    &: \List(\SenderPost) \\
+        \receivers  &: \List(\ReceiverPost) \\
+        \sinks      &: \List(\Sink) \\
+        \pi         &: \NIZK.\Proof 
+    \end{align*}
+    A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \NIZK.\ProvingKey$ and a given $T : \Transfer$:
+    \begin{align*}
+        x             &:= \Transfer.\public(T) \\
+        w             &:= \Transfer.\secret(T) \\
+        \Some(\pi)    &\sim \NIZK.\prove^\ValidTransfer_\pk(x, w) \\
+        P.\sources    &:= x.\sources \\
+        P.\senders    &:= x.\senders \\
+        P.\receivers  &:= x.\receivers \\
+        P.\sinks      &:= x.\sinks \\
+        P.\pi         &:= \pi
+    \end{align*}
+    where $\Transfer.\public$ returns \SenderPost{s} for each \Sender{} in $T$ and \ReceiverPost{s} for each \Receiver{} in $T$, keeping \Source{s} and \Sink{s} as they are, and $\Transfer.\secret$ returns all the rest of $T$ which is not part of the output of $\Transfer.\public$.
+\end{definition}
+
+Now that a participant has constructed a transfer post $P : \TransferPost$ they can send it to the \Ledger{} for verification. 
+
+\begin{definition}[\Ledger{}-side \Transfer{} Validity]
+    To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
+    \begin{itemize}
+        \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
+        \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
+        \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
+        \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
+        \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
+        \item \textbf{Verify \Transfer{}}: Check that $\NIZK.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$.
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[\Ledger{} \Transfer{} Update]
+    After checking that a given \TransferPost{} $P$ is valid, the \Ledger{} updates its state by performing the following changes:
+    \begin{itemize}
+        \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances using the \Source{s} and \Sink{s} present in $P$.
+        \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
+        \item \textbf{\VoidNumberSet{} Update}: The new \VoidNumber{s} are appended to the \VoidNumberSet{}.
+    \end{itemize}
+\end{definition}
+
+\lsubsection{Semantic Transactions}{abstract-semantic-transactions}
+
+For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their shielded assets and use them to build \TransferPost{s} to send to the \Ledger{}. The \emph{shielded balance} of any participant is the sum of the balances of their shielded assets, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their shielded balance, the participant would need to accumulate all of the relevant fragments into a large enough \emph{shielded asset} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
+
+\begin{algorithm*}
+\caption{Semantic Transaction Algorithm}
+\begin{algorithmic}
+    \Procedure {BuildTransaction}{$\sk$, $\mathcal{B}$, $\total$, $\rk$}
+        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples pairs from $\mathcal{B}$ that total at least $\total$}
+        \If{$\len(B) = 0$}
+            \State \textsf{return} $[\,]$ \Comment{Insufficient Balance}
+        \EndIf
+        \State $P \gets [\,]$ \Comment{Allocate a new list for \TransferPost{s}}
+        \While{$\len(B) > N$} \Comment{While there are enough pairs to make another \Transfer}
+            \State $A \gets [\,]$
+            \For{$b \in \next(B, N)$} \Comment{Get the next $N$ pairs from $B$}
+                \State $S \gets \BuildSenders_\sk(b)$
+                \State $[acc, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$ \Comment{Build a new accumulator and zeroes}
+                \State $P \gets P + \TransferPost(\Transfer([], S, [acc, zs...], []))$
+                \State $(A, Z) \gets (A + (acc.\tilde{d}, acc.\asset.\VALUE), Z + zs)$ \Comment{Save $acc$ for the next loop, $zs$ for the end}
+            \EndFor
+            \State $B \gets A + \remainder(B, N)$
+        \EndWhile
+        \State $S \gets \PrepareZeroes_\sk(N, B, Z, P)$ \Comment{Use $Z$ and \Mint{s} to make $B$ go up to $N$ in size.}
+        \State $R \gets \BuildReceiver_\sk(\rk, S)$
+        \State $[c, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$
+        \State \textsf{return} $P + \TransferPost(\Transfer([], S, [R, c, zs...], []))$
+    \EndProcedure
+\end{algorithmic}
+\end{algorithm*}
+
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
+
+\footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
+
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of key-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
+\[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \rk)\]
+to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\rk$.
+
+If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathcal{B}$ should be updated accordingly, removing all of the pairs which were used in the \Transfer{}. Wallets should also handle the more complex case when only some of the \Transfer{s} succeed in which case they need to be able to continue retrying the transaction until they are finally resolved. Since the only \Transfer{} which sends \Asset{s} out of the control of the user is the last one (and it recursively depends on the previous \Transfer{s}), then it is safe to continue from a partially resolved state with a simple retry of the $\textsc{BuildTransaction}$ algorithm.

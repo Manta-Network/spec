@@ -2,5 +2,5 @@
 
 These are the current specifications for the protocols in the Manta family:
 
-- [`MantaPay`](manta-pay/spec.pdf)
+- [`MantaPay`](manta-pay/)
 

@@ -1,1 +1,3 @@
-# Manta Pay Protocol Specification
+# MantaPay Protocol Specification
+
+Rendered Specification: [spec.pdf](spec.pdf)

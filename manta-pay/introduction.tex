@@ -1,0 +1,15 @@
+\lsection{Introduction}{introduction}
+
+\MantaPay{} aims to solve the long-standing privacy problems facing cryptocurrencies in the Web3 age. At its heart, it uses various cryptographic constructions including NIZK (non-interactive zero knowledge proof) systems to ensure user privacy from \emph{first principles}.
+
+\begin{table}[h]
+    \begin{tabular}{l|l|l|l|l} \hline
+        Protocol & Cryptographic Primitive & Consensus & Arbitrary Nomination & Multi-Asset \\ \hline \hline
+        ZCash (Sapling)          & NIZK   & PoW & \cmark & \xmark \\ \hline
+        Monero                   & RingCT & PoW & \cmark & \xmark \\ \hline
+        Tornado.Cash             & NIZK   & PoW & \xmark & \xmark \\ \hline
+        MantaPay \input{version} & NIZK   & PoS & \cmark & \cmark \\ \hline
+    \end{tabular}
+    \caption{Comparison of \MantaPay{} with previous constructions} \label{tab:overview}
+\end{table}
+

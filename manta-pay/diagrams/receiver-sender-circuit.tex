@@ -1,0 +1,64 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, landscape, margin=0.8in]{geometry}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{tikz-cd}
+
+\tikzcdset{row sep/normal = 2em}
+
+\begin{document}
+
+\pagenumbering{gobble}
+
+\begin{center}
+    \Large{\textbf{Receiver and Sender Circuits}} \\
+    \small{\textbf{NB}: \textit{Does not include UTXO accumulator proof.}}
+\end{center}
+
+\vspace{-1em}
+
+\begin{center}
+\begin{tikzcd}
+                                      &                                           &  &                                                          &  &                                                                       &                                     &                                                                                                                 & {} \arrow[ddddd, no head, dotted] &                                     &                               \\
+                                      &                                           &  & \textsf{id} : \mathbb{F}_\textsf{b} \arrow[lld, start anchor = west]          &  &                                                                       &                                     & |[red, draw=black]| \textsf{asset} : \textsf{Asset} \arrow[llll, dashed] \arrow[lllld, dashed, end anchor = east] \arrow[rrdd]                         &                                   &                                     &                               \\
+    |[blue, draw=black]| \textsf{utxo} : \mathbb{F}_\textsf{b} & \textsf{POSEIDON}^4 \arrow[l, Rightarrow] &  & \textsf{value} : \mathbb{F}_\textsf{b} \arrow[ll]        &  &                                                                       &                                     & |[red, draw=black]| \textsf{pk} : \mathbb{G} \arrow[ld, start anchor = west]                                                                             &                                   & |[red, draw=black]| \textsf{pvk} : \mathbb{G} \arrow[d] &                               \\
+                                      &                                           &  & \textsf{trapdoor.x} : \mathbb{F}_\textsf{b} \arrow[llu, start anchor = west, end anchor = south east]  &  & \textsf{trapdoor} : \mathbb{G} \arrow[ll, dashed] \arrow[lld, dashed, end anchor = east] & \textsf{DHKE} \arrow[l, Rightarrow] & |[red, draw=black]| \textsf{esk} \sim \mathbb{F}_\textsf{s} \arrow[l] \arrow[d, "\textsf{DHKE}" description, Rightarrow] \arrow[rr] &                                   & \textsf{AES} \arrow[r, Rightarrow]  & |[blue, draw=black]| \textsf{note} : \textsf{Note} \\
+                                      &                                           &  & \textsf{trapdoor.y} : \mathbb{F}_\textsf{b} \arrow[lluu, start anchor = west, end anchor = {[xshift=-0.75em, yshift=-0.5em]south east}] &  &                                                                       &                                     & |[blue, draw=black]| \textsf{epk} : \mathbb{G} \arrow[rru]                                                                           &                                   &                                     &                               \\
+                                      &                                           &  &                                                          &  &                                                                       &                                     &                                                                                                                 & {}                                &                                     &                              
+\end{tikzcd}
+\end{center}
+
+\begin{center}
+\begin{tikzcd}
+                                    &                                                  &  &                                                          &  &                                                                        &                                                              & {} \arrow[dddddd, no head, dotted] &                                                            &                                                 \\
+                                    &                                                  &  & \textsf{id} : \mathbb{F}_\textsf{b} \arrow[lld, start anchor = west]          &  & |[red, draw=black]| \textsf{asset} : \textsf{Asset} \arrow[ll, dashed] \arrow[lld, dashed, end anchor = east] &                                                              &                                    & \textsf{AES} \arrow[lll, Rightarrow]                       &                                                 \\
+                                    & \textsf{POSEIDON}^4 \arrow[d, Rightarrow]        &  & \textsf{value} : \mathbb{F}_\textsf{b} \arrow[ll]        &  &                                                                        & \textsf{epk} : \mathbb{G} \arrow[d]                          &                                    & |[red, draw=black]| \textsf{note} : \textsf{Note} \arrow[u] \arrow[ll, dashed] & |[red, draw=black]| \textsf{svk} : \mathbb{F}_\textsf{s} \arrow[lu] \\
+                                    & \textsf{utxo} : \mathbb{F}_\textsf{b} \arrow[dd] &  & \textsf{trapdoor.x} : \mathbb{F}_\textsf{b} \arrow[llu, start anchor = west, end anchor = south east]  &  & \textsf{trapdoor} : \mathbb{G} \arrow[ll, dashed] \arrow[lld, dashed, end anchor = east]  & \textsf{DHKE} \arrow[l, Rightarrow]                          &                                    &                                                            &                                                 \\
+                                    &                                                  &  & \textsf{trapdoor.y} : \mathbb{F}_\textsf{b} \arrow[lluu, start anchor = west, end anchor = {[xshift=-0.75em, yshift=-0.5em]south east}] &  &                                                                        &                                                              &                                    &                                                            &                                                 \\
+    |[blue, draw=black]| \textsf{vn} : \mathbb{F}_\textsf{b} & \textsf{POSEIDON}^2 \arrow[l, Rightarrow]        &  &                                                          &  &                                                                        & |[red, draw=black]| \textsf{sk} : \mathbb{F}_\textsf{s} \arrow[uu] \arrow[lllll] &                                    &                                                            &                                                 \\
+                                    &                                                  &  &                                                          &  &                                                                        &                                                              & {}                                 &                                                            &                                                
+\end{tikzcd}
+\end{center}
+
+\vspace{2em}
+
+\[
+    (\rightarrow) := \text{input}
+    \,\,\,\,\,\,\,
+    (\Rightarrow) := \text{computation}
+    \,\,\,\,\,\,\,
+    (\dasharrow) := \text{projection}
+    \,\,\,\,\,\,\,
+    (\,\cdots\,) := \text{circuit boundary}
+    \,\,\,\,\,\,\,
+    ({\color{red}{x : T}}) := \text{private input}
+    \,\,\,\,\,\,\,
+    ({\color{blue}{x : T}}) := \text{public output}
+\]
+
+\end{document}
