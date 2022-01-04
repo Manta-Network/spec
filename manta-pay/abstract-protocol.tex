@@ -355,7 +355,7 @@ In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the 
     \item \textbf{Well-formed Receivers}: All of the \Receiver{s} in the \Transfer{} must be constructed according to the above \Receiver{} definition.
 \end{itemize}
 
-In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the \Ledger{}. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the \Ledger{} are valid. Deviation from the protocol in encryption or decryption stages does not reduce the security of the protocol for honest participants.
+In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the \Ledger{}. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the \Ledger{} are valid. Deviation from the protocol in encryption or decryption stages does not reduce the security of the protocol for honest participants, it only makes certain assets inaccessible to honest receivers if they are not aware of the devation, since they cannot decrypt assets normally. This does not effect the \emph{balanced transfer} or \emph{ownership} invariants of the protocol for the existing assets of ledger participants.
 
 \begin{definition}[\Transfer{} Validity \Statement{}]\label{def:transfer-validity-statement}
     A transfer $T : \Transfer$ is considered \emph{valid} if and only if
@@ -429,7 +429,6 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
     \begin{itemize}
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
-        \item \textbf{Shielded Withdraw}: The total balance in $P.\sinks$ does not exceed the amount in the $\ShieldedAssetPool{}$ balance.
         \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
         \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
         \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
@@ -441,8 +440,6 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
     After checking that a given \TransferPost{} $P$ is valid, the \Ledger{} updates its state by performing the following changes:
     \begin{itemize}
         \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances using the \Source{s} and \Sink{s} present in $P$.
-        \item \textbf{Pool Update}: The \ShieldedAssetPool{} balance is updated to reflect the new shielded balances, increasing by the amount:
-            \[\left(\sum_{a \in P.\sources} a.\VALUE\right) - \left(\sum_{a \in P.\sinks} a.\VALUE\right)\]
         \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
         \item \textbf{\VoidNumberSet{} Update}: The new \VoidNumber{s} are appended to the \VoidNumberSet{}.
     \end{itemize}
@@ -451,14 +448,6 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 \lsubsection{Semantic Transactions}{abstract-semantic-transactions}
 
 For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their shielded assets and use them to build \TransferPost{s} to send to the \Ledger{}. The \emph{shielded balance} of any participant is the sum of the balances of their shielded assets, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their shielded balance, the participant would need to accumulate all of the relevant fragments into a large enough \emph{shielded asset} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
-
-Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
-
-\footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
-
-For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of key-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
-\[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \rk)\]
-to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\rk$.
 
 \begin{algorithm*}
 \caption{Semantic Transaction Algorithm}
@@ -487,4 +476,12 @@ to receive a $\List(\TransferPost)$ to send to the ledger, representing the tran
 \end{algorithmic}
 \end{algorithm*}
 
-If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathcal{B}$ should be updated accordingly, removing all of the pairs which were used in the \Transfer{}.
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
+
+\footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
+
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of key-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
+\[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \rk)\]
+to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\rk$.
+
+If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathcal{B}$ should be updated accordingly, removing all of the pairs which were used in the \Transfer{}. Wallets should also handle the more complex case when only some of the \Transfer{s} succeed in which case they need to be able to continue retrying the transaction until they are finally resolved. Since the only \Transfer{} which sends \Asset{s} out of the control of the user is the last one (and it recursively depends on the previous \Transfer{s}), then it is safe to continue from a partially resolved state with a simple retry of the $\textsc{BuildTransaction}$ algorithm.
