@@ -236,23 +236,22 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \begin{itemize}
         \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
         \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
-        \item \textbf{Void Number Hash}: $\HASH^{\VN}$
+        \item \textbf{Void Number Commitment Scheme}: $\COM^{\VN}$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
         \KA            &:= \HPKE.\KA \\
-        \Trapdoor      &:= \COM^{\UTXO}.\Trapdoor \\
         \UTXO          &:= \COM^{\UTXO}.\Output \\
-        \VoidNumber    &:= \HASH^{\VN}.\Output \\
+        \VoidNumber    &:= \COM^{\VN}.\Output \\
         \EncryptedNote &:= \HPKE.\Message \\
         \UTXOSet       &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
         \COM^{\UTXO}.\Input    &= \Asset \\
-        \HASH^{\VN}.\Input     &= \UTXO \times \KA.\SecretKey \\
+        \COM^{\VN}.\Input     &= \UTXO \times \KA.\SecretKey \\
         \UTXOSet.\Item         &= \UTXO \\
         \ValidTransfer         &: \NIZK.\Statement
     \end{align*}
@@ -265,8 +264,9 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \Sender{} is the following tuple:
     \begin{align*}
         \sk       &: \SpendingKey \\
+        \rk.\spend &: \KA.\PublicKey \\ 
+        \esk    &: \KA.\SecretKey \\
         \epk      &: \KA.\PublicKey \\
-        \trapdoor &: \Trapdoor \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \cm_z     &: \UTXOSet.\Output \\
@@ -277,16 +277,17 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
     \begin{align*}
         S.\sk                &:= \sk \\
+        S.\rk.\spend               &:= \KA.\derive(S.\sk.\spend) \\
         \epk, c              &:= \note \\
-        \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
+        \Some\left((\esk, \asset)\right)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
         S.\asset             &:= \asset \\
+        S.\esk               &:= \esk \\
         S.\epk               &:= \epk \\
-        S.\trapdoor          &:= \KA.\agree(S.\sk.\spend, S.\epk) \\
-        S.\cm                &:= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
+        S.\cm                &:= \COM^{\UTXO}(S.\esk, S.\rk.\spend, S.\asset) \\
         \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
         S.\cm_z              &:= \cm_z \\
         S.\cm_w              &:= \cm_w \\
-        S.\vn                &:= \HASH^{\VN}(S.\cm, S.\sk.\spend) \\
+        S.\vn                &:= \COM^{\VN}(S.\cm, S.\sk.\spend) 
     \end{align*}
 \end{definition}
 
@@ -304,7 +305,6 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         \rk       &: \ReceivingKey \\
         \esk      &: \KA.\SecretKey \\
-        \trapdoor &: \Trapdoor \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
@@ -314,10 +314,9 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         R.\rk       &:= \rk \\
         R.\esk      &:= \esk \\
-        R.\trapdoor &:= \KA.\agree(R.\esk, R.\rk.\spend) \\
         R.\asset    &:= \asset \\
-        R.\cm       &:= \COM^{\UTXO}(R.\trapdoor, R.\asset) \\
-        R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, R.\asset)
+        R.\cm       &:= \COM^{\UTXO}(R.\esk, R.\rk.\spend, R.\asset) \\
+        R.\note     &:= \HPKE.\encrypt \left( R.\rk.\view, R.\esk, (R.\esk, R.\asset) \right)
     \end{align*}
 \end{definition}
 
@@ -384,16 +383,15 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\trapdoor                               &= \KA.\agree(S.\sk.\spend, S.\epk) \\
-                S.\cm                                     &= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
-                S.\vn                                     &= \HASH^{\VN}(S.\cm, S.\sk.\spend) \\
+                S.\rk.\spend                              &= \KA.\derive(S.\sk.\spend) \\
+                S.\cm                                     &= \COM^{\UTXO}(S.\esk, S.\rk.\spend, S.\asset) \\
+                S.\vn                                     &= \COM^{\VN}(S.\cm, S.\sk.\spend) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
                 R.\note.\epk &= \KA.\derive(R.\esk) \\
-                R.\trapdoor  &= \KA.\agree(R.\esk, R.\rk.\spend) \\
-                R.\cm        &= \COM^{\UTXO}(R.\trapdoor, R.\asset)
+                R.\cm        &= \COM^{\UTXO}(R.\esk, R.\rk.\spend, R.\asset)
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
