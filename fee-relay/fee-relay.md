@@ -1,5 +1,7 @@
 # Manta Fee Relayer Spec
 
+Status: Draft
+
 ## Motivation
 
 In order to publish a private transaction on Manta Network, clients must pay a MANTA-denominated fee from a public account. Without mitigation, this is a significant privacy leak.
