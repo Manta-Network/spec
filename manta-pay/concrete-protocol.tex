@@ -1,13 +1,13 @@
 \lsection{Concrete Protocol}{concrete-protocol}
 
-\TODO{other than cryptographic schemes, are there any implementation details we want to include here?}
+We define the instantiation of the abstract protol in this section.
 
 \subsection{Concrete Cryptographic Schemes}
 
 Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. The ZKP system we use is based on elliptic-curve cryptography so we will notate a fixed embedded elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following constructions. See \autoref{def:concrete-zkp} for more.
 
 \begin{definitiontoc}{Commitment Schemes and Hash Functions}
-    \TODO{Poseidon hash for \UTXO{} commitment (arity-4) or Pedersen Commitment variant and Poseidon hash for \VN{} hash (arity-2)}
+    Poseidon hash \cite{KRRS21USENIX} for \UTXO{} commitment (arity-4) or Pedersen Commitment variant and Poseidon hash for \VN{} hash (arity-2)
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Agreement Scheme}
@@ -20,13 +20,11 @@ Since we use a Zero-Knowledge Proving System, we want the cryptographic construc
 \end{definitiontoc}
 
 \begin{definitiontoc}{Symmetric-Key Encryption Scheme}
-    For $\SYM$, we use
-
-    \TODO{symmetric-key encryption scheme: AES-GCM with magic-number nonce and no associated data}
+    For $\SYM$, we use symmetric-key encryption scheme: AES-GCM~\cite{rfc5288} with magic-number nonce and no associated data.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Derivation Functions}
-    For $\KDF$, we use ... \TODO{Blake2s with magic-number salt}
+    For $\KDF$, we use Blake2s~\cite{rfc7693} with magic-number salt.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
@@ -36,8 +34,6 @@ Since we use a Zero-Knowledge Proving System, we want the cryptographic construc
 \end{definitiontoc}
 
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System} \label{def:concrete-zkp}
-    For $\NIZK$, we use
-
-    \TODO{non-interactive zero-knowledge proving system: Groth16 and/or PLONK}
+    For $\NIZK$, the protocol can use non-interactive zero-knowledge proving system like Groth16 \cite{KRRS21USENIX} and/or PLONK/PLONKUP~\cite{plonk,plonkup}. 
 \end{definitiontoc}
 
