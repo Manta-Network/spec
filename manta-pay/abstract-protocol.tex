@@ -60,7 +60,7 @@ In the following section, we outline the formal specifications for all of the \e
 \end{definitiontoc}
 
 \begin{definitiontoc}{Symmetric-Key Encryption Scheme}
-    A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
+    A \emph{one-time symmetric-key encryption scheme} $\SYM$ is defined by the schema:
     \begin{align*}
         \Key &: \Type \\
         \Plaintext &: \Type \\
@@ -70,19 +70,15 @@ In the following section, we outline the formal specifications for all of the \e
     \end{align*}
     with the following properties:
     \begin{itemize}
-        \item \textbf{Invertibility}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
+        \item \textbf{Soundness}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
             \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
-        \item \TODO{hiding, one-time encryption security?}
+        \item \textbf{Security Requirement}: The symmetric-key encryption scheme must be one-time (INT-CTXT $\land$ IND-CPA)-secure \cite{BC2000AC}. ``One-time'' means that an honest protocol participant will almost surely encrypt only one message with a given key; however, the adversary could make many adaptive chosen ciphertext queries for a given key.
     \end{itemize}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Derivation Function}
     A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
     \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
-    with the following properties:
-    \begin{itemize}
-        \item \TODO{security properties}
-    \end{itemize}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
@@ -100,7 +96,7 @@ In the following section, we outline the formal specifications for all of the \e
         \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
-    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys are ephemeral, etc.} \\
+    \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
@@ -124,7 +120,6 @@ In the following section, we outline the formal specifications for all of the \e
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
             \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
-        \item \TODO{security properties}
     \end{itemize}
     \TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
 \end{definitiontoc}
