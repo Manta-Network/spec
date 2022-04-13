@@ -53,7 +53,9 @@ In the following section, we outline the formal specifications for all of the \e
     with the following properties:
     \begin{itemize}
         \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
-        \item \TODO{security properties}
+        \item \textbf{Passive Security}: Even if an adversary who eavedrops the network communication, she cannot forge the agreed secret unless she knows how to break Diffie-Hellman Problem.
+        \item \textbf{Known-key Security}: Suppose an adversary learned a shared secret from the past session, the adversary does not gain any additional information from combining the past key and public visible data for the purpose of deducting future shared secrets.
+        \item \textbf{No Key Control}: The shared secrets are determined by both parties, neither party clone can control the outcome of the shared secret by restricting it to lie in some predetermined small set.
     \end{itemize}
 \end{definitiontoc}
 
