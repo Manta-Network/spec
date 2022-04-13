@@ -1,12 +1,20 @@
 \lsection{Concrete Protocol}{concrete-protocol}
 
-We define the instantiation of the abstract protol in this section.
+We define the instantiation of the abstract protocol in this section.
+
+\subsection{Preliminaries}
+
+\subsubsection{Elliptic Curve Cryptography}
+
+Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. To denote the elliptic-curve constructions that live inside of a ZKP system we use the term ``embedded'' and denote the embedded elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following sections. See \autoref{def:concrete-zkp} for more.
+
+\subsubsection{Poseidon Permutation}
+
+One of the major building blocks of our cryptographic primitives is the \Poseidon{} Permutation \cite{KRRS21USENIX}.
 
 \subsection{Concrete Cryptographic Schemes}
 
-Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. The ZKP system we use is based on elliptic-curve cryptography so we will notate a fixed embedded elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following constructions. See \autoref{def:concrete-zkp} for more.
-
-\begin{definitiontoc}{Commitment Schemes and Hash Functions}
+\begin{definitiontoc}{Commitment Schemes}
     Poseidon hash \cite{KRRS21USENIX} for \UTXO{} commitment (arity-4) or Pedersen Commitment variant and Poseidon hash for \VN{} hash (arity-2)
 \end{definitiontoc}
 
@@ -20,7 +28,7 @@ Since we use a Zero-Knowledge Proving System, we want the cryptographic construc
 \end{definitiontoc}
 
 \begin{definitiontoc}{Symmetric-Key Encryption Scheme}
-    For $\SYM$, we use symmetric-key encryption scheme: AES-GCM~\cite{rfc5288} with magic-number nonce and no associated data.
+    For $\SYM$, we use symmetric-key encryption scheme: AES-GCM~\cite{rfc5288} with magic-number nonce and no associated data. Note that it is safe to reuse the nonce here because we assume that the encryption key is only used once.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Derivation Functions}
@@ -28,12 +36,12 @@ Since we use a Zero-Knowledge Proving System, we want the cryptographic construc
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
-    For $\DCA$, we use
+    For $\DCA$, we use a Merkle Tree with of arity-2 with \Poseidon{} as the inner node combining hash function.
 
     \TODO{dynamic cryptographic accumulator: Merkle Tree with Poseidon hashes (incremental tree for the ledger is an optimization since it only needs to know enough to compute the accumulated value)}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System} \label{def:concrete-zkp}
-    For $\NIZK$, the protocol can use non-interactive zero-knowledge proving system like Groth16 \cite{KRRS21USENIX} and/or PLONK/PLONKUP~\cite{plonk,plonkup}. 
+    For $\NIZK$, the protocol can use any non-interactive zero-knowledge proving system like Groth16 \cite{KRRS21USENIX} and/or PLONK/PLONKUP~\cite{plonk,plonkup}. 
 \end{definitiontoc}
 

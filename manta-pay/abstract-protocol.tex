@@ -7,16 +7,16 @@ In the following section, we outline the formal specifications for all of the \e
 \begin{definitiontoc}{Commitment Scheme}
     A \emph{commitment scheme} $\COM$ is defined by the schema:
     \begin{align*}
-        \Trapdoor             &: \Type \\
-        \Input                &: \Type \\
-        \Output               &: \Type \\
-        \TrapdoorDistribution &: \mathfrak{D}(\Trapdoor) \\
-        \commit               &: \Trapdoor \times \Input \to \Output
+        \Randomness             &: \Type \\
+        \Input                  &: \Type \\
+        \Output                 &: \Type \\
+        \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
+        \commit                 &: \Randomness \times \Input \to \Output
     \end{align*}
     with the following properties:
     \begin{itemize}
-        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Trapdoor$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
-        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
+        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Randomness$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
+        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \RandomnessDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \RandomnessDistribution}$ are \emph{computationally indistinguishable}.
     \end{itemize}
 
     \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
@@ -247,10 +247,12 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \COM^{\UTXO}.\Input    &= \Asset \\
-        \COM^{\VN}.\Input     &= \UTXO \times \KA.\SecretKey \\
-        \UTXOSet.\Item         &= \UTXO \\
-        \ValidTransfer         &: \NIZK.\Statement
+        \COM^{\UTXO}.\Randomness &= \KA.\SecretKey \\
+        \COM^{\UTXO}.\Input      &= \KA.\PublicKey \times \Asset \\
+        \COM^{\VN}.\Randomness   &= \KA.\SecretKey \\
+        \COM^{\VN}.\Input        &= \UTXO \\
+        \UTXOSet.\Item           &= \UTXO \\
+        \ValidTransfer           &: \NIZK.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
 \end{definition}
@@ -260,31 +262,24 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
     \begin{align*}
-        \sk       &: \SpendingKey \\
+        \sk        &: \SpendingKey \\
         \rk.\spend &: \KA.\PublicKey \\ 
-        \esk    &: \KA.\SecretKey \\
-        \epk      &: \KA.\PublicKey \\
-        \asset    &: \Asset \\
-        \cm       &: \UTXO \\
-        \cm_z     &: \UTXOSet.\Output \\
-        \cm_w     &: \UTXOSet.\Witness \\
-        \vn       &: \VoidNumber
+        \esk       &: \KA.\SecretKey \\
+        \asset     &: \Asset \\
+        \cm        &: \UTXO \\
+        \cm_z      &: \UTXOSet.\Output \\
+        \cm_w      &: \UTXOSet.\Witness \\
+        \vn        &: \VoidNumber
     \end{align*}
 
-    A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
+    A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $(\epk, C_\note) : \EncryptedNote$ with the following algorithm:
     \begin{align*}
-        S.\sk                &:= \sk \\
-        S.\rk.\spend               &:= \KA.\derive(S.\sk.\spend) \\
-        \epk, c              &:= \note \\
-        \Some\left((\esk, \asset)\right)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
-        S.\asset             &:= \asset \\
-        S.\esk               &:= \esk \\
-        S.\epk               &:= \epk \\
-        S.\cm                &:= \COM^{\UTXO}(S.\esk, S.\rk.\spend, S.\asset) \\
-        \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
-        S.\cm_z              &:= \cm_z \\
-        S.\cm_w              &:= \cm_w \\
-        S.\vn                &:= \COM^{\VN}(S.\cm, S.\sk.\spend) 
+        S.\sk                              &:= \sk \\
+        S.\rk.\spend                       &:= \KA.\derive(S.\sk.\spend) \\
+        \Some\left(S.\esk, S.\asset\right) &:= \HPKE.\decrypt(S.\sk.\view, \epk, C_\note) \\
+        S.\cm                              &:= \COM^{\UTXO}(S.\esk, S.\rk.\spend, S.\asset) \\
+        \Some\left(S.\cm_z, S.\cm_w\right) &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
+        S.\vn                              &:= \COM^{\VN}(S.\cm, S.\sk.\spend) 
     \end{align*}
 \end{definition}
 
@@ -381,14 +376,13 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
                 S.\rk.\spend                              &= \KA.\derive(S.\sk.\spend) \\
-                S.\cm                                     &= \COM^{\UTXO}(S.\esk, S.\rk.\spend, S.\asset) \\
-                S.\vn                                     &= \COM^{\VN}(S.\cm, S.\sk.\spend) \\
+                S.\cm                                     &= \COM^{\UTXO}(S.\esk, \left(S.\rk.\spend, S.\asset\right)) \\
+                S.\vn                                     &= \COM^{\VN}(S.\sk.\spend, S.\cm) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                R.\note.\epk &= \KA.\derive(R.\esk) \\
-                R.\cm        &= \COM^{\UTXO}(R.\esk, R.\rk.\spend, R.\asset)
+                R.\cm &= \COM^{\UTXO}(R.\esk, \left(R.\rk.\spend, R.\asset\right))
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
