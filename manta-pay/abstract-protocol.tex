@@ -36,7 +36,7 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Second Pre-Image Resistance}: Given $a : \Input$, it is infeasible to find another $b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
     \end{itemize}
 
-    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into two parts.
+    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into a separate \Randomness{} and \Input{} space.
 
     \textbf{Notation}: For convenience, we may refer to $\HASH.\hash(x)$ by $\HASH(x)$.
 \end{definitiontoc}
@@ -53,13 +53,13 @@ In the following section, we outline the formal specifications for all of the \e
     with the following properties:
     \begin{itemize}
         \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
-        \item \textbf{Passive Security}: Even if an adversary who eavedrops the network communication, she cannot forge the agreed secret unless she knows how to break Diffie-Hellman Problem.
-        \item \textbf{Known-key Security}: Suppose an adversary learned a shared secret from the past session, the adversary does not gain any additional information from combining the past key and public visible data for the purpose of deducting future shared secrets.
-        \item \textbf{No Key Control}: The shared secrets are determined by both parties, neither party clone can control the outcome of the shared secret by restricting it to lie in some predetermined small set.
+        \item \textbf{Passive Security}: Even if an adversary eavedrops on the network communication, she cannot forge the agreed secret unless she knows how to find a preimage for \derive{} which should be as hard as a known hard cryptography problem like the Diffie-Hellman Problem.
+        \item \textbf{Known-key Security}: Suppose an adversary learned a shared secret from a past session, then, the adversary does not gain any additional information by combining the past key and public visible data for the purpose of deducing future shared secrets.
+        \item \textbf{No Key Control}: The shared secrets are determined by both parties, neither party can control the outcome of the shared secret by restricting it to lie in some predetermined small set.
     \end{itemize}
 \end{definitiontoc}
 
-\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
+\begin{definitiontoc}{Symmetric-Key Encryption Scheme} \label{def:abstract-symm}
     A \emph{one-time symmetric-key encryption scheme} $\SYM$ is defined by the schema:
     \begin{align*}
         \Key &: \Type \\
@@ -277,9 +277,9 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         S.\sk                              &:= \sk \\
         S.\rk.\spend                       &:= \KA.\derive(S.\sk.\spend) \\
         \Some\left(S.\esk, S.\asset\right) &:= \HPKE.\decrypt(S.\sk.\view, \epk, C_\note) \\
-        S.\cm                              &:= \COM^{\UTXO}(S.\esk, S.\rk.\spend, S.\asset) \\
+        S.\cm                              &:= \COM^{\UTXO}_{S.\esk}(S.\rk.\spend, S.\asset) \\
         \Some\left(S.\cm_z, S.\cm_w\right) &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
-        S.\vn                              &:= \COM^{\VN}(S.\cm, S.\sk.\spend) 
+        S.\vn                              &:= \COM^{\VN}_{S.\sk.\spend}(S.\cm)
     \end{align*}
 \end{definition}
 
@@ -307,8 +307,8 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         R.\rk       &:= \rk \\
         R.\esk      &:= \esk \\
         R.\asset    &:= \asset \\
-        R.\cm       &:= \COM^{\UTXO}(R.\esk, R.\rk.\spend, R.\asset) \\
-        R.\note     &:= \HPKE.\encrypt \left( R.\rk.\view, R.\esk, (R.\esk, R.\asset) \right)
+        R.\cm       &:= \COM^{\UTXO}_{R.\esk}(R.\rk.\spend, R.\asset) \\
+        R.\note     &:= \HPKE.\encrypt\left(R.\rk.\view, R.\esk, (R.\esk, R.\asset)\right)
     \end{align*}
 \end{definition}
 
@@ -376,13 +376,13 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
                 S.\rk.\spend                              &= \KA.\derive(S.\sk.\spend) \\
-                S.\cm                                     &= \COM^{\UTXO}(S.\esk, \left(S.\rk.\spend, S.\asset\right)) \\
-                S.\vn                                     &= \COM^{\VN}(S.\sk.\spend, S.\cm) \\
+                S.\cm                                     &= \COM^{\UTXO}_{S.\esk}(S.\rk.\spend, S.\asset) \\
+                S.\vn                                     &= \COM^{\VN}_{S.\sk.\spend}(S.\cm) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                R.\cm &= \COM^{\UTXO}(R.\esk, \left(R.\rk.\spend, R.\asset\right))
+                R.\cm &= \COM^{\UTXO}_{R.\esk}(R.\rk.\spend, R.\asset)
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
