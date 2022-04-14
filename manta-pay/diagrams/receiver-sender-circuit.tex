@@ -11,7 +11,13 @@
 
 \tikzcdset{row sep/normal = 2em}
 
+% Drawn with the help of <https://tikzcd.yichuanshen.de>.
+
 \begin{document}
+
+% https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBoBmAXVJADcBDAGwFcYkQAdDnGADxzgAzYAGMAtgF8ABIilcx9HAAsARiuAAxCSAml0mXPkIpypAEzU6TVuy49+Q4PADW02fMWr1AZW2792HgERKZUNAwsbIic3HwCwgBOzgB0cGgwYFBuchwKymrAAOJ+eiAYgUZEAIzmlhE20XZxjlhZMjl5XpolAYbBKGa14dZRMfbxwPUw2R756lo6peV9xsimVXUjtrEOwvRwcDA4MzsTAIIHRz1lBkGrNWFWkdudKsIACpgwrQQSAPoAFkWvTuRABpGIm2e0WBNwq-WQ4IBUIaIFhy1BKAAbKQNsNoWM4m9gGcAKK+dG3SrYoZPVFNfjEgBCjHozhgZjg1wx1OQAHZcSjRgyJgBhf4ixyQHgncaOAAyWDgxwAFJLhEyIBBGBIAJSU+GrHGPKbbcbEgAiAAkANKk7lUhEAVlppsap0cMDQrnasy6xQNKyILrxdOFHuE0um7TVuU8BV8pBycuEF0Ox31-jhQZQApNW3dKeASWStCwMAA7idXuoAxJLDAoABzeBEUCCBIQMRIF0gHAQJDkLMdrs9mj9pAA4ed7uIGp9geIHEgFQZKBIMggOBKLCCHAb6ejxCDBdILGH2fg09Li+D8eL8+lEezgXXgAcNCUMHo6+ikDAbA0IwWAAewUAQDgPDrrec6bhOiAAJxASBozgcwKiMIBIBfj+SBgMwjCMOO9BYIw7D-mwMHLvBm7AaB0RoRhWE4b++GEcRpHkQQlFPjOSBIdeVTznRqEQOhmEgJ+36sQRRF9iRZF-txsLPkg87wVUZgwZp95qbRKFgWJTGSdh0l4bJHGKeAynabpc6mCAImGeJzFmYgbFyTgClcaBQH0KujCfIa7AgdgsAmW6hKMsI1p2tcqmIL2GlTrxR7qYuVQpe2fFzle8EIdpSUZVplASEAA
+
+% https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZARgBoBmAXVJADcBDAGwFcYkQAdDnGADxzgAzYAGMAtgF8ABIilcx9HAAsARiuAAxCSAml0mXPkIpyFanSat2XHvyHB4Aa2mz5i1eoDK23fux4CIlMAFnMGFjZETm4+AWE4RwA6ODQYMCgXOQ4FZTVgbx09EAx-IyIAJlJiMMtI6Ns44CwMmSycj00fIpLDQJRK8pqI6xi7YXDWTLdc9S1Cv17jZFNqmgm6m1j7ejg4GBwp0caAQV39roWApbJBtdqR9pVhAAVMGGaCCQB9YPnigyuRGCpAADEMrFE-j1AShgQBWcF1KEAsooOGkW4WYZRTb8J7AY4AUQKvn+pT6yHRVDu2PqsXxACFGPRHDBynALmTFkQAGwYxEjBr2ADC31xjUgPEOQuEABksHADgAKcX2BkQCCMCQASmR5KW6NCNIhdLxwgAIgAJADShM50NRlKqApxR3skpgmRV2XceW8pCyMoJZwOutJDopfKNWJNqviSVoWBgAHdDo91ABxe0oimVakxjZu4QAJySKTSLVcPpmwCzeu5KBBpGj60FW3GYGz+qIZBb91dDXxrz2H07X3K9ZhyD5+dbA-bDjQzla0w6dYk5hgUAA5vAiKBBMWIGIkOiQDgIEhyKTD8fTzQL0hgjejyfEGRz5fEHyQCoK0gmxAOAlCwQQcAAl870QYFPyQHlILfUxYO-BCkAAdgfL8AA4aCUGB6CgdhIDANgaEYLASPYKAIBwHhCNQ99AMfRAAE4yIoupqOYFRGFIkA8IIpAwGYRhGAfegsEYIiCDYBif2YwDyMoqIuJ4viBMIxBhNE8TJOkyiGOISpkOIRSOKoiBuN4kBcPwzTtLE88JKkqJiNkopbzfM9mOIa8PNfJBiBgnzygY4yfLPJTOMstSbP4uyhJExycGc-S+OZP9GGHBsQAo7BYDiudTRwfErVtTlPMC7yv3g-yoOIDCTJ-KKLKs9SEq0pLdJc8AZL+SrECYr8GrCzDArQwykJ8wycJM0K6rfNiTKQlqVJi6zbMEzqdKcvTXL6wyP2YliNwkIA 
 
 \pagenumbering{gobble}
 
@@ -24,24 +30,11 @@
 
 \begin{center}
 \begin{tikzcd}
-                                      &                                           &  &                                                          &  &                                                                       &                                     &                                                                                                                 & {} \arrow[ddddd, no head, dotted] &                                     &                               \\
-                                      &                                           &  & \textsf{id} : \mathbb{F}_\textsf{b} \arrow[lld, start anchor = west]          &  &                                                                       &                                     & |[red, draw=black]| \textsf{asset} : \textsf{Asset} \arrow[llll, dashed] \arrow[lllld, dashed, end anchor = east] \arrow[rrdd]                         &                                   &                                     &                               \\
-    |[blue, draw=black]| \textsf{utxo} : \mathbb{F}_\textsf{b} & \textsf{POSEIDON}^4 \arrow[l, Rightarrow] &  & \textsf{value} : \mathbb{F}_\textsf{b} \arrow[ll]        &  &                                                                       &                                     & |[red, draw=black]| \textsf{pk} : \mathbb{G} \arrow[ld, start anchor = west]                                                                             &                                   & |[red, draw=black]| \textsf{pvk} : \mathbb{G} \arrow[d] &                               \\
-                                      &                                           &  & \textsf{trapdoor.x} : \mathbb{F}_\textsf{b} \arrow[llu, start anchor = west, end anchor = south east]  &  & \textsf{trapdoor} : \mathbb{G} \arrow[ll, dashed] \arrow[lld, dashed, end anchor = east] & \textsf{DHKE} \arrow[l, Rightarrow] & |[red, draw=black]| \textsf{esk} \sim \mathbb{F}_\textsf{s} \arrow[l] \arrow[d, "\textsf{DHKE}" description, Rightarrow] \arrow[rr] &                                   & \textsf{AES} \arrow[r, Rightarrow]  & |[blue, draw=black]| \textsf{note} : \textsf{Note} \\
-                                      &                                           &  & \textsf{trapdoor.y} : \mathbb{F}_\textsf{b} \arrow[lluu, start anchor = west, end anchor = {[xshift=-0.75em, yshift=-0.5em]south east}] &  &                                                                       &                                     & |[blue, draw=black]| \textsf{epk} : \mathbb{G} \arrow[rru]                                                                           &                                   &                                     &                               \\
-                                      &                                           &  &                                                          &  &                                                                       &                                     &                                                                                                                 & {}                                &                                     &                              
 \end{tikzcd}
 \end{center}
 
 \begin{center}
 \begin{tikzcd}
-                                    &                                                  &  &                                                          &  &                                                                        &                                                              & {} \arrow[dddddd, no head, dotted] &                                                            &                                                 \\
-                                    &                                                  &  & \textsf{id} : \mathbb{F}_\textsf{b} \arrow[lld, start anchor = west]          &  & |[red, draw=black]| \textsf{asset} : \textsf{Asset} \arrow[ll, dashed] \arrow[lld, dashed, end anchor = east] &                                                              &                                    & \textsf{AES} \arrow[lll, Rightarrow]                       &                                                 \\
-                                    & \textsf{POSEIDON}^4 \arrow[d, Rightarrow]        &  & \textsf{value} : \mathbb{F}_\textsf{b} \arrow[ll]        &  &                                                                        & \textsf{epk} : \mathbb{G} \arrow[d]                          &                                    & |[red, draw=black]| \textsf{note} : \textsf{Note} \arrow[u] \arrow[ll, dashed] & |[red, draw=black]| \textsf{svk} : \mathbb{F}_\textsf{s} \arrow[lu] \\
-                                    & \textsf{utxo} : \mathbb{F}_\textsf{b} \arrow[dd] &  & \textsf{trapdoor.x} : \mathbb{F}_\textsf{b} \arrow[llu, start anchor = west, end anchor = south east]  &  & \textsf{trapdoor} : \mathbb{G} \arrow[ll, dashed] \arrow[lld, dashed, end anchor = east]  & \textsf{DHKE} \arrow[l, Rightarrow]                          &                                    &                                                            &                                                 \\
-                                    &                                                  &  & \textsf{trapdoor.y} : \mathbb{F}_\textsf{b} \arrow[lluu, start anchor = west, end anchor = {[xshift=-0.75em, yshift=-0.5em]south east}] &  &                                                                        &                                                              &                                    &                                                            &                                                 \\
-    |[blue, draw=black]| \textsf{vn} : \mathbb{F}_\textsf{b} & \textsf{POSEIDON}^2 \arrow[l, Rightarrow]        &  &                                                          &  &                                                                        & |[red, draw=black]| \textsf{sk} : \mathbb{F}_\textsf{s} \arrow[uu] \arrow[lllll] &                                    &                                                            &                                                 \\
-                                    &                                                  &  &                                                          &  &                                                                        &                                                              & {}                                 &                                                            &                                                
 \end{tikzcd}
 \end{center}
 
@@ -51,8 +44,6 @@
     (\rightarrow) := \text{input}
     \,\,\,\,\,\,\,
     (\Rightarrow) := \text{computation}
-    \,\,\,\,\,\,\,
-    (\dasharrow) := \text{projection}
     \,\,\,\,\,\,\,
     (\,\cdots\,) := \text{circuit boundary}
     \,\,\,\,\,\,\,
