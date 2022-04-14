@@ -4,18 +4,25 @@ We define the instantiation of the abstract protocol in this section.
 
 \subsection{Preliminaries}
 
+Two of the major building blocks of the protocol are elliptic curve cryptography and finite field algebraic hash functions.
+
 \subsubsection{Elliptic Curve Cryptography}
 
-Since we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. To denote the elliptic-curve constructions that live inside of a ZKP system we use the term ``embedded'' and denote the embedded elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following sections. See \autoref{def:concrete-zkp} for more.
+Because we use a Zero-Knowledge Proving System, we want the cryptographic constructions below to be \emph{ZKP-friendly}. To denote the elliptic-curve constructions that live inside of a ZKP system we use the term ``embedded'' and denote the embedded elliptic curve group $\mathbb{G}$ with scalar field $\mathbb{F}$ for the following sections. See \autoref{def:concrete-zkp} for more.
 
 \subsubsection{Poseidon Permutation}
 
-One of the major building blocks of our cryptographic primitives is the \Poseidon{} Permutation \cite{KRRS21USENIX}.
+The \Poseidon{} Permutation \cite{KRRS21USENIX} is a finite field cryptographic primitive that can be used in lots of different contexts, like hash functions, commitment schemes, and symmetric encryption. \Poseidon{} plays a fundamental role in simplifying the protocol and reducing the overall cost of the Zero-Knowledge circuits. The \Poseidon{} Permutations are a family of hash functions with the following signature:
+\[\Poseidon_k : \mathbb{F}^k \to \mathbb{F}\]
+We make use of \Poseidon{} for a few values of $k$ in the concrete protocol below.
 
 \subsection{Concrete Cryptographic Schemes}
 
 \begin{definitiontoc}{Commitment Schemes}
-    Poseidon hash \cite{KRRS21USENIX} for \UTXO{} commitment (arity-4) or Pedersen Commitment variant and Poseidon hash for \VN{} hash (arity-2)
+    The protocol features two different commitment schemes: $\COM^{\UTXO}$ the \UTXO{} Commitment Scheme and $\COM^{\VN}$ the Void Number Commitment Scheme. Both commitment schemes use \Poseidon{} as the cryptographic primitive. The \UTXO{} uses an arity-4 \Poseidon{} with the following mapping:
+    \[\COM^{\UTXO}(\esk, \pk, \asset) := \Poseidon_4(\esk, x(\pk), \asset.\ID, \asset.\VALUE)\]
+    For the Void Number Commitment Scheme we use an arity-2 \Poseidon{} with the following mapping:
+    \[\COM^{\VN}(\sk, \cm) := \Poseidon_2(\sk, \cm)\]
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Agreement Scheme}
