@@ -15,10 +15,6 @@
 
 \begin{document}
 
-% https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBoBmAXVJADcBDAGwFcYkQAdDnGADxzgAzYAGMAtgF8ABIilcx9HAAsARiuAAxCSAml0mXPkIpypAEzU6TVuy49+Q4PADW02fMWr1AZW2792HgERKZUNAwsbIic3HwCwgBOzgB0cGgwYFBuchwKymrAAOJ+eiAYgUZEAIzmlhE20XZxjlhZMjl5XpolAYbBKGa14dZRMfbxwPUw2R756lo6peV9xsimVXUjtrEOwvRwcDA4MzsTAIIHRz1lBkGrNWFWkdudKsIACpgwrQQSAPoAFkWvTuRABpGIm2e0WBNwq-WQ4IBUIaIFhy1BKAAbKQNsNoWM4m9gGcAKK+dG3SrYoZPVFNfjEgBCjHozhgZjg1wx1OQAHZcSjRgyJgBhf4ixyQHgncaOAAyWDgxwAFJLhEyIBBGBIAJSU+GrHGPKbbcbEgAiAAkANKk7lUhEAVlppsap0cMDQrnasy6xQNKyILrxdOFHuE0um7TVuU8BV8pBycuEF0Ox31-jhQZQApNW3dKeASWStCwMAA7idXuoAxJLDAoABzeBEUCCBIQMRIF0gHAQJDkLMdrs9mj9pAA4ed7uIGp9geIHEgFQZKBIMggOBKLCCHAb6ejxCDBdILGH2fg09Li+D8eL8+lEezgXXgAcNCUMHo6+ikDAbA0IwWAAewUAQDgPDrrec6bhOiAAJxASBozgcwKiMIBIBfj+SBgMwjCMOO9BYIw7D-mwMHLvBm7AaB0RoRhWE4b++GEcRpHkQQlFPjOSBIdeVTznRqEQOhmEgJ+36sQRRF9iRZF-txsLPkg87wVUZgwZp95qbRKFgWJTGSdh0l4bJHGKeAynabpc6mCAImGeJzFmYgbFyTgClcaBQH0KujCfIa7AgdgsAmW6hKMsI1p2tcqmIL2GlTrxR7qYuVQpe2fFzle8EIdpSUZVplASEAA
-
-% https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZARgBoBmAXVJADcBDAGwFcYkQAdDnGADxzgAzYAGMAtgF8ABIilcx9HAAsARiuAAxCSAml0mXPkIpyFanSat2XHvyHB4Aa2mz5i1eoDK23fux4CIlMAFnMGFjZETm4+AWE4RwA6ODQYMCgXOQ4FZTVgbx09EAx-IyIAJlJiMMtI6Ns44CwMmSycj00fIpLDQJRK8pqI6xi7YXDWTLdc9S1Cv17jZFNqmgm6m1j7ejg4GBwp0caAQV39roWApbJBtdqR9pVhAAVMGGaCCQB9YPnigyuRGCpAADEMrFE-j1AShgQBWcF1KEAsooOGkW4WYZRTb8J7AY4AUQKvn+pT6yHRVDu2PqsXxACFGPRHDBynALmTFkQAGwYxEjBr2ADC31xjUgPEOQuEABksHADgAKcX2BkQCCMCQASmR5KW6NCNIhdLxwgAIgAJADShM50NRlKqApxR3skpgmRV2XceW8pCyMoJZwOutJDopfKNWJNqviSVoWBgAHdDo91ABxe0oimVakxjZu4QAJySKTSLVcPpmwCzeu5KBBpGj60FW3GYGz+qIZBb91dDXxrz2H07X3K9ZhyD5+dbA-bDjQzla0w6dYk5hgUAA5vAiKBBMWIGIkOiQDgIEhyKTD8fTzQL0hgjejyfEGRz5fEHyQCoK0gmxAOAlCwQQcAAl870QYFPyQHlILfUxYO-BCkAAdgfL8AA4aCUGB6CgdhIDANgaEYLASPYKAIBwHhCNQ99AMfRAAE4yIoupqOYFRGFIkA8IIpAwGYRhGAfegsEYIiCDYBif2YwDyMoqIuJ4viBMIxBhNE8TJOkyiGOISpkOIRSOKoiBuN4kBcPwzTtLE88JKkqJiNkopbzfM9mOIa8PNfJBiBgnzygY4yfLPJTOMstSbP4uyhJExycGc-S+OZP9GGHBsQAo7BYDiudTRwfErVtTlPMC7yv3g-yoOIDCTJ-KKLKs9SEq0pLdJc8AZL+SrECYr8GrCzDArQwykJ8wycJM0K6rfNiTKQlqVJi6zbMEzqdKcvTXL6wyP2YliNwkIA 
-
 \pagenumbering{gobble}
 
 \begin{center}
@@ -26,24 +22,43 @@
     \small{\textbf{NB}: \textit{Does not include UTXO accumulator proof.}}
 \end{center}
 
-\vspace{-1em}
+\vspace{1.5em}
 
 \begin{center}
 \begin{tikzcd}
+                         &                                           &                                                                                                                    & {} \arrow[dddd, no head, dotted] &                                                          &                                        &                                                         \\
+                         & \textsf{id} : \mathbb{F} \arrow[d]        & |[red, draw=black]| \textsf{asset} : \textsf{Asset} \arrow[l, dashed] \arrow[d, dashed] \arrow[rr]                                                     &                                  & {\textsf{note} : (\mathbb{S}, \textsf{Asset})} \arrow[r] & \textbf{AES} \arrow[r, Rightarrow]     & |[blue, draw=black]| \textsf{C}_\textsf{note} : \textsf{List}(\textsf{Bool}) \\
+|[blue, draw=black]| \textsf{cm} : \mathbb{F} & \mathbf{Poseidon}_4 \arrow[l, Rightarrow] & \textsf{value} : \mathbb{F} \arrow[l]                                                                              &                                  & |[blue, draw=black]| \textsf{epk} : \mathbb{G}                                & \textbf{Blake2s} \arrow[u, Rightarrow] &                                                         \\
+                         & \textsf{rk.spend} : \mathbb{G} \arrow[u]  & |[red, draw=black]| \textsf{esk} : \mathbb{S} \arrow[lu] \arrow[rrr] \arrow[rru, "\textbf{DHKE}" description, Rightarrow] \arrow[rruu] &                                  &                                                          & \textbf{DHKE} \arrow[u, Rightarrow]    & |[red, draw=black]| \textsf{rk.view} : \mathbb{G} \arrow[l]                 \\
+                         &                                           &                                                                                                                    & {}                               &                                                          &                                        &                                                        
 \end{tikzcd}
 \end{center}
 
 \begin{center}
 \begin{tikzcd}
+            &                                           &                                                      &                                                                                              & {} \arrow[ddddd, no head, dotted] &                                                                        &                                                                   \\
+            &                                           & \textsf{asset} : \textsf{Asset} \arrow[ld, dashed] \arrow[d, dashed] &                                                                                              &                                   & {\textsf{note} : (\mathbb{S}, \textsf{Asset})} \arrow[lld, dashed] \arrow[lll, dashed] &                                                                   \\
+            & \textsf{id} : \mathbb{F} \arrow[rd]       & \textsf{value} : \mathbb{F} \arrow[d]                & \textsf{esk} : \mathbb{S} \arrow[ld]                                                         &                                   & \textbf{AES} \arrow[u, Rightarrow]                                     & |[red, draw=black]| \textsf{C}_\textsf{note} : \textsf{List}(\textsf{Bool}) \arrow[l] \\
+            & \textsf{cm} : \mathbb{F} \arrow[d]        & \mathbf{Poseidon}_4 \arrow[l, Rightarrow]            & \textsf{rk.spend} : \mathbb{G} \arrow[l]                                                     &                                   & \textbf{Blake2s} \arrow[u, Rightarrow]                                 & |[red, draw=black]| \textsf{epk} : \mathbb{G} \arrow[ld]                              \\
+    |[blue, draw=black]| \textsf{vn} : \mathbb{F} & \textbf{Poseidon}_2 \arrow[l, Rightarrow] &                                                      & |[red, draw=black]| \textsf{sk.spend} : \mathbb{S} \arrow[u, "\textbf{DHKE}" description, Rightarrow] \arrow[ll] &                                   & \textbf{DHKE} \arrow[u, Rightarrow]                                    & |[red, draw=black]| \textsf{sk.view} : \mathbb{G} \arrow[l]                           \\
+            &                                           &                                                      &                                                                                              & {}                                &                                                                        &                                                                  
 \end{tikzcd}
 \end{center}
 
-\vspace{2em}
+\vspace{1em}
+
+\begin{center}
+    \emph{The circuits are on the left of the dotted lines.}
+\end{center}
+
+\vspace{3em}
 
 \[
     (\rightarrow) := \text{input}
     \,\,\,\,\,\,\,
     (\Rightarrow) := \text{computation}
+    \,\,\,\,\,\,\,
+    (\dasharrow) := \text{projection}
     \,\,\,\,\,\,\,
     (\,\cdots\,) := \text{circuit boundary}
     \,\,\,\,\,\,\,
