@@ -1,0 +1,56 @@
+\lsection{Security Proofs}{security-proofs}
+
+\TODO{basically everything}
+
+\subsection{Defining Security}
+
+
+\TODO{Text in {\color{blue} blue indicates that these are copied from the ZCash paper} and need to be appropriately adapted to our protocol.}
+{\color{blue}
+\begin{definitiontoc}{Secure Decentralized Anonymous Payment Scheme}
+    A decentralized anonymous payment scheme is secure if it satisfies Ledger Indistinguishability, Transaction Non-Malleability, and Balance. Each of these properties is defined in reference to an experiment carried out between an Adversary and a Challenger; see Section ?? 
+\end{definitiontoc}
+}
+
+\subsection{Adversarial Model}
+
+We prove the security of our anonymous payment protocol in an adversarial model consisting of three parties (Adversary, Challenger, Oracle) which act as follows:
+
+
+\begin{definitiontoc}{Adversary}
+    The Adversary participates in security experiments by submitting \emph{Queries} (see below) to the Challenger in order to elicit state changes on the blockchain.  The Adversary attempts to compromise the security of the protocol and is said to ``win'' an experiment if his \emph{advantage} (probability of success) is non-negligible in the security parameter.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Challenger}
+    The Challenger receives \emph{Queries} from the Adversary, checks each query's validity, and then passes all valid queries along to the Oracle.  The Challenger acts as a sort of referee for each experiment, limiting the Adversary's behavior to include only allowable actions.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Oracle}
+    The Oracle is an entity initialized with some public parameters and tasked with storing and updating a state consisting of \emph{(i)} a \Ledger, \emph{(ii)} a list of Address key-pairs, {\color{blue} \emph{(iii)} a list of Coins }.  Updates to the Oracle's state are initiated by \emph{Queries} as defined below.
+\end{definitiontoc}
+
+{\color{blue}
+\begin{definitiontoc}{Query}
+    A Query is one of the following actions:
+    \begin{itemize}
+        \item \textbf{CreateAddress}
+        \item \textbf{Mint}
+        \item \textbf{Pour}
+        \item \textbf{Receive}
+        \item \textbf{Insert}
+    \end{itemize}
+\end{definitiontoc}
+}
+
+
+\subsection{Security Experiments}
+
+Here we define each security experiment in which an Adversary attempts to compromise some aspect of the intended security of our decentralized anonymous payment scheme.  Informally, the experiments are meant to test the system as follows:
+% the kerning after \Ledger is bad, maybe the macro should include a space at the end
+% kerning is bad after all \Term macros 
+\begin{enumerate}
+    \item Ledger Indistinguishability: This experiment formalizes the notion that no shielded information can be extracted from the public \Ledger. What the experiment actually shows is that two ledgers created according to valid actions cannot be distinguished from each other. In this experiment the Adversary uses allowed actions (create address, etc -- \TODO{our analogs of the ZCash actions}) submitted to two independent ledgers and tries at the end to guess which ledger is which.  The Adversary wins the experiment if they can do so with probability greater than 0.5.  
+    \item Transaction Non-Malleability: this can be thought of as the ``no double-spend'' experiment.  Here the Adversary's goal is to submit queries to the Challenger in a way that ends with the Adversary submitting a \Transfer which \emph{(i)} contains a \UTXO whose \VoidNumber has already been added to the \VoidNumberSet and \emph{(ii)} is nonetheless deemed valid by the \Ledger.  That is, the Adversary attempts in this experiment to spend a \UTXO twice.
+    \item Balance: this experiment formalizes the notion of ``honest accounting'' in each \Transfer.  That is, although the \Sender and \Receiver \AssetValue s are shielded, they nonetheless balance the public source/sink amounts in the obvious way.  In this experiment the Adversary tries to submit a sequence of queries to the chain that result in the Adversary having spent more than he received.  
+\end{enumerate}
+It is worth comparing and contrasting the Transaction Non-Malleability and Balance properties.  Both ensure the economic value of on-chain assets, though in subtly different ways.  Transaction Non-Malleability expresses the impossibility of spending a \UTXO whose \VoidNumber has already apeared, \emph{i.e.} a ``double-spend.'' Balance, on the other hand, refers to the separate property expressed in \TODO{reference Definition 4.3.8}.
