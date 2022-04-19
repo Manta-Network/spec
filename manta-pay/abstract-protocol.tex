@@ -7,16 +7,16 @@ In the following section, we outline the formal specifications for all of the \e
 \begin{definitiontoc}{Commitment Scheme}
     A \emph{commitment scheme} $\COM$ is defined by the schema:
     \begin{align*}
-        \Trapdoor             &: \Type \\
-        \Input                &: \Type \\
-        \Output               &: \Type \\
-        \TrapdoorDistribution &: \mathfrak{D}(\Trapdoor) \\
-        \commit               &: \Trapdoor \times \Input \to \Output
+        \Randomness             &: \Type \\
+        \Input                  &: \Type \\
+        \Output                 &: \Type \\
+        \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
+        \commit                 &: \Randomness \times \Input \to \Output
     \end{align*}
     with the following properties:
     \begin{itemize}
-        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Trapdoor$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
-        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \TrapdoorDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \TrapdoorDistribution}$ are \emph{computationally indistinguishable}.
+        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Randomness$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
+        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \RandomnessDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \RandomnessDistribution}$ are \emph{computationally indistinguishable}.
     \end{itemize}
 
     \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
@@ -36,7 +36,7 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Second Pre-Image Resistance}: Given $a : \Input$, it is infeasible to find another $b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
     \end{itemize}
 
-    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into two parts.
+    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into a separate \Randomness{} and \Input{} space.
 
     \textbf{Notation}: For convenience, we may refer to $\HASH.\hash(x)$ by $\HASH(x)$.
 \end{definitiontoc}
@@ -53,12 +53,14 @@ In the following section, we outline the formal specifications for all of the \e
     with the following properties:
     \begin{itemize}
         \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
-        \item \TODO{security properties}
+        \item \textbf{Passive Security}: Even if an adversary eavedrops on the network communication, she cannot forge the agreed secret unless she knows how to find a preimage for \derive{} which should be as hard as a known hard cryptography problem like the Diffie-Hellman Problem.
+        \item \textbf{Known-key Security}: Suppose an adversary learned a shared secret from a past session, then, the adversary does not gain any additional information by combining the past key and public visible data for the purpose of deducing future shared secrets.
+        \item \textbf{No Key Control}: The shared secrets are determined by both parties, neither party can control the outcome of the shared secret by restricting it to lie in some predetermined small set.
     \end{itemize}
 \end{definitiontoc}
 
-\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
-    A \emph{symmetric-key encryption scheme} $\SYM$ is defined by the schema:
+\begin{definitiontoc}{Symmetric-Key Encryption Scheme} \label{def:abstract-symm}
+    A \emph{one-time symmetric-key encryption scheme} $\SYM$ is defined by the schema:
     \begin{align*}
         \Key &: \Type \\
         \Plaintext &: \Type \\
@@ -68,19 +70,15 @@ In the following section, we outline the formal specifications for all of the \e
     \end{align*}
     with the following properties:
     \begin{itemize}
-        \item \textbf{Invertibility}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
+        \item \textbf{Soundness}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
             \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
-        \item \TODO{hiding, one-time encryption security?}
+        \item \textbf{Security Requirement}: The symmetric-key encryption scheme must be one-time (INT-CTXT $\land$ IND-CPA)-secure \cite{BC2000AC}. ``One-time'' means that an honest protocol participant will almost surely encrypt only one message with a given key; however, the adversary could make many adaptive chosen ciphertext queries for a given key.
     \end{itemize}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Derivation Function}
     A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
     \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
-    with the following properties:
-    \begin{itemize}
-        \item \TODO{security properties}
-    \end{itemize}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
@@ -98,7 +96,7 @@ In the following section, we outline the formal specifications for all of the \e
         \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
-    \TODO{security properties, combine with \SYM{} and \KA{} properties, like the fact that some of these keys are ephemeral, etc.} \\
+    \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
@@ -122,9 +120,8 @@ In the following section, we outline the formal specifications for all of the \e
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
             \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
-        \item \TODO{security properties}
     \end{itemize}
-    \TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
+    %\TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
@@ -236,25 +233,26 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \begin{itemize}
         \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
         \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
-        \item \textbf{Void Number Hash}: $\HASH^{\VN}$
+        \item \textbf{Void Number Commitment Scheme}: $\COM^{\VN}$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
         \KA            &:= \HPKE.\KA \\
-        \Trapdoor      &:= \COM^{\UTXO}.\Trapdoor \\
         \UTXO          &:= \COM^{\UTXO}.\Output \\
-        \VoidNumber    &:= \HASH^{\VN}.\Output \\
+        \VoidNumber    &:= \COM^{\VN}.\Output \\
         \EncryptedNote &:= \HPKE.\Message \\
         \UTXOSet       &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \COM^{\UTXO}.\Input    &= \Asset \\
-        \HASH^{\VN}.\Input     &= \UTXO \times \KA.\SecretKey \\
-        \UTXOSet.\Item         &= \UTXO \\
-        \ValidTransfer         &: \NIZK.\Statement
+        \COM^{\UTXO}.\Randomness &= \KA.\SecretKey \\
+        \COM^{\UTXO}.\Input      &= \KA.\PublicKey \times \Asset \\
+        \COM^{\VN}.\Randomness   &= \KA.\SecretKey \\
+        \COM^{\VN}.\Input        &= \UTXO \\
+        \UTXOSet.\Item           &= \UTXO \\
+        \ValidTransfer           &: \NIZK.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
 \end{definition}
@@ -264,29 +262,24 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
     \begin{align*}
-        \sk       &: \SpendingKey \\
-        \epk      &: \KA.\PublicKey \\
-        \trapdoor &: \Trapdoor \\
-        \asset    &: \Asset \\
-        \cm       &: \UTXO \\
-        \cm_z     &: \UTXOSet.\Output \\
-        \cm_w     &: \UTXOSet.\Witness \\
-        \vn       &: \VoidNumber
+        \sk        &: \SpendingKey \\
+        \rk.\spend &: \KA.\PublicKey \\ 
+        \esk       &: \KA.\SecretKey \\
+        \asset     &: \Asset \\
+        \cm        &: \UTXO \\
+        \cm_z      &: \UTXOSet.\Output \\
+        \cm_w      &: \UTXOSet.\Witness \\
+        \vn        &: \VoidNumber
     \end{align*}
 
-    A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $\note : \EncryptedNote$ with the following algorithm:
+    A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $(\epk, C_\note) : \EncryptedNote$ with the following algorithm:
     \begin{align*}
-        S.\sk                &:= \sk \\
-        \epk, c              &:= \note \\
-        \Some(\asset)        &:= \HPKE.\decrypt(S.\sk.\view, \epk, c) \\
-        S.\asset             &:= \asset \\
-        S.\epk               &:= \epk \\
-        S.\trapdoor          &:= \KA.\agree(S.\sk.\spend, S.\epk) \\
-        S.\cm                &:= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
-        \Some(\cm_z, \cm_w)  &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
-        S.\cm_z              &:= \cm_z \\
-        S.\cm_w              &:= \cm_w \\
-        S.\vn                &:= \HASH^{\VN}(S.\cm, S.\sk.\spend) \\
+        S.\sk                              &:= \sk \\
+        S.\rk.\spend                       &:= \KA.\derive(S.\sk.\spend) \\
+        \Some\left(S.\esk, S.\asset\right) &:= \HPKE.\decrypt(S.\sk.\view, \epk, C_\note) \\
+        S.\cm                              &:= \COM^{\UTXO}_{S.\esk}(S.\rk.\spend, S.\asset) \\
+        \Some\left(S.\cm_z, S.\cm_w\right) &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
+        S.\vn                              &:= \COM^{\VN}_{S.\sk.\spend}(S.\cm)
     \end{align*}
 \end{definition}
 
@@ -304,7 +297,6 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         \rk       &: \ReceivingKey \\
         \esk      &: \KA.\SecretKey \\
-        \trapdoor &: \Trapdoor \\
         \asset    &: \Asset \\
         \cm       &: \UTXO \\
         \note     &: \EncryptedNote
@@ -314,10 +306,9 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         R.\rk       &:= \rk \\
         R.\esk      &:= \esk \\
-        R.\trapdoor &:= \KA.\agree(R.\esk, R.\rk.\spend) \\
         R.\asset    &:= \asset \\
-        R.\cm       &:= \COM^{\UTXO}(R.\trapdoor, R.\asset) \\
-        R.\note     &:= \HPKE.\encrypt(R.\rk.\view, R.\esk, R.\asset)
+        R.\cm       &:= \COM^{\UTXO}_{R.\esk}(R.\rk.\spend, R.\asset) \\
+        R.\note     &:= \HPKE.\encrypt\left(R.\rk.\view, R.\esk, (R.\esk, R.\asset)\right)
     \end{align*}
 \end{definition}
 
@@ -384,16 +375,14 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\trapdoor                               &= \KA.\agree(S.\sk.\spend, S.\epk) \\
-                S.\cm                                     &= \COM^{\UTXO}(S.\trapdoor, S.\asset) \\
-                S.\vn                                     &= \HASH^{\VN}(S.\cm, S.\sk.\spend) \\
+                S.\rk.\spend                              &= \KA.\derive(S.\sk.\spend) \\
+                S.\cm                                     &= \COM^{\UTXO}_{S.\esk}(S.\rk.\spend, S.\asset) \\
+                S.\vn                                     &= \COM^{\VN}_{S.\sk.\spend}(S.\cm) \\
                 \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                R.\note.\epk &= \KA.\derive(R.\esk) \\
-                R.\trapdoor  &= \KA.\agree(R.\esk, R.\rk.\spend) \\
-                R.\cm        &= \COM^{\UTXO}(R.\trapdoor, R.\asset)
+                R.\cm &= \COM^{\UTXO}_{R.\esk}(R.\rk.\spend, R.\asset)
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
