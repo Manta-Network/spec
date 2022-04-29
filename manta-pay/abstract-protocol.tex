@@ -4,24 +4,6 @@
 
 In the following section, we outline the formal specifications for all of the \emph{cryptographic schemes} used in the \MantaPay{} protocol.
 
-\begin{definitiontoc}{Commitment Scheme}
-    A \emph{commitment scheme} $\COM$ is defined by the schema:
-    \begin{align*}
-        \Randomness             &: \Type \\
-        \Input                  &: \Type \\
-        \Output                 &: \Type \\
-        \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
-        \commit                 &: \Randomness \times \Input \to \Output
-    \end{align*}
-    with the following properties:
-    \begin{itemize}
-        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Randomness$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
-        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \RandomnessDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \RandomnessDistribution}$ are \emph{computationally indistinguishable}.
-    \end{itemize}
-
-    \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
-\end{definitiontoc}
-
 \begin{definitiontoc}{Hash Function}
     A \emph{hash function} $\HASH$ is defined by the schema:
     \begin{align*}
@@ -39,6 +21,52 @@ In the following section, we outline the formal specifications for all of the \e
     We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into a separate \Randomness{} and \Input{} space.
 
     \textbf{Notation}: For convenience, we may refer to $\HASH.\hash(x)$ by $\HASH(x)$.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Commitment Scheme}
+    A \emph{commitment scheme} $\COM$ is defined by the schema:
+    \begin{align*}
+        \Input                  &: \Type \\
+        \Output                 &: \Type \\
+        \Randomness             &: \Type \\
+        \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
+        \commit                 &: \Randomness \times \Input \to \Output
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Randomness$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
+        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \RandomnessDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \RandomnessDistribution}$ are \emph{computationally indistinguishable}.
+    \end{itemize}
+
+    \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Key-Derivation Function}
+    A \emph{key-derivation function} $\KDF$ is defined by the schema:
+    \begin{align*}
+        \Input  &: \Type \\
+        \Output &: \Type \\
+        \derive &: \Input \to \Output
+    \end{align*}
+
+    \textbf{Notation}: For convenience, we may refer to $\KDF.\derive(x)$ by $\KDF(x)$.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Randomizable Key-Derivation Function}
+    A \emph{randomizable key derivation function} $\rKDF$ extends a $\KDF$ scheme by adding the following randomization:
+    \begin{align*}
+        \Randomness             &: \Type \\
+        \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
+        \rand^I                 &: \Randomness \times \Input \to \Input \\
+        \rand^O                 &: \Randomness \times \Output \to \Output
+    \end{align*}
+    where $\rand$ can be denoted without the type marker if the context is clear. The scheme has the following properties:
+    \begin{itemize}
+        \item \textbf{Random Derivation}: For all $x : \Input$ and $\alpha : \Randomness$, we have $\rand(\alpha, \derive(x)) = \derive(\rand(\alpha, x))$.
+        \item \TODO{security properties}
+    \end{itemize}
+
+    \textbf{Notation}: For convenience, we may refer to $\rand(\alpha, x)$ by $\rand_\alpha(x)$ and refer to $\rand_\alpha(\derive(x))$ by $\derive_\alpha(x)$.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Key-Agreement Scheme}
@@ -59,8 +87,53 @@ In the following section, we outline the formal specifications for all of the \e
     \end{itemize}
 \end{definitiontoc}
 
+\begin{definitiontoc}{Message Authentication Code}
+    A \emph{message authentication code} $\MAC$ is given by the schema:
+    \begin{align*}
+        \SecretKey &: \Type \\
+        \Message   &: \Type \\
+        \Tag       &: \Type \\
+        \sign      &: \SecretKey \times \Message \to \Tag \\
+        \verify    &: \SecretKey \times \Message \times \Tag \to \Bool
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Completeness}: For all $\sk : \SecretKey$, $m : \Message$, we have that $\verify(\sk, m, \sign(\sk, m)) = \True$.
+        \item \textbf{Unforgeability}: For any key $\sk : \SecretKey$ and efficient adversary $\mathcal{A}_\sk$ with oracle access to $\sign(\sk, \dash)$ the following probability is negligible:
+            \[
+                \Prob{
+                    \verify(\sk, m, t) = \True
+                }{
+                    (m, t) \sim \mathcal{A}_\sk \\
+                    m \not\in \mathcal{Q}(\mathcal{A}_\sk)
+                }
+            \]
+            where $\mathcal{Q}(\mathcal{A}_\sk)$ denotes the set of queries that $\mathcal{A}_\sk$ makes to the oracle during its strategy.
+    \end{itemize}
+
+    \textbf{NB}: In the case that the secret key should not be known by the verifier, one can use a signature scheme instead.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Signature Scheme}
+    A \emph{signature scheme} $\SIG$ is defined by the schema:
+    \begin{align*}
+        \SecretKey    &: \Type \\
+        \PublicKey    &: \Type \\
+        \Message      &: \Type \\
+        \Signature    &: \Type \\
+        \derive       &: \SecretKey \to \PublicKey \\
+        \sign         &: \SecretKey \times \Message \to \mathfrak{D}(\Signature) \\
+        \verify       &: \PublicKey \times \Message \times \Signature \to \Bool
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Completeness}: For all $\sk : \SecretKey$, $m : \Message$, and any signature $\sigma \sim \sign(\sk, m)$, we have that $\verify(\derive(\sk), m, \sigma) = \True$.
+        \item \TODO{add security properties}
+    \end{itemize}
+\end{definitiontoc}
+
 \begin{definitiontoc}{Symmetric-Key Encryption Scheme} \label{def:abstract-symm}
-    A \emph{one-time symmetric-key encryption scheme} $\SYM$ is defined by the schema:
+    An \emph{authenticated one-time symmetric-key encryption scheme} $\SYM$ is defined by the schema:
     \begin{align*}
         \Key &: \Type \\
         \Plaintext &: \Type \\
@@ -76,11 +149,6 @@ In the following section, we outline the formal specifications for all of the \e
     \end{itemize}
 \end{definitiontoc}
 
-\begin{definitiontoc}{Key-Derivation Function}
-    A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
-    \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
-\end{definitiontoc}
-
 \begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
     A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
     \begin{itemize}
@@ -91,12 +159,30 @@ In the following section, we outline the formal specifications for all of the \e
             which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
     \end{itemize}
 
-    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \SYM.\Ciphertext \times \KA.\PublicKey$, and the above two algorithms by
+    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
     \begin{align*}
         \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
     \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
+\end{definitiontoc}
+
+\begin{definitiontoc}{Message Digest Cipher}
+    A \emph{message digest cipher} $\MDC$ is the following scheme:
+    \begin{align*}
+        \SecretKey &: \Type \\
+        \mathbb{F} &: \Type \\
+        H          &: \SecretKey \times \mathbb{F} \to \mathbb{F} \\
+        \left(\dash\,\oplus\,\dash\right) &: \mathbb{F}^2 \to \mathbb{F} \\
+        \left(\dash\,\ominus\,\dash\right) &: \mathbb{F}^2 \to \mathbb{F}
+    \end{align*}
+    where $H$ is a suitable Hash Function and $\oplus$ and $\ominus$ fulfill the following right-invertibility constraint for all $x, y : \mathbb{F}$
+    \[(x \oplus y) \ominus y = x\]
+    From these primitives we build a block-based encryption scheme. Given a plaintext $P : \mathbb{F}^k$ and a key schedule $K : \SecretKey^k$ we can encrypt to a ciphertext $C : \mathbb{F}^k$ by sequentially applying the following for each round:
+    \[C_i := P_i \oplus H(K_i, C_{i-1})\]
+    where on the first round $C_{-1}$ is some secret initialization vector. For decryption we use the reverse operation
+    \[P_i := C_i \ominus H(K_i, C_{i-1})\]
+    \textbf{NB}: This encryption scheme is not \emph{authenticating} in-and-of-itself and requires some strategy like Encrypt-then-MAC for authentication.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
@@ -121,7 +207,6 @@ In the following section, we outline the formal specifications for all of the \e
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
             \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
     \end{itemize}
-    %\TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
 \end{definitiontoc}
 
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
