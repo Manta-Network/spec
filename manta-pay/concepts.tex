@@ -11,32 +11,33 @@ Whenever an \Asset{} is being used in a public setting, we simply refer to it as
 
 \lsubsection{Addresses}{addresses}
 
-In order for \MantaPay{} participants to receive \Asset{s} via the \Transfer{} protocol, they create an \emph{address} which they use as a unique identifier to represent them on the ledger.
+In order for \MantaPay{} participants to receive \Asset{s} via the \Transfer{} protocol, they create a \emph{shielded addresses} which they use as identifiers to represent them on the ledger.
 
 \begin{center}
     \vspace{1em}
-    \begin{mdframed}[leftmargin=0.25\textwidth, rightmargin=0.25\textwidth]
+    \begin{mdframed}[leftmargin=0.15\textwidth, rightmargin=0.15\textwidth]
         \begin{center}
-    \begin{tikzcd}
-        & \sk \arrow[r, Rightarrow] \arrow[ld, bend right] & \pk \arrow[rd, bend left] & \\
-        {(\sk, \svk)} & & & {(\pk, \pvk)} \\
-        & \svk \arrow[r, Rightarrow] \arrow[lu, bend left] & \pvk \arrow[ru, bend right] &
-    \end{tikzcd}
+            \begin{tikzcd}
+                & \sk \arrow[ld] \arrow[rd] & & & \\
+                \sk_\alpha \arrow[rd] & & \ak \arrow[ld] \arrow[r] & \vk \arrow[r] & (\textsf{D}, \pk_\textsf{D}) \\
+                & \ak_\alpha & & &
+\end{tikzcd}
         \end{center}
     \end{mdframed}
     \vspace{-1em}
-    \captionof{figure}{Key pairs and Addresses.}
+    \captionof{figure}{Key Schedule for \MantaPay{}.}
 \end{center}
 
-\MantaPay{} uses two kinds of cryptographic keypairs to build an address, \emph{spending keys}, $\sk$ and $\pk$, and \emph{viewing keys}, $\svk$ and $\pvk$. An address is the pair $(\pk, \pvk)$ of public keys. The keys have the following properties:
+\MantaPay{} uses four kinds of keys all derived from a base secret key $\sk$, which give the following kinds of privileged access in the protocol:
 
 \begin{itemize}
-    \item Access to a public spending key $\pk$ and public viewing key $\pvk$ represents the ability to send \Asset{s} to the owner of the associated $\sk$.
-    \item Access to a secret viewing key $\svk$ represents the ability to reveal shielded \Asset{} information for \Asset{s} belonging to the owner of the associated $\sk$.
-    \item Access to a secret spending key $\sk$ represents the ability to spend \Asset{s} that were received under the associated public spending key $\pk$.
+    \item \textbf{Shielded Address} (\send{}): Access to the shielded address $(\textsf{D}, \pk_\textsf{D})$ gives the user the right to send \Asset{s} to the owner of the associated $\sk$. The diversifier $\textsf{D}$ allows the owner of a given $\sk$ key to generate many shielded addresses with the same backing spend authority.
+    \item \textbf{Viewing Key} (\view{}): Access to the viewing key $\vk$ gives the user the right to view all transactions for the owner of the associated $\sk$.
+    \item \textbf{Proof Authorization Keys} (\prove{}): Access to proof authorization key $\ak$ gives the user the right to build the transaction proof on behalf of the owner of $\sk$. In order to delegate proof generation to another party, the owner of the secret key generates a randomizer $\alpha$ and sends it to the prover which generates the proof. The owner then signs the transaction against $\ak_\alpha$ with their randomized key $\sk_\alpha$ which proves that they have knowledge of $\sk$.
+    \item \textbf{Spending Keys} (\spend{}): Access to the spending key $\sk$ gives total control over the assets owned by this secret, including spending, proof generation, and viewing.
 \end{itemize}
 
-Participants in \MantaPay{} are represented by their addresses, but they are not unique representations, since one participant may have access to more than one set of secret keys. See \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, viewing, and receiving \Asset{s}.
+Participants in \MantaPay{} are represented by their addresses, but they are not unique representations, since one participant may have access to more than one secret key. See \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, proving, viewing, and receiving.
 
 \subsection{Ledger}
 
