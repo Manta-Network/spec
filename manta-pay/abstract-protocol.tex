@@ -279,43 +279,61 @@ In the following section, we outline the formal specifications for all of the \e
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
-For this protocol we use a multi-layered system of keys:
+For the \Transfer{} protocol we use a multi-layered system of keys:
 
-\begin{tikzcd}
-\textsf{sk} \arrow[rrr, "\textsf{derive}" description] \arrow[rd, "\textsf{rand}_\alpha" description] &                                                              &  & \textsf{ak} \arrow[rr, "\textsf{KDF}^\textsf{vk}" description] \arrow[d, "\textsf{rand}_\alpha" description] &  & \textsf{vk} \arrow[rr, "\textsf{agree}_\textsf{D}" description] &  & \textsf{pk}_\textsf{D} \\
-                                                                                                      & \textsf{sk}_\alpha \arrow[rr, "\textsf{derive}" description] &  & \textsf{ak}_\alpha                                                                                           &  &                                                                 &  &                       
+\begin{center}
+    \vspace{1em}
+    \begin{mdframed}[leftmargin=0.125\textwidth, rightmargin=0.125\textwidth]
+        \begin{center}
+            \begin{tikzcd}
+                &  & \sk \arrow[lldd, "\rand_\alpha"'] \arrow[rrdd, "\derive"] & & & & & & \\
+                & & & & & & & & \\
+                \sk_\alpha \arrow[rrdd, "\derive"'] & & & & \ak \arrow[lldd, "\rand_\alpha"] \arrow[rr, "\KDF^\vk"] & & \vk \arrow[rr, "\agree_\textsf{D}"] & & (\textsf{D}, \pk_\textsf{D}) \\
+                & & & & & & & & \\
+                & & \ak_\alpha & & & & & &
 \end{tikzcd}
+        \end{center}
+    \end{mdframed}
+    \vspace{-1em}
+    \captionof{figure}{Detailed Key Schedule for \MantaPay{}.}
+\end{center}
 
-
-Given a choice of $\HPKE$ we have the following definitions:
+Here we define each key and its function in the \Transfer{} protocol.
 
 \begin{definition}[Spending Key]
-    A \SpendingKey{} is the following pair of keys:
-    \begin{align*}
-        \spend &: \HPKE.\KA.\SecretKey \\
-        \view  &: \HPKE.\KA.\SecretKey
-    \end{align*}
-    The second secret key, $\view$, is called the \ViewingKey{}.
+    Given a key-agreement scheme $\KA$ with compatible randomized key-derivation function $\rKDF$ we have:
+    \[\SpendingKey := \KA.\SecretKey\]
+
+    which can be randomized by $\rKDF.\Randomness$. The spending key must also be compatible with a signature scheme $\SIG$ who's underlying key derivation matches $\KA$ and $\rKDF$. 
 \end{definition}
 
-\begin{definition}[Receiving Key]
-    A \ReceivingKey{} is the following pair of keys:
-    \begin{align*}
-        \spend &: \HPKE.\KA.\PublicKey \\
-        \view  &: \HPKE.\KA.\PublicKey
-    \end{align*}
-    which is derived from a spending key $\sk : \SpendingKey$ with the following algorithm:
-    \begin{align*}
-        \rk.\spend &:= \KA.\derive(\sk.\spend) \\
-        \rk.\view  &:= \KA.\derive(\sk.\view) 
-    \end{align*}
+\begin{definition}[Proof Authorizing Key]
+    Given a key-agreement scheme $\KA$ with compatible randomized key-derivation function $\rKDF$ we have:
+    \[\ProofAuthorizingKey := \KA.\PublicKey\]
+
+    where a given $\sk : \SpendingKey$ derives the proof-authorizing key by
+    \[\ak := \KA.\derive(\sk)\]
+
+    This key can be randomized by $\alpha : \rKDF.\Randomness$ to get
+    \[\ak_\alpha := \rKDF.\rand_\alpha(\ak)\]
+
+    which is also equal to the key-agreement derivation of the randomized secret key
+    \[\ak_\alpha = \KA.\derive(\rKDF.\rand_\alpha(\sk))\]
 \end{definition}
 
-A keypair $(\sk, \rk) : \SpendingKey \times \ReceivingKey$, represents the ability to spend and receive \Asset{s} as a unique \emph{representative participant} on the \Ledger. Any user of the \MantaPay{} protocol can create many such keypairs, but each one represents a different participant and \Asset{s} must be transfered between them using the \Transfer{} protocol as if they were independently owned by different users. A \ReceivingKey{} can be used to receive any number of \Asset{s} and the \SpendingKey{} can be used to spend any number of those \Asset{s}. See \autoref{sec:abstract-semantic-transactions} for the protocol used to spend a subset of \Asset{s} owned by a single user.
+\begin{definition}[Viewing Key]
+    Given a proof-authorizing key, we require a $\KDF^\vk$ of type
+    \[\KDF^\vk : \ProofAuthorizingKey \to \ViewingKey\]
+    where $\ViewingKey$ is of type $\KA.\SecretKey$ so that it can be available for the $\KA$ key-agreement scheme so that we have
+    \[\vk := \KDF^\vk(\ak)\]
+\end{definition}
 
-\textbf{Important}: To every spending key $\sk : \SpendingKey$ we have an assoicated viewing key $\vk : \ViewingKey := \sk.\view$ which allows the owner to decrypt the encrypted messages associated to $\sk$, but does not contain enough information to perform a spend with those \Asset{s}. This can be used for account auditing purposes, and for removing anonymity, but sharing this key should be done with caution.
+\begin{definition}[Shielded Address]
+    Given a viewing key which is the secret key for the key-agreement scheme $\KA$, the shielded address is given by randomly selecting a public key $\textsf{D} : \KA.\PublicKey$ and then performing $\KA.\agree$ against it:
+    \[\pk_\textsf{D} := \KA.\agree_\textsf{D}(\vk)\]
 
-In general, one may have a collection of viewing keys which can be used to separate the encrypted notes into different sets, by key. This way only certain transactions can be de-anonymized by certain parties.
+    We return the pair as the shielded address: $(\textsf{D}, \pk_\textsf{D})$.
+\end{definition}
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
@@ -357,17 +375,17 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
     \begin{align*}
-        \sk        &: \SpendingKey \\
-        \rk.\spend &: \KA.\PublicKey \\ 
-        \esk       &: \KA.\SecretKey \\
-        \asset     &: \Asset \\
-        \cm        &: \UTXO \\
-        \cm_z      &: \UTXOSet.\Output \\
-        \cm_w      &: \UTXOSet.\Witness \\
-        \vn        &: \VoidNumber
+        \ak                          &: \ProofAuthorizingKey \\
+        \alpha                       &: \rKDF.\Randomness \\
+        \asset                       &: \Asset \\
+        r                            &: \COM^\UTXO.\Randomness \\
+        \cm                          &: \UTXO \\
+        (z_\cm, w_\cm)               &: \UTXOSet.\MembershipProof \\
+        \vn                          &: \VoidNumber \\
+        (\epk_\out, \textsf{C}_\out) &: \EncryptedMessage \\
     \end{align*}
 
-    A \Sender{}, $S$, is constructed from a spending key $\sk : \SpendingKey$ and an encrypted message $(\epk, C_\note) : \EncryptedNote$ with the following algorithm:
+    A \Sender{}, $S$, is constructed from a proof authorizing key $\ak : \ProofAuthorizingKey$ and an encrypted message $(\epk_\in, \textsf{C}_\in) : \EncryptedMessage$ with the following algorithm:
     \begin{align*}
         S.\sk                              &:= \sk \\
         S.\rk.\spend                       &:= \KA.\derive(S.\sk.\spend) \\
@@ -477,7 +495,8 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                R.\cm &= \COM^{\UTXO}_{R.\esk}(R.\rk.\spend, R.\asset)
+                \cm &= \COM^{\UTXO}_{r}(\textsf{D}, \pk_\textsf{D}, \asset) \\
+                \textsf{C}_\textsf{in} &= \SYM.\encrypt(\cdots, [\textsf{D}, r, \asset])
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
