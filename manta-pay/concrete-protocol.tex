@@ -4,46 +4,66 @@ We define the instantiation of the abstract protocol in this section, but first 
 
 \subsection{Poseidon Permutation}
 
-The \Poseidon{} Permutation \cite{KRRS21USENIX} is a finite field cryptographic primitive that can be used in lots of different contexts, like hash functions, commitment schemes, and symmetric encryption. \Poseidon{} plays a fundamental role in simplifying the protocol and reducing the overall cost of the Zero-Knowledge circuits. \Poseidon{} (without sponges) is a family of hash functions with the following signature:
-\[\Poseidon_k : \mathbb{F}^k \to \mathbb{F}\]
-over some sufficiencly large finite field $\mathbb{F}$. We make use of \Poseidon{} for a few values of $k$ in the concrete protocol below.
+The \Poseidon{} Permutation \cite{KRRS21USENIX} is a finite field cryptographic primitive that can be used in lots of different contexts, like hash functions, commitment schemes, and symmetric encryption. \Poseidon{} plays a fundamental role in simplifying the \Transfer{} protocol and reducing the overall cost of the Zero-Knowledge circuits. \Poseidon{} (without sponges) is a family of hash functions with the following signature:
+\[\Poseidon_k : \mathbb{F} \times \mathbb{F}^k \to \mathbb{F}\]
+over some sufficiencly large finite field $\mathbb{F}$. The first distinguished field element is used as a domain separation element. For this purpose, we use the following hashing function to generate domain strings:
+\[\HashToScalar(m) := \mathbb{F}.\truncate(\textsf{Blake2s}(m))\]
+
+We make use of \Poseidon{} for a few values of $k$ in the concrete protocol below.
 
 \subsection{Elliptic Curve Cryptography}
 
-Because we use a Zero-Knowledge Proving System, we want the cryptographic constructions that feature in our protocol to be \emph{ZKP-friendly}. For a ZKP system defined over a field $\mathbb{F}$ we can look for elliptic curves that have a base field of the same order as $\mathbb{F}$. These such curves are said to be ``embeddable'' or ``embedded in'' $\mathbb{F}$. For the constructions below, we use $\mathbb{F}$ as the proof system field and $\mathbb{G}$ as an embedded curve with scalar field $\mathbb{S}$. We also assume that $\left|\mathbb{S}\right| < \left|\mathbb{F}\right|$ so we can use the injection $\lift : \mathbb{S} \to \mathbb{F}$ to lift scalars to the proof system field.
+Because we use a Zero-Knowledge Proving System, we want the cryptographic constructions that feature in our protocol to be \emph{ZKP-friendly}. For a ZKP system defined over a field $\mathbb{F}$ we can look for elliptic curves that have a base field of the same order as $\mathbb{F}$. These such curves are said to be ``embeddable'' or ``embedded in'' $\mathbb{F}$. For the constructions below, we use $\mathbb{F}$ as the proof system field and $\mathbb{G}$ as an embedded curve with scalar field $\mathbb{S}$. We also assume that $\left|\mathbb{S}\right| < \left|\mathbb{F}\right|$ so we can use the injection $\lift : \mathbb{S} \to \mathbb{F}$ to lift scalars to the proof system field. 
+
+To use group elements in affine form we also define the projections:
+\[\X : \mathbb{G} \to \mathbb{F} \,\,\,\text{and}\,\,\, \Y : \mathbb{G} \to \mathbb{F}\]
+which we use below to insert group elements into field-only hash functions.
 
 \subsection{Concrete Cryptographic Schemes}
 
-\begin{definitiontoc}{Commitment Schemes}
-    The protocol features two different commitment schemes: $\COM^{\UTXO}$ the \UTXO{} Commitment Scheme and $\COM^{\VN}$ the Void Number Commitment Scheme. Both commitment schemes use \Poseidon{} as the cryptographic primitive. The \UTXO{} uses an arity-4 \Poseidon{} with the following mapping:
-    \[\COM^{\UTXO}(\esk, \pk, \asset) := \Poseidon_4(\lift(\esk), x(\pk), \asset.\ID, \asset.\VALUE)\]
-    where $x$ is the coordinate-extraction function from $\mathbb{G}$ to $\mathbb{F}$.
-    For the Void Number Commitment Scheme we use an arity-2 \Poseidon{} with the following mapping:
-    \[\COM^{\VN}(\sk, \cm) := \Poseidon_2(\lift(\sk), \cm)\]
-\end{definitiontoc}
+\begin{definition}[Commitment Schemes]
+    The protocol features two different commitment schemes: $\COM^{\UTXO}$ the \UTXO{} Commitment Scheme and $\COM^{\VN}$ the Void Number Commitment Scheme. Both commitment schemes use \Poseidon{} as the underlying cryptographic primitive. The \UTXO{} uses an arity-8 \Poseidon{} with the following mapping:
+    \[\COM^{\UTXO}_r(\textsf{D}, \pkD, \asset) := \Poseidon_8(d, 0, r, \X(\textsf{D}), \Y(\textsf{D}), \X(\pkD), \Y(\pkD), \asset.\ID, \asset.\VALUE)\]
+    where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/com-utxo})$.
+    For the Void Number Commitment Scheme we use an arity-4 \Poseidon{} with the following mapping:
+    \[\COM^{\VN}_\ak(\cm) := \Poseidon_4(\HashToScalar(\domainstr{manta-pay/1.0.0/com-vn}), 0, \X(\ak), \Y(\ak), \cm)\]
+\end{definition}
 
-\begin{definitiontoc}{Key-Agreement Scheme}
+\begin{definition}[Key-Agreement Scheme]
     For $\KA$, we use a Diffie-Hellman Key Exchange over $(\mathbb{G}, \mathbb{S})$:
     \begin{align*}
         \KA.\derive(x)   &: \mathbb{S} \to \mathbb{G}                   := x \cdot G \\
         \KA.\agree(x, Y) &: \mathbb{S} \times \mathbb{G} \to \mathbb{G} := x \cdot Y
     \end{align*}
     where $G$ is a fixed public point.
-\end{definitiontoc}
+\end{definition}
 
-\begin{definitiontoc}{Symmetric-Key Encryption Scheme}
-    For $\SYM$, we use symmetric-key encryption scheme: AES-GCM~\cite{rfc5288} with magic-number nonce and no associated data. Note that it is safe to reuse the nonce here because we assume that the encryption key is only used once. See \autoref{def:abstract-symm} for more.
-\end{definitiontoc}
+\begin{definition}[Symmetric-Key Encryption Scheme]
+    For $\SYM$ we use $\Poseidon_2$ as the hash function in a message digest cipher with key-schedule given by the following:
+    \[K_i := \Poseidon_2(\HashToScalar(\domainstr{manta-pay/1.0.0/mdc-key-schedule}), K_0, K_{i-1})\]
+\end{definition}
 
-\begin{definitiontoc}{Key-Derivation Functions}
-    For $\KDF$, we use Blake2s~\cite{rfc7693} with magic-number salt.
-\end{definitiontoc}
+\begin{definition}[Key-Derivation Functions]
+    For the encryption scheme \KDF{s}, we use the following which maps a group element $G : \mathbb{G}$ to a scalar:
+    \[\KDF(G) := \Poseidon_2(\HashToScalar(\domainstr{manta-pay/1.0.0/encryption-kdf}), x(G), y(G))\]
+\end{definition}
 
-\begin{definitiontoc}{Dynamic Cryptographic Accumulator}
+\begin{definition}[Message Authentication Code]
+    For message authentication codes we use the following instantiation of \Poseidon{}:
+    \[\MAC(\sk, m) := \Poseidon_{\abs{m} + 1}(\HashToScalar(\domainstr{manta-pay/1.0.0/mac}), \sk, m)\]
+
+    In this protocol, we use $|m| \in \set{2, 6}$ for $\OutgoingNote$ and $\IncomingNote$ respectively.
+\end{definition}
+
+\begin{definition}[Signature Scheme]
+    For the signature scheme we use standard ECDSA over $\mathbb{G}$.
+\end{definition}
+
+\begin{definition}[Dynamic Cryptographic Accumulator]
     For $\DCA$, we use a Merkle Tree with $\Poseidon_2$ as the inner node combining hash function and no leaf hash function. It is safe to omit the leaf hash function in this case because the leaf values are already the outputs of a hash function and cannot be directly controlled.
-\end{definitiontoc}
+\end{definition}
 
-\begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System} \label{def:concrete-zkp}
+\begin{definition}[Non-Interactive Zero-Knowledge Proving System] \label{def:concrete-zkp}
     For $\NIZK$, the protocol can use any non-interactive zero-knowledge proving system like Groth16 \cite{KRRS21USENIX} and/or PLONK/PLONKUP~\cite{plonk,plonkup}. 
-\end{definitiontoc}
+\end{definition}
 

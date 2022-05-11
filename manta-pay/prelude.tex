@@ -53,16 +53,15 @@
 \newtheorem{definition}{Definition}[subsection]
 \newtheorem*{definition*}{Definition}
 
-\newcommand{\cmark}{\ding{51}}
-\newcommand{\xmark}{\ding{55}}
-\newcommand{\dash}{{\textrm{--}}}
 \renewcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\domainstr}[1]{{``\texttt{#1}"}}
 \newcommand{\Prob}[2]{\mathrm{Pr}\scalebox{0.88}{\ensuremath{\left[\!\!\begin{array}{c}#1\end{array} \middle| \begin{array}{l}#2\end{array}\!\!\right]}}}
 
 \newcommand{\Alice}{{\textsf{Alice}}}
 \newcommand{\AssetId}{{\textsf{AssetId}}}
 \newcommand{\AssetValue}{{\textsf{AssetValue}}}
 \newcommand{\Asset}{{\textsf{Asset}}}
+\newcommand{\AuthEncrypted}{{\textsf{AuthEncrypted}}}
 \newcommand{\Block}{{\textsf{Block}}}
 \newcommand{\Bob}{{\textsf{Bob}}}
 \newcommand{\Bool}{{\textsf{Bool}}}
@@ -73,8 +72,10 @@
 \newcommand{\Charlie}{{\textsf{Charlie}}}
 \newcommand{\CheckProof}{{\textsf{CheckProof}}}
 \newcommand{\Checkpoint}{{\textsf{Checkpoint}}}
+\newcommand{\Cin}{{\textsf{C}_\textsf{in}}}
 \newcommand{\Ciphertext}{{\textsf{Ciphertext}}}
 \newcommand{\Concat}{{\textsf{Concat}}}
+\newcommand{\Cout}{{\textsf{C}_\textsf{out}}}
 \newcommand{\DCA}{{\textsf{DCA}}}
 \newcommand{\Decrypt}{{\textsf{Decrypt}}}
 \newcommand{\DerivePublic}{{\textsf{DerivePublic}}}
@@ -84,6 +85,7 @@
 \newcommand{\EK}{{\textsf{EK}}}
 \newcommand{\EncryptedMessage}{{\textsf{EncryptedMessage}}}
 \newcommand{\EncryptedNote}{{\textsf{EncryptedNote}}}
+\newcommand{\Encrypted}{{\textsf{Encrypted}}}
 \newcommand{\Encrypt}{{\textsf{Encrypt}}}
 \newcommand{\EntropySource}{{\textsf{EntropySource}}}
 \newcommand{\Enumerate}{{\textsf{enumerate}}}
@@ -92,8 +94,12 @@
 \newcommand{\FinSet}{{\textsf{FinSet}}}
 \newcommand{\GetProof}{{\textsf{GetProof}}}
 \newcommand{\HASH}{{\textsf{HASH}}}
+\newcommand{\HPKEin}{{\HPKE^\textsf{in}}}
+\newcommand{\HPKEout}{{\HPKE^\textsf{out}}}
 \newcommand{\HPKE}{{\textsf{HPKE}}}
+\newcommand{\HashToScalar}{{\textsf{HashToScalar}}}
 \newcommand{\ID}{{\textsf{id}}}
+\newcommand{\IncomingNote}{{\textsf{IncomingNote}}}
 \newcommand{\Input}{{\textsf{Input}}}
 \newcommand{\Item}{{\textsf{Item}}}
 \newcommand{\KA}{{\textsf{KA}}}
@@ -118,6 +124,7 @@
 \newcommand{\None}{{\textsf{None}}}
 \newcommand{\Note}{{\textsf{Note}}}
 \newcommand{\Option}{{\textsf{Option}}}
+\newcommand{\OutgoingNote}{{\textsf{OutgoingNote}}}
 \newcommand{\Output}{{\textsf{Output}}}
 \newcommand{\PATH}{{\textsf{path}}}
 \newcommand{\PRF}{{\textsf{PRF}}}
@@ -149,6 +156,7 @@
 \newcommand{\SYM}{{\textsf{SYM}}}
 \newcommand{\Sample}{{\textsf{Sample}}}
 \newcommand{\SecretInput}{{\textsf{SecretInput}}}
+\newcommand{\SecretKeyDistribution}{{\textsf{SecretKeyDistribution}}}
 \newcommand{\SecretKey}{{\textsf{SecretKey}}}
 \newcommand{\SeededRng}{{\textsf{SeededRng}}}
 \newcommand{\SenderPost}{{\textsf{SenderPost}}}
@@ -165,6 +173,7 @@
 \newcommand{\SpendingKey}{{\textsf{SpendingKey}}}
 \newcommand{\StateT}{{\textsf{State}}}
 \newcommand{\Statement}{{\textsf{Statement}}}
+\newcommand{\TAG}{{\textsf{tag}}}
 \newcommand{\Tag}{{\textsf{Tag}}}
 \newcommand{\TransferConfiguration}{{\textsf{TransferConfiguration}}}
 \newcommand{\TransferPost}{{\textsf{TransferPost}}}
@@ -187,21 +196,32 @@
 \newcommand{\VoidNumber}{{\textsf{VoidNumber}}}
 \newcommand{\Void}{{\textsf{Void}}}
 \newcommand{\Witness}{{\textsf{Witness}}}
+\newcommand{\X}{{\text{\Large $x$}}}
+\newcommand{\Y}{{\text{\Large $y$}}}
+\newcommand{\aHPKEin}{{\aHPKE^\textsf{in}}}
+\newcommand{\aHPKEout}{{\aHPKE^\textsf{out}}}
+\newcommand{\aHPKE}{{\textsf{aHPKE}}}
 \newcommand{\addr}{{\textsf{addr}}}
 \newcommand{\agree}{{\textsf{agree}}}
 \newcommand{\ak}{{\textsf{ak}}}
 \newcommand{\allocated}{{\textsf{allocated}}}
 \newcommand{\allocate}{{\textsf{allocate}}}
 \newcommand{\asset}{{\textsf{asset}}}
+\newcommand{\cmark}{\ding{51}}
 \newcommand{\cm}{{\textsf{cm}}}
 \newcommand{\commit}{{\textsf{commit}}}
 \newcommand{\contains}{{\textsf{contains}}}
 \newcommand{\current}{{\textsf{current}}}
+\newcommand{\dash}{{\textrm{--}}}
 \newcommand{\decrypt}{{\textsf{decrypt}}}
 \newcommand{\derive}{{\textsf{derive}}}
 \newcommand{\encrypt}{{\textsf{encrypt}}}
+\newcommand{\epkin}{{\epk_\textsf{in}}}
+\newcommand{\epkout}{{\epk_\out}}
 \newcommand{\epk}{{\textsf{epk}}}
 \newcommand{\eq}{{\textsf{eq}}}
+\newcommand{\eskin}{{\esk_\textsf{in}}}
+\newcommand{\eskout}{{\esk_\out}}
 \newcommand{\esk}{{\textsf{esk}}}
 \newcommand{\hash}{{\textsf{hash}}}
 \newcommand{\insertF}{{\textsf{insert}}}
@@ -213,6 +233,7 @@
 \newcommand{\opk}{{\textsf{opk}}}
 \newcommand{\osk}{{\textsf{osk}}}
 \newcommand{\out}{{\textsf{out}}}
+\newcommand{\pkD}{{\pk_\textsf{D}}}
 \newcommand{\pk}{{\textsf{pk}}}
 \newcommand{\prove}{{\textsf{prove}}}
 \newcommand{\public}{{\textsf{public}}}
@@ -241,11 +262,15 @@
 \newcommand{\spent}{{\textsf{spent}}}
 \newcommand{\stateF}{{\textsf{state}}}
 \newcommand{\svk}{{\textsf{svk}}}
+\newcommand{\tagin}{{\TAG_\textsf{in}}}
+\newcommand{\tagout}{{\TAG_\out}}
 \newcommand{\total}{{\textsf{total}}}
 \newcommand{\trapdoor}{{\textsf{trapdoor}}}
+\newcommand{\truncate}{{\textsf{truncate}}}
 \newcommand{\update}{{\textsf{update}}}
 \newcommand{\utxos}{{\textsf{utxos}}}
 \newcommand{\verify}{{\textsf{verify}}}
 \newcommand{\view}{{\textsf{view}}}
 \newcommand{\vk}{{\textsf{vk}}}
 \newcommand{\vn}{{\textsf{vn}}}
+\newcommand{\xmark}{\ding{55}}

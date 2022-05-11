@@ -48,10 +48,9 @@ In the following section, we outline the formal specifications for all of the \e
         \Output &: \Type \\
         \derive &: \Input \to \Output
     \end{align*}
-    with the following properties:
-    \TODO{add properties}
-
     \textbf{Notation}: For convenience, we may refer to $\KDF.\derive(x)$ by $\KDF(x)$.
+
+    \textbf{NB}: This abstract definition covers many different cases of key related functions. The security properties of a specific $\KDF$ are outlined wherever it's used.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Randomizable Key-Derivation Function}
@@ -77,6 +76,7 @@ In the following section, we outline the formal specifications for all of the \e
         \SecretKey    &: \Type \\
         \PublicKey    &: \Type \\
         \SharedSecret &: \Type \\
+        \SecretKeyDistribution &: \mathfrak{D}(\SecretKey) \\
         \derive       &: \SecretKey \to \PublicKey \\
         \agree        &: \SecretKey \times \PublicKey \to \SharedSecret
     \end{align*}
@@ -179,9 +179,9 @@ In the following section, we outline the formal specifications for all of the \e
             which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
     \end{itemize}
 
-    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
+    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Encrypted(\SYM.\Plaintext) := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
     \begin{align*}
-        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
+        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Encrypted(\SYM.\Plaintext) \\
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
     \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
@@ -190,14 +190,14 @@ In the following section, we outline the formal specifications for all of the \e
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
     A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
     \begin{align*}
-        \Item     &: \Type \\
-        \Output   &: \Type \\
-        \Witness  &: \Type \\
-        \StateT   &: \Type \\
-        \current  &: \StateT \to \Output \\
-        \insertF  &: \Item \times \StateT \to \StateT \\
-        \contains &: \Item \times \StateT \to \Option(\Output \times \Witness) \\
-        \verify   &: \Item \times \Output \times \Witness \to \Bool
+        \Item    &: \Type \\
+        \Output  &: \Type \\
+        \Witness &: \Type \\
+        \StateT  &: \Type \\
+        \current &: \StateT \to \Output \\
+        \insertF &: \Item \times \StateT \to \StateT \\
+        \prove   &: \Item \times \StateT \to \Option(\Output \times \Witness) \\
+        \verify  &: \Item \times \Output \times \Witness \to \Bool
     \end{align*}
     with the following properties:
     \begin{itemize}
@@ -207,7 +207,7 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
-            \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
+            \[\Some(z, w) := \prove(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
     \end{itemize}
 \end{definitiontoc}
 
@@ -308,7 +308,7 @@ Here we define each key and its function in the \Transfer{} protocol.
 \end{definition}
 
 \begin{definition}[Proof Authorizing Key]
-    Given a key-agreement scheme $\KA$ with compatible randomized key-derivation function $\rKDF$ we have:
+    Given a key-agreement scheme $\KA$ with compatible randomized key-derivation function $\rKDF$ and with a signature scheme $\SIG$ we have:
     \[\ProofAuthorizingKey := \KA.\PublicKey\]
 
     where a given $\sk : \SpendingKey$ derives the proof-authorizing key by
@@ -319,6 +319,14 @@ Here we define each key and its function in the \Transfer{} protocol.
 
     which is also equal to the key-agreement derivation of the randomized secret key
     \[\ak_\alpha = \KA.\derive(\rKDF.\rand_\alpha(\sk))\]
+
+    To authorize a message $m$, the owner of $\sk$ can perform the following signature algorithm:
+    \[\sigma \sim \SIG.\sign(\rKDF.\rand_\alpha(\sk), m)\]
+
+    which can then be verified against $\ak_\alpha$ with
+    \[\SIG.\verify(\ak_\alpha, m, \sigma)\]
+
+    \textbf{NB}: For the \Transfer{} protocol, the message will be the zero-knowlege proof of a valid transfer and any additional associated data and \Ledger{} payload.
 \end{definition}
 
 \begin{definition}[Viewing Key]
@@ -341,6 +349,7 @@ Here we define each key and its function in the \Transfer{} protocol.
         \item \textbf{Key-Agreement Scheme}: $\KA$
         \item \textbf{Randomized Key-Derivation Scheme}: $\rKDF$
         \item \textbf{Viewing Key Derivation Function}: $\KDF^\vk$
+        \item \textbf{Proof Authorization Signature}: $\SIG$
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
@@ -352,8 +361,11 @@ Here we define each key and its function in the \Transfer{} protocol.
     \end{align*}
     with the following constraints:
     \begin{align*}
-        \rKDF.\Input  &= \KA.\SecretKey \\
-        \rKDF.\Output &= \KA.\PublicKey
+        \rKDF.\Input    &= \KA.\SecretKey \\
+        \rKDF.\Output   &= \KA.\PublicKey \\
+        \SIG.\SecretKey &= \KA.\SecretKey \\
+        \SIG.\PublicKey &= \KA.\PublicKey \\
+        \SIG.\derive    &= \KA.\derive
     \end{align*}
 \end{definition}
 
@@ -367,7 +379,8 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     A \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
     \begin{itemize}
         \item \textbf{Key Schedule}: $\KeySchedule$
-        \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
+        \item \textbf{Incoming Authenticated Hybrid Public Key Encryption}: $\aHPKEin$
+        \item \textbf{Outgoing Authenticated Hybrid Public Key Encryption}: $\aHPKEout$
         \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
         \item \textbf{Void Number Commitment Scheme}: $\COM^{\VN}$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
@@ -375,20 +388,21 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
-        \UTXO            &:= \COM^{\UTXO}.\Output \\
-        \VoidNumber      &:= \COM^{\VN}.\Output \\
-        \Note            &:= \COM^\UTXO.\Randomness \times \KeySchedule.\ShieldedAddress \times \Asset
-        \EncryptedNote   &:= \HPKE.\EncryptedMessage \\
-        \UTXOSet         &:= \DCA
+        \UTXO         &:= \COM^{\UTXO}.\Output \\
+        \VoidNumber   &:= \COM^{\VN}.\Output \\
+        \IncomingNote &:= \KeySchedule.\ShieldedAddress \times \COM^\UTXO.\Randomness \times \Asset \\
+        \OutgoingNote &:= \Asset \\
+        \UTXOSet      &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \COM^{\UTXO}.\Input      &= \KeySchedule.\ShieldedAddress \times \Asset \\
-        \COM^{\VN}.\Randomness   &= \KeySchedule.\ProofAuthorizingKey \\
-        \COM^{\VN}.\Input        &= \UTXO \\
-        \UTXOSet.\Item           &= \UTXO \\
-        \KPKE.\Message           &= \Note \\
-        \ValidTransfer           &: \NIZK.\Statement
+        \COM^{\UTXO}.\Input    &= \KeySchedule.\ShieldedAddress \times \Asset \\
+        \COM^{\VN}.\Randomness &= \KeySchedule.\ProofAuthorizingKey \\
+        \COM^{\VN}.\Input      &= \UTXO \\
+        \UTXOSet.\Item         &= \UTXO \\
+        \aHPKEin.\KA           &= \KeySchedule.\KA \\
+        \aHPKEout.\KA           &= \KeySchedule.\KA \\
+        \ValidTransfer         &: \NIZK.\Statement \\
     \end{align*}
     where \ValidTransfer{} is defined below.
 \end{definition}
@@ -398,32 +412,41 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
     \begin{align*}
-        \ak                          &: \ProofAuthorizingKey \\
-        \alpha                       &: \rKDF.\Randomness \\
-        \asset                       &: \Asset \\
-        r                            &: \COM^\UTXO.\Randomness \\
-        \cm                          &: \UTXO \\
-        (z_\cm, w_\cm)               &: \UTXOSet.\MembershipProof \\
-        \vn                          &: \VoidNumber \\
-        (\epk_\out, \textsf{C}_\out) &: \EncryptedMessage \\
+        \ak                       &: \ProofAuthorizingKey \\
+        \alpha                    &: \rKDF.\Randomness \\
+        \ak_\alpha                &: \KA.\PublicKey \\
+        \textsf{D}                &: \Diversifier \\
+        r                         &: \COM^\UTXO.\Randomness \\
+        \asset                    &: \Asset \\
+        \pkD                      &: \KA.\PublicKey \\
+        \eskout                   &: \KA.\SecretKey \\
+        (\tagout, \epkout, \Cout) &: \AuthEncrypted(\OutgoingNote) \\
+        \cm                       &: \UTXO \\
+        (z_\cm, \pi_\cm)          &: \UTXOSet.\MembershipProof \\
+        \vn                       &: \VoidNumber
     \end{align*}
 
-    A \Sender{}, $S$, is constructed from a proof authorizing key $\ak : \ProofAuthorizingKey$ and an encrypted message $(\epk_\in, \textsf{C}_\in) : \EncryptedMessage$ with the following algorithm:
+    A \Sender{}, $S$, is constructed from a proof authorizing key $\ak : \ProofAuthorizingKey$, a randomizer $\alpha : \rKDF.\Randomness$ and an encrypted message $(\tagin, \epkin, \Cin) : \AuthEncrypted(\IncomingNote)$ with the following algorithm:
     \begin{align*}
-        S.\sk                              &:= \sk \\
-        S.\rk.\spend                       &:= \KA.\derive(S.\sk.\spend) \\
-        \Some\left(S.\esk, S.\asset\right) &:= \HPKE.\decrypt(S.\sk.\view, \epk, C_\note) \\
-        S.\cm                              &:= \COM^{\UTXO}_{S.\esk}(S.\rk.\spend, S.\asset) \\
-        \Some\left(S.\cm_z, S.\cm_w\right) &:= \UTXOSet.\contains(S.\cm, \Ledger.\utxos()) \\
-        S.\vn                              &:= \COM^{\VN}_{S.\sk.\spend}(S.\cm)
+        \ak_\alpha                   &:= \rKDF.\rand_\alpha(\ak) \\
+        \vk                          &:= \KDF^\vk(\ak) \\
+        \Some(\textsf{D}, r, \asset) &:= \aHPKEin.\decrypt(\vk, \tagin, \epkin, \Cin) \\
+        \pkD                         &:= \KA.\agree_\textsf{D}(\vk) \\
+        \eskout                      &:\sim \KA.\SecretKeyDistribution \\
+        (\tagout, \epkout, \Cout)    &:= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \asset) \\
+        \cm                          &:= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \asset) \\
+        \Some(z_\cm, \pi_\cm)        &:= \UTXOSet.\prove(\cm) \\
+        \vn                          &:= \COM^{\VN}_\ak(\cm)
     \end{align*}
 \end{definition}
 
 \begin{definition}[\Transfer{} Sender Post]
     A \SenderPost{} is the following tuple extracted from a \Sender{}:
     \begin{align*}
-        \cm_z &: \UTXOSet.\Output \\
-        \vn   &: \VoidNumber
+        \ak_\alpha                &: \KA.\PublicKey \\
+        (\tagout, \epkout, \Cout) &: \AuthEncrypted(\OutgoingNote) \\
+        z_\cm                     &: \UTXOSet.\Output \\
+        \vn                       &: \VoidNumber
     \end{align*}
     which are the parts of a \Sender{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
@@ -431,28 +454,27 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Receiver]
     A \Receiver{} is the following tuple:
     \begin{align*}
-        \rk       &: \ReceivingKey \\
-        \esk      &: \KA.\SecretKey \\
-        \asset    &: \Asset \\
-        \cm       &: \UTXO \\
-        \note     &: \EncryptedNote
+        (\textsf{D}, \pkD)     &: \ShieldedAddress \\
+        r                      &: \COM^\UTXO.\Randomness \\
+        \asset                 &: \Asset \\
+        \cm                    &: \UTXO \\
+        \eskin                 &: \KA.\SecretKey \\
+        (\tagin, \epkin, \Cin) &: \AuthEncrypted(\IncomingNote)
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed from a receving key $\rk : \ReceivingKey$, an asset $\asset : \Asset$, and a random ephemeral secret key $\esk : \HPKE.\KA.\SecretKey$ with the following algorithm:
+    A \Receiver{}, $R$, is constructed from a shielded address $(\textsf{D}, \pkD) : \ShieldedAddress$, an asset $\asset : \Asset$, and a \UTXO{}-commitment randomness $r : \COM^\UTXO.\Randomness$ with the following algorithm:
     \begin{align*}
-        R.\rk       &:= \rk \\
-        R.\esk      &:= \esk \\
-        R.\asset    &:= \asset \\
-        R.\cm       &:= \COM^{\UTXO}_{R.\esk}(R.\rk.\spend, R.\asset) \\
-        R.\note     &:= \HPKE.\encrypt\left(R.\rk.\view, R.\esk, (R.\esk, R.\asset)\right)
+        \cm                    &:= \COM^{\UTXO}_r(\textsf{D}, \pkD, \asset) \\
+        \eskin                 &:\sim \KA.\SecretKeyDistribution \\
+        (\tagin, \epkin, \Cin) &:= \aHPKEin.\encrypt_\textsf{D}(\eskin, \pkD, (\textsf{D}, r, \asset))
     \end{align*}
 \end{definition}
 
 \begin{definition}[\Transfer{} Receiver Post]
     A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
     \begin{align*}
-        \cm       &: \UTXO \\
-        \note     &: \EncryptedNote
+        \cm                    &: \UTXO \\
+        (\tagin, \epkin, \Cin) &: \AuthEncrypted(\IncomingNote)
     \end{align*}
     which are the parts of a \Receiver{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
@@ -482,7 +504,7 @@ In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the 
     \item \textbf{Well-formed Receivers}: All of the \Receiver{s} in the \Transfer{} must be constructed according to the above \Receiver{} definition.
 \end{itemize}
 
-In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the \Ledger{}. It is not necessary to prove that the encryption of $\Receiver.\note$ and the decryption of a $\note$ from the \Ledger{} are valid. Deviation from the protocol in encryption or decryption stages does not reduce the security of the protocol for honest participants, it only makes certain assets inaccessible to honest receivers if they are not aware of the devation, since they cannot decrypt assets normally. This does not effect the \emph{balanced transfer} or \emph{ownership} invariants of the protocol for the existing assets of ledger participants.
+In order to prove that these constraints are satisfied for a given \Transfer{}, we build a zero-knowledge proof which will witness that the \Transfer{} is valid and should be accepted by the \Ledger{}. 
 
 \begin{definition}[\Transfer{} Validity \Statement{}]\label{def:transfer-validity-statement}
     A transfer $T : \Transfer$ is considered \emph{valid} if and only if
@@ -511,15 +533,18 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.\rk.\spend                              &= \KA.\derive(S.\sk.\spend) \\
-                S.\cm                                     &= \COM^{\UTXO}_{S.\esk}(S.\rk.\spend, S.\asset) \\
-                S.\vn                                     &= \COM^{\VN}_{S.\sk.\spend}(S.\cm) \\
-                \UTXOSet.\verify(S.\cm, S.\cm_z, S.\cm_w) &= \True
+                \ak_\alpha                            &= \rKDF.\rand_\alpha(\ak) \\
+                \vk                                   &= \KDF^\vk(\ak) \\
+                \pkD                                  &= \KA.\derive_\textsf{D}(\vk) \\
+                (\tagout, \epkout, \Cout)             &= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \asset) \\
+                \cm                                   &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \asset) \\
+                \UTXOSet.\verify(\cm, z_\cm, \pi_\cm) &= \True \\
+                \vn                                   &= \COM^{\VN}_{\ak}(\cm)
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                \cm &= \COM^{\UTXO}_{r}(\textsf{D}, \pk_\textsf{D}, \asset) \\
-                \textsf{C}_\textsf{in} &= \SYM.\encrypt(\cdots, [\textsf{D}, r, \asset])
+                \cm            &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \asset) \\
+                (\tagin, \epkin, \Cin) &= \aHPKEin.\encrypt_\textsf{D}(\eskin, (\textsf{D}, r, \asset))
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
@@ -548,11 +573,22 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
     where $\Transfer.\public$ returns \SenderPost{s} for each \Sender{} in $T$ and \ReceiverPost{s} for each \Receiver{} in $T$, keeping \Source{s} and \Sink{s} as they are, and $\Transfer.\secret$ returns all the rest of $T$ which is not part of the output of $\Transfer.\public$.
 \end{definition}
 
-Now that a participant has constructed a transfer post $P : \TransferPost$ they can send it to the \Ledger{} for verification. 
+Now that the prover has constructed the proof, the underlying spending keys need to authorize the transaction before it can be sent to the \Ledger{}.
+
+\begin{definition}[Proof Authorization]
+    Given a transfer post $T: \TransferPost{}$ and a set of spending keys $S = \set{(\sk_i, \alpha_i)}$ where $(\sk_i, \alpha_i)$ come from the $i$th spender associated to the $T.\senders_i$, we have the following signature:
+    \[\Sigma := \set{\SIG.\sign(\rKDF.\rand_\alpha(\sk), T) | (\sk, \alpha) \in S}\]
+
+    which can be verified by the ledger with 
+    \[\forall_i\SIG.\verify(T.\senders_i.\ak_\alpha, T, \Sigma_i) = \True\]
+\end{definition}
+
+Now that the transfer post has been signed by the owners of the spending keys, it can be sent up to the \Ledger{}.
 
 \begin{definition}[\Ledger{}-side \Transfer{} Validity]
     To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
     \begin{itemize}
+        \item \textbf{Signature Check}: All the signatures associated to the transactions are valid.
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
         \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
@@ -571,15 +607,15 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
     \end{itemize}
 \end{definition}
 
-\lsubsection{Semantic Transactions}{abstract-semantic-transactions}
+\lsubsection{Batched Transactions}{abstract-batched-transactions}
 
 For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their shielded assets and use them to build \TransferPost{s} to send to the \Ledger{}. The \emph{shielded balance} of any participant is the sum of the balances of their shielded assets, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their shielded balance, the participant would need to accumulate all of the relevant fragments into a large enough \emph{shielded asset} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
 
 \begin{algorithm*}
-\caption{Semantic Transaction Algorithm}
+\caption{Batch Transaction Algorithm}
 \begin{algorithmic}
-    \Procedure {BuildTransaction}{$\sk$, $\mathcal{B}$, $\total$, $\rk$}
-        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples pairs from $\mathcal{B}$ that total at least $\total$}
+    \Procedure {BuildTransaction}{$\sk$, $\mathcal{B}$, $\total$, $\addr$}
+        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples key-asset pairs from $\mathcal{B}$ whose asset total at least $\total$}
         \If{$\len(B) = 0$}
             \State \textsf{return} $[\,]$ \Comment{Insufficient Balance}
         \EndIf
@@ -595,19 +631,19 @@ For \MantaPay{} participants to use the \Transfer{} protocol, they will need to 
             \State $B \gets A + \remainder(B, N)$
         \EndWhile
         \State $S \gets \PrepareZeroes_\sk(N, B, Z, P)$ \Comment{Use $Z$ and \Mint{s} to make $B$ go up to $N$ in size.}
-        \State $R \gets \BuildReceiver_\sk(\rk, S)$
+        \State $R \gets \BuildReceiver_\sk(\addr, S)$
         \State $[c, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$
         \State \textsf{return} $P + \TransferPost(\Transfer([], S, [R, c, zs...], []))$
     \EndProcedure
 \end{algorithmic}
 \end{algorithm*}
 
-Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single (atomic) action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
 
 \footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
 
-For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of key-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
-\[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \rk)\]
-to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\rk$.
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of key-asset pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a shielded key $\addr : \ShieldedAddress$. We can then compute 
+\[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \addr)\]
+to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\addr$.
 
 If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathcal{B}$ should be updated accordingly, removing all of the pairs which were used in the \Transfer{}. Wallets should also handle the more complex case when only some of the \Transfer{s} succeed in which case they need to be able to continue retrying the transaction until they are finally resolved. Since the only \Transfer{} which sends \Asset{s} out of the control of the user is the last one (and it recursively depends on the previous \Transfer{s}), then it is safe to continue from a partially resolved state with a simple retry of the $\textsc{BuildTransaction}$ algorithm.
