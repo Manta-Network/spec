@@ -445,6 +445,8 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \Some(z_\cm, \pi_\cm)        &:= \UTXOSet.\prove(\cm) \\
         \vn                          &:= \COM^{\VN}_\ak(\cm)
     \end{align*}
+
+    \textbf{NB}: Whenever we want to create a \Sender{} that has an $\asset$ with $\AssetValue$ of zero, then to ensure that we don't have to pay a cost to create it's \UTXO{} we can directly create it and skip the \UTXOSet{} membership proof (which won't return a valid proof since no proof exists). This is safe because we are not creating any economic value by inlining the creation of the zero asset on the \Sender{} side of the \Transfer{}. See \ref{def:transfer-validity-statement} for more details on this special case.
 \end{definition}
 
 \begin{definition}[\Transfer{} Sender Post]
@@ -545,7 +547,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 \pkD                                  &= \KA.\derive_\textsf{D}(\vk) \\
                 (\tagout, \epkout, \Cout)             &= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \asset) \\
                 \cm                                   &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \asset) \\
-                \UTXOSet.\verify(\cm, z_\cm, \pi_\cm) &= \True \\
+                \left(\asset.\VALUE = 0\right) &\vee \left(\UTXOSet.\verify(\cm, z_\cm, \pi_\cm) = \True\right) \\
                 \vn                                   &= \COM^{\VN}_{\ak}(\cm)
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
