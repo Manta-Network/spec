@@ -64,7 +64,6 @@ In the following section, we outline the formal specifications for all of the \e
     where $\rand$ can be denoted without the type marker if the context is clear. The scheme has the following properties:
     \begin{itemize}
         \item \textbf{Random Derivation}: For all $x : \Input$ and $\alpha : \Randomness$, we have $\rand(\alpha, \derive(x)) = \derive(\rand(\alpha, x))$.
-        \item \TODO{security properties}
     \end{itemize}
 
     \textbf{Notation}: For convenience, we may refer to $\rand(\alpha, x)$ by $\rand_\alpha(x)$ and refer to $\rand_\alpha(\derive(x))$ by $\derive_\alpha(x)$.
@@ -130,7 +129,6 @@ In the following section, we outline the formal specifications for all of the \e
     with the following properties:
     \begin{itemize}
         \item \textbf{Completeness}: For all $\sk : \SecretKey$, $m : \Message$, and any signature $\sigma \sim \sign(\sk, m)$, we have that $\verify(\derive(\sk), m, \sigma) = \True$.
-        \item \TODO{add security properties}
     \end{itemize}
 \end{definitiontoc}
 
@@ -185,6 +183,15 @@ In the following section, we outline the formal specifications for all of the \e
         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
     \end{align*}
     \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
+\end{definitiontoc}
+
+\begin{definitiontoc}{Authenticated Hybrid Public Key Encryption Scheme}
+    An \emph{authenticated hybrid public encryption scheme} $\aHPKE$ is an authenticated encryption scheme built off of an $\HPKE$ and a $\MAC$ used in the following way:
+    \[\aHPKE.\encrypt : \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \AuthEncrypted(\SYM.\Plaintext)\]
+    where $\AuthEncrypted$ is the encrypted note type:
+    \[\AuthEncrypted(\SYM.\Plaintext) := \MAC.\Tag \times \Encrypted(\SYM.\Plaintext)\]
+    and the tag is computed by applying the $\MAC$ onto the encrypted note:
+    \[\TAG := \MAC(\sk, \HPKE.\encrypt(\esk, \pk))\]
 \end{definitiontoc}
 
 \begin{definitiontoc}{Dynamic Cryptographic Accumulator}

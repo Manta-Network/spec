@@ -19,6 +19,8 @@ To use group elements in affine form we also define the projections:
 \[\X : \mathbb{G} \to \mathbb{F} \,\,\,\text{and}\,\,\, \Y : \mathbb{G} \to \mathbb{F}\]
 which we use below to insert group elements into field-only hash functions.
 
+For this protocol, we use \texttt{BLS12-381} as our outer (pairing-friendly) curve with scalar field $\mathbb{F}$ and \texttt{JubJub} as our inner curve with scalar field $\mathbb{S}$.
+
 \subsection{Concrete Cryptographic Schemes}
 
 \begin{definition}[Commitment Schemes]
@@ -66,4 +68,8 @@ which we use below to insert group elements into field-only hash functions.
 \begin{definition}[Non-Interactive Zero-Knowledge Proving System] \label{def:concrete-zkp}
     For $\NIZK$, the protocol can use any non-interactive zero-knowledge proving system like Groth16 \cite{KRRS21USENIX} and/or PLONK/PLONKUP~\cite{plonk,plonkup}. 
 \end{definition}
+
+\subsection{\AssetValue{} Bounds Check}
+
+In order to implement the balanced transfer relation one needs to ensure that the amount of input value is equal to the amount of output value. However, since we're working over finite fields, the na\"ive arithmetic wraps past zero and is vulnerable to range-based attacks. Instead we constrain every \AssetValue{} to be less than some bound $\mathcal{V}$ and that every sum over those values is also less than $\mathcal{V}$. Since we're using \texttt{BLS12-381} we are safe to use $\mathcal{V} = 2^{128}$.
 
