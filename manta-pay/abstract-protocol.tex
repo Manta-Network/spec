@@ -332,18 +332,41 @@ Here we define each key and its function in the \Transfer{} protocol.
     Given a viewing key which is the secret key for the key-agreement scheme $\KA$, the shielded address is given by randomly selecting a public key $\textsf{D} : \KA.\PublicKey$ and then performing $\KA.\agree$ against it:
     \[\pk_\textsf{D} := \KA.\agree_\textsf{D}(\vk)\]
 
-    We return the pair as the shielded address: $(\textsf{D}, \pk_\textsf{D})$.
+    We return the pair as the shielded address: $\addr := (\textsf{D}, \pk_\textsf{D})$. We call the random element $\textsf{D}$ the \Diversifier{} for the shielded address $\addr$.
+\end{definition}
+
+\begin{definition}[Key Schedule]
+    A $\KeySchedule$ is a collection of implementations of the following abstract cryptographic primitives as described in the above definitions:
+    \begin{itemize}
+        \item \textbf{Key-Agreement Scheme}: $\KA$
+        \item \textbf{Randomized Key-Derivation Scheme}: $\rKDF$
+        \item \textbf{Viewing Key Derivation Function}: $\KDF^\vk$
+    \end{itemize}
+    with the following notational conventions:
+    \begin{align*}
+        \SpendingKey         &:= \KA.\SecretKey \\
+        \ProofAuthorizingKey &:= \KA.\PublicKey \\
+        \ViewingKey          &:= \KA.\SecretKey \\
+        \Diversifier         &:= \KA.\PublicKey \\
+        \ShieldedAddress     &:= \KA.\Diversifier \times \KA.\PublicKey
+    \end{align*}
+    with the following constraints:
+    \begin{align*}
+        \rKDF.\Input  &= \KA.\SecretKey \\
+        \rKDF.\Output &= \KA.\PublicKey
+    \end{align*}
 \end{definition}
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
-The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \Asset{s} among participants while preserving their anonymity. The \Transfer{} is made up of special cryptographic constructions called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction. To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \ReceivingKey{s} from other participants for the outputs, assigning each key a subset of the input \Asset{s}, and then builds a \Transfer{} object representing the transfer they want to build. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated and stored, representing a completed state transition in the \Ledger{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{must} not be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
+The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \Asset{s} among participants while preserving their privacy. The \Transfer{} is made up of sub-components called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction.\footnotemark{}\footnotetext{Note that they do not represent actual individual participants in a transaction, but instead just the data involved in the transaction.} To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \ShieldedAddress{es} from other participants for the outputs of the \Transfer{}, assigning each key a subset of the input \Asset{s}, and then builds a \Transfer{} object representing that transaction. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated, representing a completed state transition in the \Ledger{}, updating the \UTXOSet{} and \VoidNumberSet{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{should not} be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
 
 We begin by defining the cryptographic primitives involved in the \Transfer{} protocol:
 
 \begin{definition}[Transfer Configuration]
     A \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
     \begin{itemize}
+        \item \textbf{Key Schedule}: $\KeySchedule$
         \item \textbf{Hybrid Public Key Encryption}: $\HPKE$
         \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
         \item \textbf{Void Number Commitment Scheme}: $\COM^{\VN}$
@@ -352,25 +375,25 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
-        \KA            &:= \HPKE.\KA \\
-        \UTXO          &:= \COM^{\UTXO}.\Output \\
-        \VoidNumber    &:= \COM^{\VN}.\Output \\
-        \EncryptedNote &:= \HPKE.\Message \\
-        \UTXOSet       &:= \DCA
+        \UTXO            &:= \COM^{\UTXO}.\Output \\
+        \VoidNumber      &:= \COM^{\VN}.\Output \\
+        \Note            &:= \COM^\UTXO.\Randomness \times \KeySchedule.\ShieldedAddress \times \Asset
+        \EncryptedNote   &:= \HPKE.\EncryptedMessage \\
+        \UTXOSet         &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
-        \COM^{\UTXO}.\Randomness &= \KA.\SecretKey \\
-        \COM^{\UTXO}.\Input      &= \KA.\PublicKey \times \Asset \\
-        \COM^{\VN}.\Randomness   &= \KA.\SecretKey \\
+        \COM^{\UTXO}.\Input      &= \KeySchedule.\ShieldedAddress \times \Asset \\
+        \COM^{\VN}.\Randomness   &= \KeySchedule.\ProofAuthorizingKey \\
         \COM^{\VN}.\Input        &= \UTXO \\
         \UTXOSet.\Item           &= \UTXO \\
+        \KPKE.\Message           &= \Note \\
         \ValidTransfer           &: \NIZK.\Statement
     \end{align*}
     where \ValidTransfer{} is defined below.
 \end{definition}
 
-For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
+For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We also implicitly use the \KeySchedule{} and drop its prefix when refering to its members. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
 
 \begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
