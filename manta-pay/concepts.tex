@@ -28,12 +28,14 @@ In order for \MantaPay{} participants to receive \Asset{s} via the \Transfer{} p
     \captionof{figure}{Key Schedule for \MantaPay{}.}
 \end{center}
 
-\MantaPay{} uses four kinds of keys all derived from a base secret key $\sk$, which give the following kinds of privileged access in the protocol:
+\MantaPay{} uses four kinds of keys all derived from a base secret, spending key $\sk$, which give the following kinds of privileged access in the protocol:
 
 \begin{itemize}
     \item \textbf{Shielded Address} (\send{}): Access to the shielded address $(\textsf{D}, \pk_\textsf{D})$ gives the user the right to send \Asset{s} to the owner of the associated $\sk$. The diversifier $\textsf{D}$ allows the owner of a given $\sk$ key to generate many shielded addresses with the same backing spend authority.
     \item \textbf{Viewing Key} (\view{}): Access to the viewing key $\vk$ gives the user the right to view all transactions for the owner of the associated $\sk$.
-    \item \textbf{Proof Authorization Key} (\prove{}): Access to proof authorization key $\ak$ gives the user the right to build the transaction proof on behalf of the owner of $\sk$. In order to delegate proof generation to another party, the owner of the secret key generates a randomizer $\alpha$ and sends it to the prover which generates the proof. The owner then signs the transaction against $\ak_\alpha$ with their randomized key $\sk_\alpha$ which proves that they have knowledge of $\sk$.
+    \item \textbf{Proof Authorization Key} (\prove{}): Proof authorization key $\ak$ gives the user the right to build the transaction proof on behalf of the owner of $\sk$. 
+    In the cases of delegating proof generation, i.e. using hardware wallet to control the $sk$ or signing associated data in transparent UTXOs, 
+    the owner of the secret key generates a randomizer $\alpha$ and sends it to the prover which generates the proof. The owner then signs the transaction against $\ak_\alpha$ with their randomized key $\sk_\alpha$ which proves that they have knowledge of $\sk$.
     \item \textbf{Spending Key} (\spend{}): Access to the spending key $\sk$ gives total control over the assets owned by this secret, including spending, proof generation, and viewing.
 \end{itemize}
 
@@ -41,7 +43,18 @@ Participants in \MantaPay{} are represented by their addresses, but they are not
 
 \subsection{Ledger}
 
-Preserving the economic value of \Asset{s} requires more than just balanced transfers. It also requires that \Asset{s} are owned by exactly one address at a time, namely, that the ability to spend an \Asset{} can be proved before a transfer and revoked after a transfer. It is not simply the \emph{information-content} of an \Asset{} that should be transfered, but the \emph{ability to spend the asset in the future}, which should be transfered. To enforce this second invariant we can use a public ledger\footnotemark{} that keeps track of the movement of \Asset{s} from one participant to another.\footnotetext{A public (or private) ledger is not enough to solve the \emph{provable-ownership problem} or the \emph{double-spending problem}. A \emph{consensus mechanism} is also required to ensure that all participants agree on the current state and state transformations of the ledger. The design and specification of the consensus mechanism that secures the \MantaPay{} ledger is beyond the scope of this paper.} Unfortunately, using a public ledger alone does not allow participants to remain anonymous, so \MantaPay{} extends the public ledger by adding a special account called the \emph{shielded asset pool} which is responsible for keeping track of the \Asset{s} which have been anonymized by the protocol. We denote the three ledger types in the protocol as follows: the public ledger as \PublicLedger{}, the shielded asset pool as \ShieldedAssetPool{}, and the combined ledger we denote \Ledger{}.
+We model a blockchain as a byzantine fault tolerance replicated state
+machine with append only state, a.k.a ledger. When interacting with the blockchain, we call the entity who
+initiates the interaction (e.g., sending a transfer request) the user; the entity who verifies the interaction and
+logs it into the blockchain the validator (also known as miner in other contents). Users interact with the
+blockchain by sending amendment requests to the ledger. The amendment is appended to the database once
+validators approve the request. For simplicity, we assume 1) the ledger is synchronized, and the block finality
+is instant; 2) the validators are trusted for liveness and completeness. The underlying consensus protocol
+that validators employ is indeed orthogonal to this paper. What is also of out the scope of this paper is
+the governance token for the underlying blockchain. We nonetheless assume that the senders of our protocol
+holds enough governance tokens to send the transactions.
+
+More specifically, \MantaPay{}'s ledger state \Ledger{} consists of two parts: the public ledger as \PublicLedger{}, and the shielded asset pool as \ShieldedAssetPool{}.
 
 \begin{center}
     \vspace{1em}

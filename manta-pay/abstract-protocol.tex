@@ -29,7 +29,7 @@ In the following section, we outline the formal specifications for all of the \e
         \Input                  &: \Type \\
         \Output                 &: \Type \\
         \Randomness             &: \Type \\
-        \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
+        \RandomnessDistribution &: \mathfrak{D}\bra{\Randomness} \\
         \commit                 &: \Randomness \times \Input \to \Output
     \end{align*}
     with the following properties:
@@ -57,7 +57,7 @@ In the following section, we outline the formal specifications for all of the \e
     A \emph{randomizable key derivation function} $\rKDF$ extends a $\KDF$ scheme by adding the following randomization:
     \begin{align*}
         \Randomness             &: \Type \\
-        \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
+        \RandomnessDistribution &: \mathfrak{D}\bra{\Randomness} \\
         \rand^I                 &: \Randomness \times \Input \to \Input \\
         \rand^O                 &: \Randomness \times \Output \to \Output
     \end{align*}
@@ -75,7 +75,7 @@ In the following section, we outline the formal specifications for all of the \e
         \SecretKey    &: \Type \\
         \PublicKey    &: \Type \\
         \SharedSecret &: \Type \\
-        \SecretKeyDistribution &: \mathfrak{D}(\SecretKey) \\
+        \SecretKeyDistribution &: \mathfrak{D}\bra{\SecretKey} \\
         \derive       &: \SecretKey \to \PublicKey \\
         \agree        &: \SecretKey \times \PublicKey \to \SharedSecret
     \end{align*}
@@ -123,7 +123,7 @@ In the following section, we outline the formal specifications for all of the \e
         \Message      &: \Type \\
         \Signature    &: \Type \\
         \derive       &: \SecretKey \to \PublicKey \\
-        \sign         &: \SecretKey \times \Message \to \mathfrak{D}(\Signature) \\
+        \sign         &: \SecretKey \times \Message \to \mathfrak{D}\bra{\Signature} \\
         \verify       &: \PublicKey \times \Message \times \Signature \to \Bool
     \end{align*}
     with the following properties:
@@ -139,7 +139,7 @@ In the following section, we outline the formal specifications for all of the \e
         \Plaintext &: \Type \\
         \Ciphertext &: \Type \\
         \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
-        \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
+        \decrypt &: \Key \times \Ciphertext \to \Option\bra{\Plaintext}
     \end{align*}
     with the following properties:
     \begin{itemize}
@@ -173,23 +173,23 @@ In the following section, we outline the formal specifications for all of the \e
         \item Encryption: Given an ephemeral secret key $\esk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
             \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\esk), \SYM.\encrypt(\KDF(\KA.\agree(\esk, \pk)), p)\right)\]
         \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\epk, c)$, we can decrypt $m$, producing the plaintext,
-            \[p : \Option(\SYM.\Plaintext) := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \epk)), c)\]
+            \[p : \Option\bra{\SYM.\Plaintext} := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \epk)), c)\]
             which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
     \end{itemize}
 
-    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Encrypted(\SYM.\Plaintext) := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
+    \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Encrypted\bra{\SYM.\Plaintext} := \KA.\PublicKey \times \SYM.\Ciphertext$, and the above two algorithms by
     \begin{align*}
-        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Encrypted(\SYM.\Plaintext) \\
-        \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
+        \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Encrypted\bra{\SYM.\Plaintext} \\
+        \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option\bra{\SYM.\Plaintext}
     \end{align*}
     \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
 \end{definitiontoc}
 
 \begin{definitiontoc}{Authenticated Hybrid Public Key Encryption Scheme}
     An \emph{authenticated hybrid public encryption scheme} $\aHPKE$ is an authenticated encryption scheme built off of an $\HPKE$ and a $\MAC$ used in the following way:
-    \[\aHPKE.\encrypt : \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \AuthEncrypted(\SYM.\Plaintext)\]
+    \[\aHPKE.\encrypt : \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \AuthEncrypted\bra{\SYM.\Plaintext}\]
     where $\AuthEncrypted$ is the encrypted note type:
-    \[\AuthEncrypted(\SYM.\Plaintext) := \MAC.\Tag \times \Encrypted(\SYM.\Plaintext)\]
+    \[\AuthEncrypted\bra{\SYM.\Plaintext} := \MAC.\Tag \times \Encrypted\bra{\SYM.\Plaintext}\]
     and the tag is computed by applying the $\MAC$ onto the encrypted note:
     \[\TAG := \MAC(\sk, \HPKE.\encrypt(\esk, \pk))\]
 \end{definitiontoc}
@@ -203,7 +203,7 @@ In the following section, we outline the formal specifications for all of the \e
         \StateT  &: \Type \\
         \current &: \StateT \to \Output \\
         \insertF &: \Item \times \StateT \to \StateT \\
-        \prove   &: \Item \times \StateT \to \Option(\Output \times \Witness) \\
+        \prove   &: \Item \times \StateT \to \Option\bra{\Output \times \Witness} \\
         \verify  &: \Item \times \Output \times \Witness \to \Bool
     \end{align*}
     with the following properties:
@@ -227,8 +227,8 @@ In the following section, we outline the formal specifications for all of the \e
         \PublicInput  &: \Type \\
         \SecretInput  &: \Type \\
         \Proof        &: \Type \\
-        \keys         &: \Statement \to \mathfrak{D}(\ProvingKey \times \VerifyingKey) \\
-        \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}(\Option(\Proof)) \\
+        \keys         &: \Statement \to \mathfrak{D}\bra{\ProvingKey \times \VerifyingKey} \\
+        \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}\bra{\Option\bra{\Proof}} \\
         \verify       &: \VerifyingKey \times \PublicInput \times \Proof \to \Bool
     \end{align*}
     \textbf{Notation}: We use the following notation for a $\NIZK$:
@@ -246,9 +246,9 @@ In the following section, we outline the formal specifications for all of the \e
     \begin{itemize}
         \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
         \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
-            \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\PublicInput \times \Proof)\]
+            \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}\bra{\PublicInput \times \Proof}\]
              there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
-            \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\SecretInput)\]
+            \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}\bra{\SecretInput}\]
             such that the following probability is negligible:
             \[
                 \Prob{
@@ -427,7 +427,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \asset                    &: \Asset \\
         \pkD                      &: \KA.\PublicKey \\
         \eskout                   &: \KA.\SecretKey \\
-        (\tagout, \epkout, \Cout) &: \AuthEncrypted(\OutgoingNote) \\
+        (\tagout, \epkout, \Cout) &: \AuthEncrypted\bra{\OutgoingNote} \\
         \cm                       &: \UTXO \\
         (z_\cm, \pi_\cm)          &: \UTXOSet.\MembershipProof \\
         \vn                       &: \VoidNumber
@@ -453,7 +453,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \SenderPost{} is the following tuple extracted from a \Sender{}:
     \begin{align*}
         \ak_\alpha                &: \KA.\PublicKey \\
-        (\tagout, \epkout, \Cout) &: \AuthEncrypted(\OutgoingNote) \\
+        (\tagout, \epkout, \Cout) &: \AuthEncrypted\bra{\OutgoingNote} \\
         z_\cm                     &: \UTXOSet.\Output \\
         \vn                       &: \VoidNumber
     \end{align*}
@@ -468,7 +468,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \asset                 &: \Asset \\
         \cm                    &: \UTXO \\
         \eskin                 &: \KA.\SecretKey \\
-        (\tagin, \epkin, \Cin) &: \AuthEncrypted(\IncomingNote)
+        (\tagin, \epkin, \Cin) &: \AuthEncrypted\bra{\IncomingNote}
     \end{align*}
     
     A \Receiver{}, $R$, is constructed from a shielded address $(\textsf{D}, \pkD) : \ShieldedAddress$, an asset $\asset : \Asset$, and a \UTXO{}-commitment randomness $r : \COM^\UTXO.\Randomness$ with the following algorithm:
@@ -483,7 +483,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
     \begin{align*}
         \cm                    &: \UTXO \\
-        (\tagin, \epkin, \Cin) &: \AuthEncrypted(\IncomingNote)
+        (\tagin, \epkin, \Cin) &: \AuthEncrypted\bra{\IncomingNote}
     \end{align*}
     which are the parts of a \Receiver{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
@@ -495,10 +495,10 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \begin{definition}[\Transfer{} Object]
     A \Transfer{} is the following tuple:
     \begin{align*}
-        \sources    &: \List(\Asset) \\
-        \senders    &: \List(\Sender) \\
-        \receivers  &: \List(\Receiver) \\
-        \sinks      &: \List(\Asset)
+        \sources    &: \List\bra{\Asset} \\
+        \senders    &: \List\bra{\Sender} \\
+        \receivers  &: \List\bra{\Receiver} \\
+        \sinks      &: \List\bra{\Asset}
     \end{align*}
     The \emph{shape} of a \Transfer{} is the following $4$-tuple of cardinalities of those sets
     \[\left(\abs{T.\sources}, \abs{T.\senders}, \abs{T.\receivers}, \abs{T.\sinks}\right)\]
@@ -562,10 +562,10 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 \begin{definition}[\Transfer{} Post]
     A \TransferPost{} is the following tuple:
     \begin{align*}
-        \sources    &: \List(\Source) \\
-        \senders    &: \List(\SenderPost) \\
-        \receivers  &: \List(\ReceiverPost) \\
-        \sinks      &: \List(\Sink) \\
+        \sources    &: \List\bra{\Source} \\
+        \senders    &: \List\bra{\SenderPost} \\
+        \receivers  &: \List\bra{\ReceiverPost} \\
+        \sinks      &: \List\bra{\Sink} \\
         \pi         &: \NIZK.\Proof 
     \end{align*}
     A \TransferPost{}, $P$, is constructed by assembling the zero-knowledge proof of \Transfer{} validity from a known proving key $\pk : \NIZK.\ProvingKey$ and a given $T : \Transfer$:
