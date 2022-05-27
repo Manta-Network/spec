@@ -18,7 +18,7 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Second Pre-Image Resistance}: Given $a : \Input$, it is infeasible to find another $b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
     \end{itemize}
 
-    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into a separate \Randomness{} and \Input{} space.
+    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the below \emph{Commitment Scheme} definition if we partition the $\Input$ space into a separate \Randomness{} and \Input{} space.
 
     \textbf{Notation}: For convenience, we may refer to $\HASH.\hash(x)$ by $\HASH(x)$.
 \end{definitiontoc}
@@ -50,7 +50,7 @@ In the following section, we outline the formal specifications for all of the \e
     \end{align*}
     \textbf{Notation}: For convenience, we may refer to $\KDF.\derive(x)$ by $\KDF(x)$.
 
-    \textbf{NB}: This abstract definition covers many different cases of key related functions. The security properties of a specific $\KDF$ are outlined wherever it's used.
+    \textbf{Note}: This abstract definition covers many different cases of key related functions. The security properties of a specific $\KDF$ are outlined wherever it's used.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Randomizable Key-Derivation Function}
@@ -88,6 +88,8 @@ In the following section, we outline the formal specifications for all of the \e
     \end{itemize}
 \end{definitiontoc}
 
+    \textbf{Notation}: For convenience, we may refer to $\KA.\agree(\sk, \textsf{D})$ as $\KA.\agree_{\textsf{D}}(\sk)$ for all $\sk : \SecretKey$ and $\textsf{D} : \PublicKey$.
+
 \begin{definitiontoc}{Message Authentication Code}
     A \emph{message authentication code} $\MAC$ is given by the schema:
     \begin{align*}
@@ -112,7 +114,7 @@ In the following section, we outline the formal specifications for all of the \e
             where $\mathcal{Q}(\mathcal{A}_\sk)$ denotes the set of queries that $\mathcal{A}_\sk$ makes to the oracle during its strategy.
     \end{itemize}
 
-    \textbf{NB}: In the case that the secret key should not be known by the verifier, one can use a signature scheme instead.
+    \textbf{Note}: In the case that the secret key should not be known by the verifier, one can use a signature scheme instead.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Signature Scheme}
@@ -160,11 +162,11 @@ In the following section, we outline the formal specifications for all of the \e
     \end{align*}
     where $H$ is a suitable Hash Function and $\oplus$ and $\ominus$ fulfill the following right-invertibility constraint for all $x, y : \mathbb{F}$
     \[(x \oplus y) \ominus y = x\]
-    From these primitives we build a block-based encryption scheme. Given a plaintext $P : \mathbb{F}^k$ and a key schedule $K : \SecretKey^k$ we can encrypt to a ciphertext $C : \mathbb{F}^k$ by sequentially applying the following for each round:
-    \[C_i := P_i \oplus H(K_i, C_{i-1})\]
-    where on the first round $C_{-1}$ is some secret initialization vector. For decryption we use the reverse operation
+    From these primitives we build a block-based encryption scheme. Given a plaintext $P = [P_0, P_1, \cdots, P_{k-1}]: \mathbb{F}^k$ and a key schedule $K = [K_0, K_1, \cdots, K_{k-1}] : \SecretKey^k$ we can encrypt to a ciphertext $C = [C_0, C_1, \cdots, C_{k-1}] : \mathbb{F}^k$ by sequentially applying the following for each round:
+    \[C_i := P_i \oplus H(K_i, C_{i-1}), \;\; i \in \{0,1,\cdots, k-1\}\]
+    where $C_{-1}: \mathbb{F}$ is some secret initialization value. For decryption we use the reverse operation
     \[P_i := C_i \ominus H(K_i, C_{i-1})\]
-    \textbf{NB}: This encryption scheme is not \emph{authenticating} in-and-of-itself and requires some strategy like Encrypt-then-MAC for authentication.
+    \textbf{Note}: This encryption scheme is not \emph{authenticating} in-and-of-itself and requires some strategy like Encrypt-then-MAC for authentication.
 \end{definitiontoc}
 
 \begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
@@ -333,7 +335,7 @@ Here we define each key and its function in the \Transfer{} protocol.
     which can then be verified against $\ak_\alpha$ with
     \[\SIG.\verify(\ak_\alpha, m, \sigma)\]
 
-    \textbf{NB}: For the \Transfer{} protocol, the message will be the zero-knowlege proof of a valid transfer and any additional associated data and \Ledger{} payload.
+    \textbf{Note}: For the \Transfer{} protocol, the message will be the zero-knowlege proof of a valid transfer and any additional associated data and \Ledger{} payload.
 \end{definition}
 
 \begin{definition}[Viewing Key]
@@ -446,7 +448,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \vn                          &:= \COM^{\VN}_\ak(\cm)
     \end{align*}
 
-    \textbf{NB}: Whenever we want to create a \Sender{} that has an $\asset$ with $\AssetValue$ of zero, then to ensure that we don't have to pay a cost to create it's \UTXO{} we can directly create it and skip the \UTXOSet{} membership proof (which won't return a valid proof since no proof exists). This is safe because we are not creating any economic value by inlining the creation of the zero asset on the \Sender{} side of the \Transfer{}. See \ref{def:transfer-validity-statement} for more details on this special case.
+    \textbf{Note}: Whenever we want to create a \Sender{} that has an $\asset$ with $\AssetValue$ of zero, then to ensure that we don't have to pay a cost to create its \UTXO{} we can directly create it and skip the \UTXOSet{} membership proof (which won't return a valid proof since no proof exists). This is safe because we are not creating any economic value by inlining the creation of the zero asset on the \Sender{} side of the \Transfer{}. See \ref{def:transfer-validity-statement} for more details on this special case.
 \end{definition}
 
 \begin{definition}[\Transfer{} Sender Post]
@@ -572,7 +574,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
     \begin{align*}
         x             &:= \Transfer.\public(T) \\
         w             &:= \Transfer.\secret(T) \\
-        \Some(\pi)    &\sim \NIZK.\prove^\ValidTransfer_\pk(x, w) \\
+        \Some(\pi)    &\sim \NIZK.\prove^\ValidTransfer_{\pk}(x, w) \\
         P.\sources    &:= x.\sources \\
         P.\senders    &:= x.\senders \\
         P.\receivers  &:= x.\receivers \\
@@ -603,7 +605,7 @@ Now that the transfer post has been signed by the owners of the spending keys, i
         \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
         \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
         \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
-        \item \textbf{Verify \Transfer{}}: Check that $\NIZK.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$.
+        \item \textbf{Verify \Transfer{}}: Check that $\NIZK.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$. Here, $\vk : \NIZK.\VerifyingKey$ is a known verifying key.
     \end{itemize}
 \end{definition}
 

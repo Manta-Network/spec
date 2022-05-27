@@ -31,6 +31,15 @@ For this protocol, we use \texttt{BLS12-381} as our outer (pairing-friendly) cur
     \[\COM^{\VN}_\ak(\cm) := \Poseidon_4(\HashToScalar(\domainstr{manta-pay/1.0.0/com-vn}), 0, \X(\ak), \Y(\ak), \cm)\]
 \end{definition}
 
+\begin{definition}[Key-Derivation Functions]
+    For the encryption scheme \KDF{s}, we use the following which maps a group element $G : \mathbb{G}$ to a scalar:
+    \[\KDF(G) := \Poseidon_2(\HashToScalar(\domainstr{manta-pay/1.0.0/encryption-kdf}), x(G), y(G))\]
+\end{definition}
+
+\begin{definition}[Randomizable Key-Derivation Function]
+    TODO: Brandon
+\end{definition}
+
 \begin{definition}[Key-Agreement Scheme]
     For $\KA$, we use a Diffie-Hellman Key Exchange over $(\mathbb{G}, \mathbb{S})$:
     \begin{align*}
@@ -38,16 +47,6 @@ For this protocol, we use \texttt{BLS12-381} as our outer (pairing-friendly) cur
         \KA.\agree(x, Y) &: \mathbb{S} \times \mathbb{G} \to \mathbb{G} := x \cdot Y
     \end{align*}
     where $G$ is a fixed public point.
-\end{definition}
-
-\begin{definition}[Symmetric-Key Encryption Scheme]
-    For $\SYM$ we use $\Poseidon_2$ as the hash function in a message digest cipher with key-schedule given by the following:
-    \[K_i := \Poseidon_2(\HashToScalar(\domainstr{manta-pay/1.0.0/mdc-key-schedule}), K_0, K_{i-1})\]
-\end{definition}
-
-\begin{definition}[Key-Derivation Functions]
-    For the encryption scheme \KDF{s}, we use the following which maps a group element $G : \mathbb{G}$ to a scalar:
-    \[\KDF(G) := \Poseidon_2(\HashToScalar(\domainstr{manta-pay/1.0.0/encryption-kdf}), x(G), y(G))\]
 \end{definition}
 
 \begin{definition}[Message Authentication Code]
@@ -61,6 +60,15 @@ For this protocol, we use \texttt{BLS12-381} as our outer (pairing-friendly) cur
     For the signature scheme we use standard ECDSA over $\mathbb{G}$.
 \end{definition}
 
+\begin{definition}[Symmetric-Key Encryption Scheme]
+    For $\SYM$ we use $\Poseidon_2$ as the hash function in a message digest cipher with key-schedule given by the following:
+    \[K_i := \Poseidon_2(\HashToScalar(\domainstr{manta-pay/1.0.0/mdc-key-schedule}), K_0, K_{i-1})\]
+\end{definition}
+
+\begin{definition}[Message Digest Cipher]
+    TODO: Brandon
+\end{definition}
+
 \begin{definition}[Dynamic Cryptographic Accumulator]
     For $\DCA$, we use a Merkle Tree with $\Poseidon_2$ as the inner node combining hash function and no leaf hash function. It is safe to omit the leaf hash function in this case because the leaf values are already the outputs of a hash function and cannot be directly controlled.
 \end{definition}
@@ -72,4 +80,3 @@ For this protocol, we use \texttt{BLS12-381} as our outer (pairing-friendly) cur
 \subsection{\AssetValue{} Bounds Check}
 
 In order to implement the balanced transfer relation one needs to ensure that the amount of input value is equal to the amount of output value. However, since we're working over finite fields, the na\"ive arithmetic wraps past zero and is vulnerable to range-based attacks. Instead we constrain every \AssetValue{} to be less than some bound $\mathcal{V}$ and that every sum over those values is also less than $\mathcal{V}$. Since we're using \texttt{BLS12-381} we are safe to use $\mathcal{V} = 2^{128}$.
-
