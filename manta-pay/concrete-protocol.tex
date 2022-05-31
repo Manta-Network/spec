@@ -37,7 +37,13 @@ For this protocol, we use \texttt{BLS12-381} as our outer (pairing-friendly) cur
 \end{definition}
 
 \begin{definition}[Randomizable Key-Derivation Function]
-    TODO: Brandon
+    For \rKDF, we use the following which uses a scalar $r: \mathbb{S}$ to randomize a scalar $x: \mathbb{S}$ to a scalar 
+    and a group element $G : \mathbb{G}$ to a group element:
+    \begin{align*}
+        \rKDF.\rand^I(r, x): \mathbb{S} \times \mathbb{S} \to \mathbb{S} := r * x \\
+        \rKDF.\rand^O(r, G): \mathbb{S} \times \mathbb{G} \to \mathbb{G} := r \cdot G
+    \end{align*}
+
 \end{definition}
 
 \begin{definition}[Key-Agreement Scheme]
