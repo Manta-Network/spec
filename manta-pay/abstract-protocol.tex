@@ -380,7 +380,7 @@ Here we define each key and its function in the \Transfer{} protocol.
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
-The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \Asset{s} among participants while preserving their privacy. The \Transfer{} is made up of sub-components called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction.\footnotemark{}\footnotetext{Note that they do not represent actual individual participants in a transaction, but instead just the data involved in the transaction.} To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \ShieldedAddress{es} from other participants for the outputs of the \Transfer{}, assigning each key a subset of the input \Asset{s}, and then builds a \Transfer{} object representing that transaction. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated, representing a completed state transition in the \Ledger{}, updating the \UTXOSet{} and \VoidNumberSet{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{should not} be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
+The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \Asset{s} among participants while preserving their privacy. The \Transfer{} is made up of sub-components called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction.\footnotemark{}\footnotetext{Note that they do not represent actual individual participants in a transaction, but instead just the data involved in the transaction.} To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \TUTXO{s} they have still not spent (with a fixed \AssetId{}), collects \ShieldedAddress{es} from other participants for the outputs of the \Transfer{}, assigning each key a subset of the input \Asset{s}, and then builds a \Transfer{} object representing that transaction. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated, representing a completed state transition in the \Ledger{}, updating the \TUTXOSet{} and \VoidNumberSet{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{should not} be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
 
 We begin by defining the cryptographic primitives involved in the \Transfer{} protocol:
 
@@ -398,19 +398,20 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     with the following notational conventions:
     \begin{align*}
         \UTXO         &:= \COM^{\UTXO}.\Output \\
+        \TUTXO        &:= \PublicAsset \times \UTXO \times \Bool \\
         \VoidNumber   &:= \COM^{\VN}.\Output \\
         \IncomingNote &:= \KeySchedule.\ShieldedAddress \times \COM^\UTXO.\Randomness \times \Asset \\
         \OutgoingNote &:= \Asset \\
-        \UTXOSet      &:= \DCA
+        \TUTXOSet     &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
         \COM^{\UTXO}.\Input    &= \KeySchedule.\ShieldedAddress \times \Asset \\
         \COM^{\VN}.\Randomness &= \KeySchedule.\ProofAuthorizingKey \\
         \COM^{\VN}.\Input      &= \UTXO \\
-        \UTXOSet.\Item         &= \UTXO \\
+        \TUTXOSet.\Item        &= \TUTXO \\
         \aHPKEin.\KA           &= \KeySchedule.\KA \\
-        \aHPKEout.\KA           &= \KeySchedule.\KA \\
+        \aHPKEout.\KA          &= \KeySchedule.\KA \\
         \ValidTransfer         &: \NIZK.\Statement \\
     \end{align*}
     where \ValidTransfer{} is defined below.
@@ -424,14 +425,16 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \ak                       &: \ProofAuthorizingKey \\
         \alpha                    &: \rKDF.\Randomness \\
         \ak_\alpha                &: \KA.\PublicKey \\
+        \ViewKey                  &: \ViewingKey \\
+        (\tagin, \epkin, \Cin)    &: \AuthEncrypted\bra{\IncomingNote} \\
         \textsf{D}                &: \Diversifier \\
         r                         &: \COM^\UTXO.\Randomness \\
-        \asset                    &: \Asset \\
+        \sa                       &: \SecretAsset \\
         \pkD                      &: \KA.\PublicKey \\
         \eskout                   &: \KA.\SecretKey \\
         (\tagout, \epkout, \Cout) &: \AuthEncrypted\bra{\OutgoingNote} \\
         \cm                       &: \UTXO \\
-        (z_\cm, \pi_\cm)          &: \UTXOSet.\MembershipProof \\
+        (z_\tutxo, \pi_\tutxo)          &: \TUTXOSet.\MembershipProof \\
         \vn                       &: \VoidNumber
     \end{align*}
 
@@ -439,16 +442,14 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         \ak_\alpha                   &:= \rKDF.\rand_\alpha(\ak) \\
         \vk                          &:= \KDF^\vk(\ak) \\
-        \Some(\textsf{D}, r, \asset) &:= \aHPKEin.\decrypt(\vk, \tagin, \epkin, \Cin) \\
+        \Some(\textsf{D}, r, \sa) &:= \aHPKEin.\decrypt(\vk, \tagin, \epkin, \Cin) \\
         \pkD                         &:= \KA.\agree_\textsf{D}(\vk) \\
         \eskout                      &:\sim \KA.\SecretKeyDistribution \\
-        (\tagout, \epkout, \Cout)    &:= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \asset) \\
-        \cm                          &:= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \asset) \\
-        \Some(z_\cm, \pi_\cm)        &:= \UTXOSet.\prove(\cm) \\
+        (\tagout, \epkout, \Cout)    &:= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \sa) \\
+        \cm                          &:= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
+        \Some(z_\tutxo, \pi_\tutxo)        &:= \TUTXOSet.\prove(\cm) \\
         \vn                          &:= \COM^{\VN}_\ak(\cm)
     \end{align*}
-
-    \textbf{Note}: Whenever we want to create a \Sender{} that has an $\asset$ with $\AssetValue$ of zero, then to ensure that we don't have to pay a cost to create its \UTXO{} we can directly create it and skip the \UTXOSet{} membership proof (which won't return a valid proof since no proof exists). This is safe because we are not creating any economic value by inlining the creation of the zero asset on the \Sender{} side of the \Transfer{}. See \ref{def:transfer-validity-statement} for more details on this special case.
 \end{definition}
 
 \begin{definition}[\Transfer{} Sender Post]
@@ -456,7 +457,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         \ak_\alpha                &: \KA.\PublicKey \\
         (\tagout, \epkout, \Cout) &: \AuthEncrypted\bra{\OutgoingNote} \\
-        z_\cm                     &: \UTXOSet.\Output \\
+        z_\tutxo                     &: \TUTXOSet.\Output \\
         \vn                       &: \VoidNumber
     \end{align*}
     which are the parts of a \Sender{} which should be \emph{posted} to the \Ledger{}.
@@ -467,40 +468,46 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     \begin{align*}
         (\textsf{D}, \pkD)     &: \ShieldedAddress \\
         r                      &: \COM^\UTXO.\Randomness \\
-        \asset                 &: \Asset \\
+        \pa                    &: \PublicAsset \\
+        \sa                    &: \SecretAsset \\
+        \saiz                   &: \Bool \\
         \cm                    &: \UTXO \\
+        \tutxo                 &: \TUTXO \\
         \eskin                 &: \KA.\SecretKey \\
         (\tagin, \epkin, \Cin) &: \AuthEncrypted\bra{\IncomingNote}
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed from a shielded address $(\textsf{D}, \pkD) : \ShieldedAddress$, an asset $\asset : \Asset$, and a \UTXO{}-commitment randomness $r : \COM^\UTXO.\Randomness$ with the following algorithm:
+    A \Receiver{}, $R$, is constructed from a shielded address $(\textsf{D}, \pkD) : \ShieldedAddress$, a secret asset $\sa : \SecretAsset$, a public asset $\pa : \PublicAsset$, and a 
+    \UTXO{}-commitment randomness $r : \COM^\UTXO.\Randomness$ with the following algorithm:
     \begin{align*}
-        \cm                    &:= \COM^{\UTXO}_r(\textsf{D}, \pkD, \asset) \\
+        \cm                    &:= \COM^{\UTXO}_r(\textsf{D}, \pkD, \sa) \\
+        \saiz                   &:= \eq(\sa.\VALUE, 0) \\
+        \tutxo                 &:= (\pa, \cm, \saiz) \\
         \eskin                 &:\sim \KA.\SecretKeyDistribution \\
-        (\tagin, \epkin, \Cin) &:= \aHPKEin.\encrypt_\textsf{D}(\eskin, \pkD, (\textsf{D}, r, \asset))
+        (\tagin, \epkin, \Cin) &:= \aHPKEin.\encrypt_\textsf{D}(\eskin, \pkD, (\textsf{D}, r, \sa))
     \end{align*}
 \end{definition}
 
 \begin{definition}[\Transfer{} Receiver Post]
     A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
     \begin{align*}
-        \cm                    &: \UTXO \\
+        \tutxo                    &: \TUTXO \\
         (\tagin, \epkin, \Cin) &: \AuthEncrypted\bra{\IncomingNote}
     \end{align*}
     which are the parts of a \Receiver{} which should be \emph{posted} to the \Ledger{}.
 \end{definition}
 
 \begin{definition}[\Transfer{} Sources and Sinks]
-    A \Source{} (or a \Sink{}) is an \Asset{} representing a public input (or output) of a \Transfer{}.
+    A \Source{} (or a \Sink{}) is an \PublicAsset{} representing a public input (or output) of a \Transfer{}.
 \end{definition}
 
 \begin{definition}[\Transfer{} Object]
     A \Transfer{} is the following tuple:
     \begin{align*}
-        \sources    &: \List\bra{\Asset} \\
+        \sources    &: \List\bra{\PublicAsset} \\
         \senders    &: \List\bra{\Sender} \\
         \receivers  &: \List\bra{\Receiver} \\
-        \sinks      &: \List\bra{\Asset}
+        \sinks      &: \List\bra{\PublicAsset}
     \end{align*}
     The \emph{shape} of a \Transfer{} is the following $4$-tuple of cardinalities of those sets
     \[\left(\abs{T.\sources}, \abs{T.\senders}, \abs{T.\receivers}, \abs{T.\sinks}\right)\]
@@ -509,8 +516,9 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 In order for a \Transfer{} to be considered \emph{valid}, it must adhere to the following constraints:
 
 \begin{itemize}
-    \item \textbf{Same Id}: All the \AssetId{s} in the \Transfer{} must be equal.
-    \item \textbf{Balanced}: The sum of input \AssetValue{s} must be equal to the sum of output \AssetValue{s}.
+    \item \textbf{Correct Zero Asset Value Indicator}: All \saiz{s} in the \Transfer{} must correctly indicate whether the underlying secret asset value is zero.
+    \item \textbf{Same Id}: All non-zero-value \Asset{s} in the \Transfer{} must have the same \AssetId{}.
+    \item \textbf{Balanced}: For all non-zero-value \Asset{s}, the sum of input \AssetValue{s} must be equal to the sum of output \AssetValue{s}.
     \item \textbf{Well-formed Senders}: All of the \Sender{s} in the \Transfer{} must be constructed according to the above \Sender{} definition.
     \item \textbf{Well-formed Receivers}: All of the \Receiver{s} in the \Transfer{} must be constructed according to the above \Receiver{} definition.
 \end{itemize}
@@ -520,25 +528,30 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 \begin{definition}[\Transfer{} Validity \Statement{}]\label{def:transfer-validity-statement}
     A transfer $T : \Transfer$ is considered \emph{valid} if and only if
     \begin{enumerate}
-        \item All the \AssetId{s} in $T$ are equal:
+        \item For all $S \in T.\senders$ and $R \in T.\receivers$, $\saiz{s}: \Bool$ and $\nza{s}: \Asset$ are set correctly:
+            \begin{align*}
+                \saiz &= \eq(\sa.\VALUE,0)  \\
+                \nza  &= \select(\saiz, \pa, \sa)
+            \end{align*}
+        \item All the non-zero-value \Asset{s} in $T$ has the same \AssetId{s}:
             \[
                 \abs{
                     \left(\bigcup_{a \in T.\sources} a.\ID \right)
                     \cup
-                    \left(\bigcup_{S \in T.\senders} S.\asset.\ID \right)
+                    \left(\bigcup_{S \in T.\senders} S.\nza.\ID \right)
                     \cup
-                    \left(\bigcup_{R \in T.\receivers} R.\asset.\ID \right)
+                    \left(\bigcup_{R \in T.\receivers} R.\nza.\ID \right)
                     \cup
                     \left(\bigcup_{a \in T.\sinks} a.\ID \right)
                 } = 1
             \]
-        \item The sum of input \AssetValue{s} is equal to the sum of output \AssetValue{s}:
+        \item For all the non-zero-value \Asset{s}, the sum of input \AssetValue{s} is equal to the sum of output \AssetValue{s}:
             \[
                 \left(\sum_{a \in T.\sources} a.\VALUE\right)
                 +
-                \left(\sum_{S \in T.\senders} S.\asset.\VALUE\right)
+                \left(\sum_{S \in T.\senders} S.\nza.\VALUE\right)
                 =
-                \left(\sum_{R \in T.\receivers} R.\asset.\VALUE\right)
+                \left(\sum_{R \in T.\receivers} R.\nza.\VALUE\right)
                 +
                 \left(\sum_{a \in T.\sinks} a.\VALUE\right)
             \]
@@ -547,15 +560,16 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 \ak_\alpha                            &= \rKDF.\rand_\alpha(\ak) \\
                 \vk                                   &= \KDF^\vk(\ak) \\
                 \pkD                                  &= \KA.\derive_\textsf{D}(\vk) \\
-                (\tagout, \epkout, \Cout)             &= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \asset) \\
-                \cm                                   &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \asset) \\
-                \left(\asset.\VALUE = 0\right) &\vee \left(\UTXOSet.\verify(\cm, z_\cm, \pi_\cm) = \True\right) \\
+                (\tagout, \epkout, \Cout)             &= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \sa) \\
+                \cm                                   &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
+                \True                                 &=  \TUTXOSet.\verify(\cm, z_\tutxo, \pi_\tutxo)\\
                 \vn                                   &= \COM^{\VN}_{\ak}(\cm)
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                \cm            &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \asset) \\
-                (\tagin, \epkin, \Cin) &= \aHPKEin.\encrypt_\textsf{D}(\eskin, (\textsf{D}, r, \asset))
+                \cm            &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
+                \tutxo         &= (\pa, \cm, \saiz) \\
+                (\tagin, \epkin, \Cin) &= \aHPKEin.\encrypt_\textsf{D}(\eskin, (\textsf{D}, r, \sa))
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
@@ -602,7 +616,7 @@ Now that the transfer post has been signed by the owners of the spending keys, i
         \item \textbf{Signature Check}: All the signatures associated to the transactions are valid.
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
-        \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
+        \item \textbf{Current Accumulated State}: The $\TUTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\TUTXOSet.\current(\Ledger.\utxo{s}())$, for the current state of the \Ledger{}.
         \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
         \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
         \item \textbf{Verify \Transfer{}}: Check that $\NIZK.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$. Here, $\vk : \NIZK.\VerifyingKey$ is a known verifying key.
@@ -613,10 +627,13 @@ Now that the transfer post has been signed by the owners of the spending keys, i
     After checking that a given \TransferPost{} $P$ is valid, the \Ledger{} updates its state by performing the following changes:
     \begin{itemize}
         \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances using the \Source{s} and \Sink{s} present in $P$.
-        \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
+        \item \textbf{\TUTXOSet{} Update}: The new \TUTXO{s} are appended to the \TUTXOSet{}.
         \item \textbf{\VoidNumberSet{} Update}: The new \VoidNumber{s} are appended to the \VoidNumberSet{}.
     \end{itemize}
 \end{definition}
+
+\textbf{Note:} Ledger only accepts a $\tutxo: \TUTXO$ for smart contract if $\tutxo.\saiz = \True$.
+
 
 \lsubsection{Batched Transactions}{abstract-batched-transactions}
 

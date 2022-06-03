@@ -5,7 +5,10 @@ The \Asset{} is the fundamental currency object in the \MantaPay{} protocol. An 
 \[a = (a.\ID, a.\VALUE) : \AssetId \times \AssetValue\]
 where the \AssetId{} encodes the type of currency stored in $a$ and the \AssetValue{} encodes how many units of that currency are stored in $a$.  \MantaPay{} is a \emph{decentralized anonymous payment} protocol which facilitiates the private ownership and private transfer of \Asset{} objects. 
 
-Whenever an \Asset{} is being used in a public setting, we simply refer to it as an \Asset{}, but when the \AssetId{} and/or \AssetValue{} of a particular \Asset{} is meant to be hidden from public view, we refer to the \Asset{} as either \emph{secret}, \emph{private}, \emph{hidden}, or \emph{shielded}.
+
+We use \PublicAsset{} and \SecretAsset{} to explicitly describe whether an \Asset{} is visible to public.
+More specifically, whenever an \Asset{} is being used in a public setting, we refer to it as a \PublicAsset{}, 
+but when the \AssetId{} and/or \AssetValue{} of a particular \Asset{} is meant to be hidden from public view, we refer to the \Asset{} as either \emph{secret}, \emph{private}, \emph{hidden}, or \emph{shielded} with \SecretAsset{} type.
 
 \Asset{s} are the basic building-blocks of \emph{transactions} which consume a set of input \Asset{s} and produce a set of transformed output \Asset{s}. To preserve the economic value stored in \Asset{s}, the sum of the input \AssetValue{s} must balance the sum of the output \AssetValue{s}, and all assets in a single transaction must have the same \AssetId{}\footnotemark{}.\footnotetext{It is beyond the scope of this paper to discuss transactions with inputs and outputs that feature different \AssetId{s}, like those that would be featured in a \emph{decentralized anonymous exchange}.} This is called a \emph{balanced transfer}: no \AssetValue{} is created or destroyed in the process. The \MantaPay{} protocol uses a distributed algorithm called \Transfer{} to perform balanced transfers and ensure that they are valid.
 
@@ -61,7 +64,7 @@ More specifically, \MantaPay{}'s ledger state \Ledger{} consists of two parts: t
     \begin{mdframed}[leftmargin=0.2\textwidth, rightmargin=0.2\textwidth]
         \begin{center}
             \begin{tikzcd}
-                && \UTXOSet \arrow[ld, "\spend" description, bend right] \\
+                && \TUTXOSet \arrow[ld, "\spend" description, bend right] \\
                 \PublicLedger \arrow[r, "\mint"', bend right]
                 & \textbf{\Transfer} \arrow[l, "\reclaim"', bend right]
                 \arrow[rd, "\spend" description]
@@ -74,24 +77,39 @@ More specifically, \MantaPay{}'s ledger state \Ledger{} consists of two parts: t
     \captionof{figure}{Life cycle of an \Asset{}.}
 \end{center}
 
-The \ShieldedAssetPool{} is made up of three parts that are used to enforce the balanced transfer of \PrivateAsset{s} among anonymous participants:
+The \ShieldedAssetPool{} is made up of three parts that are used to enforce the balanced transfer of \SecretAsset{s} among anonymous participants:
 
 \begin{enumerate}
-    \item \autoref{sec:ledger-utxo-set} \UTXOSet{}: The \UTXOSet{} is a collection of ownership claims to subsets of the \ShieldedAssetPool{} (called \UTXO{s}), each one refering to an allocated \PrivateAsset{} transfered to a participant of the protocol.
-    \item \autoref{sec:ledger-encrypted-notes} \EncryptedNote{s}: For every \UTXO{} there is a matching \EncryptedNote{} which contains information necessary to spend the \PrivateAsset{}, which can be used to \emph{provably reconstruct} the \UTXO{} convincing the \Ledger{} of unique ownership. The \EncryptedNote{} can only be decrypted by the recipient of the \PrivateAsset{} or the designated viewer of the \UTXO{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
-    \item \autoref{sec:ledger-void-number-set} \VoidNumberSet{}: The \VoidNumberSet{} is a collection of commitments, like \UTXO{s}, but which track the \emph{spent state} of a \PrivateAsset{} and are used to prove to the \Ledger{} that a \PrivateAsset{} is spent \emph{exactly one time}. 
+    \item \autoref{sec:ledger-utxo-set} \TUTXOSet{}: The \TUTXOSet{} is a collection of ownership claims to subsets of the \ShieldedAssetPool{} (called \TUTXO{s}), each one refering to an allocated \SecretAsset{} transfered to a participant of the protocol.
+    \item \autoref{sec:ledger-encrypted-notes} \EncryptedNote{s}: For every \UTXO{} there is a matching \EncryptedNote{} which contains information necessary to spend the \SecretAsset{}, which can be used to \emph{provably reconstruct} the \UTXO{} convincing the \Ledger{} of unique ownership. The \EncryptedNote{} can only be decrypted by the recipient of the \SecretAsset{} or the designated viewer of the \UTXO{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
+    \item \autoref{sec:ledger-void-number-set} \VoidNumberSet{}: The \VoidNumberSet{} is a collection of commitments, like \UTXO{s}, but which track the \emph{spent state} of a \SecretAsset{} and are used to prove to the \Ledger{} that a \SecretAsset{} is spent \emph{exactly one time}. 
 \end{enumerate}
 
 The operation of these different parts of the \ShieldedAssetPool{} is elaborated in the following subsections.
 
-\lsubsubsection{\UTXO{s} and the \UTXOSet{}}{ledger-utxo-set}
+\lsubsubsection{\UTXO{s}, \TUTXO{s} and the \TUTXOSet{}}{ledger-utxo-set}
 
-An \emph{unspent transaction output}, or \UTXO{} for short, represents a claim to the output of a balanced transfer which has otherwise \emph{not yet been spent}. Every balanced transfer can produce some number of \emph{public outputs}, represented by \Asset{s}, and/or \emph{private outputs}, represented by \UTXO{s}, and these \UTXO{s} are stored in the \UTXOSet{} of the \ShieldedAssetPool{}. A \UTXO{} can only be claimed by the participant who owns the underlying \PrivateAsset{}, where ownership means \emph{knowledge of the correct spending key} and the \Transfer{} protocol requires that all inputs to a balanced transfer \emph{prove} that they own a \UTXO{} which the \ShieldedAssetPool{} has already seen in the past. The \UTXOSet{} is \emph{append-only} since it represents the past state of \emph{unspent} \PrivateAsset{s}. \UTXO{s} can only be added to the \UTXOSet{} as outputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
+An \emph{unspent transaction output}, or \UTXO{} for short, represents a claim to the private output of a balanced transfer which has 
+\emph{not yet been spent}. Every balanced transfer can produce some number of \emph{public outputs}, represented by \PublicAsset{s}, and/or 
+\emph{private outputs}, represented by \UTXO{s}.
+
+A \emph{transparent unspent transaction output}, or \TUTXO{} for short, is an extension of \PublicAsset{} and \UTXO{}. More specifically, a 
+$\tutxo$ : \TUTXO{} is a tuple 
+\begin{align*}
+    \tutxo = (\pa, \utxo, \saiz) : \PublicAsset \times \UTXO \times \Bool
+\end{align*}
+Here, \emph{secret asset is zero}, or \saiz{} for short, is a boolean indicating whether \utxo{} has underlying \AssetValue{}
+as zero. Every balanced transfer generates some number of \TUTXO{s} and these \TUTXO{s} are stored in the \TUTXOSet{} 
+of the \ShieldedAssetPool{}. A \TUTXO{} can only be claimed by the participant who owns the underlying \SecretAsset{}, where ownership means 
+\emph{knowledge of the correct spending key} and the \Transfer{} protocol requires that all inputs to a balanced transfer \emph{prove} 
+that they own a \TUTXO{} which the \ShieldedAssetPool{} has already seen in the past.
+The \TUTXOSet{} is \emph{append-only} since it represents the past state of \emph{unspent} \SecretAsset{s}. \TUTXO{s} can only be added to the 
+\TUTXOSet{} as outputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
 
 \lsubsubsection{\EncryptedNote{s}}{ledger-encrypted-notes}
 
-In order to find out what \PrivateAsset{} a \UTXO{} is connected to, every \UTXO{} comes with an associated \EncryptedNote{} which stores two pieces of information, the underlying (\AssetId{}, \AssetValue{}), and an ephemeral public key, a value which allows the new owner of the \PrivateAsset{} to reconstruct the \UTXO{}. Being able to \emph{provably reconstruct} a correct \UTXO{} is a prerequisite to ownership and the ability to spend the \PrivateAsset{} in the future. Once a participant spends a \PrivateAsset{} that they can decrypt, they build a new \EncryptedNote{} for the next participant that they sent their \PrivateAsset{s} to, so that they can then spend it, and so on. This is called the \emph{in-band secret distribution}.
+In order to find out what \SecretAsset{} a \UTXO{} is connected to, every \UTXO{} comes with an associated \EncryptedNote{} which stores two pieces of information, the underlying (\AssetId{}, \AssetValue{}), and an ephemeral public key, a value which allows the new owner of the \SecretAsset{} to reconstruct the \UTXO{}. Being able to \emph{provably reconstruct} a correct \UTXO{} is a prerequisite to ownership and the ability to spend the \SecretAsset{} in the future. Once a participant spends a \SecretAsset{} that they can decrypt, they build a new \EncryptedNote{} for the next participant that they sent their \SecretAsset{s} to, so that they can then spend it, and so on. This is called the \emph{in-band secret distribution}.
 
 \lsubsubsection{\VoidNumber{s} and the \VoidNumberSet{}}{ledger-void-number-set}
 
-Once the ability to spend a \PrivateAsset{} is extracted from a $(\UTXO, \EncryptedNote)$ pair, the \ShieldedAssetPool{} requires another commitment in order to spend the \PrivateAsset{}, transfering it to another participant. This commitment, called the \VoidNumber{}, represents the revocation of the right to spend the \PrivateAsset{} in the future, and ensures that the same \PrivateAsset{} cannot be spent twice. Like the \UTXOSet{}, the \VoidNumberSet{} is \emph{append-only} since it represents the past state of \emph{spent} \PrivateAsset{s}. \VoidNumber{s} can only be added to the \VoidNumberSet{} as inputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
+Once the ability to spend a \SecretAsset{} is extracted from a $(\UTXO, \EncryptedNote)$ pair, the \ShieldedAssetPool{} requires another commitment in order to spend the \SecretAsset{}, transfering it to another participant. This commitment, called the \VoidNumber{}, represents the revocation of the right to spend the \SecretAsset{} in the future, and ensures that the same \SecretAsset{} cannot be spent twice. Like the \TUTXOSet{}, the \VoidNumberSet{} is \emph{append-only} since it represents the past state of \emph{spent} \SecretAsset{s}. \VoidNumber{s} can only be added to the \VoidNumberSet{} as inputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
