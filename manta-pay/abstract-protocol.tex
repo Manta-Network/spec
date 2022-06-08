@@ -391,6 +391,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
         \item \textbf{Incoming Authenticated Hybrid Public Key Encryption}: $\aHPKEin$
         \item \textbf{Outgoing Authenticated Hybrid Public Key Encryption}: $\aHPKEout$
         \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
+        \item \textbf{HASH Function}: $\HASH{}$
         \item \textbf{Void Number Commitment Scheme}: $\COM^{\VN}$
         \item \textbf{Dynamic Cryptographic Accumulator}: $\DCA$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
@@ -398,7 +399,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     with the following notational conventions:
     \begin{align*}
         \UTXO         &:= \COM^{\UTXO}.\Output \\
-        \TUTXO        &:= \PublicAsset \times \UTXO \times \Bool \\
+        \TUTXO        &:= \PublicAsset \times \UTXO \times \Bool \times \tUTXOID \\
         \VoidNumber   &:= \COM^{\VN}.\Output \\
         \IncomingNote &:= \KeySchedule.\ShieldedAddress \times \COM^\UTXO.\Randomness \times \Asset \\
         \OutgoingNote &:= \Asset \\
@@ -433,22 +434,25 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \pkD                      &: \KA.\PublicKey \\
         \eskout                   &: \KA.\SecretKey \\
         (\tagout, \epkout, \Cout) &: \AuthEncrypted\bra{\OutgoingNote} \\
-        \cm                       &: \UTXO \\
+        \utxo                       &: \UTXO \\
+        \tutxo                    &: \TUTXO \\
         (z_\tutxo, \pi_\tutxo)          &: \TUTXOSet.\MembershipProof \\
         \vn                       &: \VoidNumber
     \end{align*}
 
-    A \Sender{}, $S$, is constructed from a proof authorizing key $\ak : \ProofAuthorizingKey$, a randomizer $\alpha : \rKDF.\Randomness$ and an encrypted message $(\tagin, \epkin, \Cin) : \AuthEncrypted(\IncomingNote)$ with the following algorithm:
+    A \Sender{}, $S$, is constructed from a proof authorizing key $\ak : \ProofAuthorizingKey$, a randomizer $\alpha : \rKDF.\Randomness$, a tutxo identification $\ID : \tUTXOID$, a public asset $\pa : \PublicAsset$, and an encrypted message $(\tagin, \epkin, \Cin) : \AuthEncrypted(\IncomingNote)$ with the following algorithm:
     \begin{align*}
         \ak_\alpha                   &:= \rKDF.\rand_\alpha(\ak) \\
         \vk                          &:= \KDF^\vk(\ak) \\
         \Some(\textsf{D}, r, \sa) &:= \aHPKEin.\decrypt(\vk, \tagin, \epkin, \Cin) \\
+        \saiz                       &:= \eq(\sa.\VALUE,0) \\
         \pkD                         &:= \KA.\agree_\textsf{D}(\vk) \\
         \eskout                      &:\sim \KA.\SecretKeyDistribution \\
         (\tagout, \epkout, \Cout)    &:= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \sa) \\
-        \cm                          &:= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
-        \Some(z_\tutxo, \pi_\tutxo)        &:= \TUTXOSet.\prove(\cm) \\
-        \vn                          &:= \COM^{\VN}_\ak(\cm)
+        \utxo                          &:= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
+        h                            &:= \HASH.\hash(\pa, \utxo, \saiz, \ID) \\
+        \Some(z_\tutxo, \pi_\tutxo)        &:= \TUTXOSet.\prove(h) \\
+        \vn                          &:= \COM^{\VN}_\ak(h)
     \end{align*}
 \end{definition}
 
@@ -471,18 +475,18 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \pa                    &: \PublicAsset \\
         \sa                    &: \SecretAsset \\
         \saiz                   &: \Bool \\
-        \cm                    &: \UTXO \\
+        \utxo                    &: \UTXO \\
         \tutxo                 &: \TUTXO \\
         \eskin                 &: \KA.\SecretKey \\
         (\tagin, \epkin, \Cin) &: \AuthEncrypted\bra{\IncomingNote}
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed from a shielded address $(\textsf{D}, \pkD) : \ShieldedAddress$, a secret asset $\sa : \SecretAsset$, a public asset $\pa : \PublicAsset$, and a 
+    A \Receiver{}, $R$, is constructed from a shielded address $(\textsf{D}, \pkD) : \ShieldedAddress$, a secret asset $\sa : \SecretAsset$, a public asset $\pa : \PublicAsset$, a tutxo identification $\ID: \tUTXOID$, and a 
     \UTXO{}-commitment randomness $r : \COM^\UTXO.\Randomness$ with the following algorithm:
     \begin{align*}
-        \cm                    &:= \COM^{\UTXO}_r(\textsf{D}, \pkD, \sa) \\
+        \utxo                    &:= \COM^{\UTXO}_r(\textsf{D}, \pkD, \sa) \\
         \saiz                   &:= \eq(\sa.\VALUE, 0) \\
-        \tutxo                 &:= (\pa, \cm, \saiz) \\
+        \tutxo                 &:= (\pa, \utxo, \saiz, \ID) \\
         \eskin                 &:\sim \KA.\SecretKeyDistribution \\
         (\tagin, \epkin, \Cin) &:= \aHPKEin.\encrypt_\textsf{D}(\eskin, \pkD, (\textsf{D}, r, \sa))
     \end{align*}
@@ -561,14 +565,14 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 \vk                                   &= \KDF^\vk(\ak) \\
                 \pkD                                  &= \KA.\derive_\textsf{D}(\vk) \\
                 (\tagout, \epkout, \Cout)             &= \aHPKEout.\encrypt_\textsf{D}(\eskout, \pkD, \sa) \\
-                \cm                                   &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
-                \True                                 &=  \TUTXOSet.\verify(\cm, z_\tutxo, \pi_\tutxo)\\
-                \vn                                   &= \COM^{\VN}_{\ak}(\cm)
+                \utxo                                   &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
+                h                                     &= \HASH.\hash(\pa, \utxo, \saiz, \ID) \\
+                \True                                 &=  \TUTXOSet.\verify(h, z_\tutxo, \pi_\tutxo)\\
+                \vn                                   &= \COM^{\VN}_{\ak}(h)
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                \cm            &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
-                \tutxo         &= (\pa, \cm, \saiz) \\
+                \utxo            &= \COM^{\UTXO}_{r}(\textsf{D}, \pkD, \sa) \\
                 (\tagin, \epkin, \Cin) &= \aHPKEin.\encrypt_\textsf{D}(\eskin, (\textsf{D}, r, \sa))
             \end{align*}
     \end{enumerate}

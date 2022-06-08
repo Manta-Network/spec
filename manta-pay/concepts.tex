@@ -1,7 +1,7 @@
 \lsection{Concepts}{concepts}
 \subsection{Assets}
 
-The \Asset{} is the fundamental currency object in the \MantaPay{} protocol. An asset $a : \Asset$ is a tuple
+\Asset{} is the fundamental currency object in the \MantaPay{} protocol. An asset $a : \Asset$ is a tuple
 \[a = (a.\ID, a.\VALUE) : \AssetId \times \AssetValue\]
 where the \AssetId{} encodes the type of currency stored in $a$ and the \AssetValue{} encodes how many units of that currency are stored in $a$.  \MantaPay{} is a \emph{decentralized anonymous payment} protocol which facilitiates the private ownership and private transfer of \Asset{} objects. 
 
@@ -96,10 +96,12 @@ An \emph{unspent transaction output}, or \UTXO{} for short, represents a claim t
 A \emph{transparent unspent transaction output}, or \TUTXO{} for short, is an extension of \PublicAsset{} and \UTXO{}. More specifically, a 
 $\tutxo$ : \TUTXO{} is a tuple 
 \begin{align*}
-    \tutxo = (\pa, \utxo, \saiz) : \PublicAsset \times \UTXO \times \Bool
+    \tutxo = (\pa, \utxo, \saiz, \ID) : \PublicAsset \times \UTXO \times \Bool \times \tUTXOID
 \end{align*}
 Here, \emph{secret asset is zero}, or \saiz{} for short, is a boolean indicating whether \utxo{} has underlying \AssetValue{}
-as zero. Every balanced transfer generates some number of \TUTXO{s} and these \TUTXO{s} are stored in the \TUTXOSet{} 
+as zero. 
+\tUTXOID{} is an identification to distinguish two \TUTXO{s} with the same \PublicAsset{} and \UTXO{}.
+Every balanced transfer generates some number of \TUTXO{s} and these \TUTXO{s} are stored in the \TUTXOSet{} 
 of the \ShieldedAssetPool{}. A \TUTXO{} can only be claimed by the participant who owns the underlying \SecretAsset{}, where ownership means 
 \emph{knowledge of the correct spending key} and the \Transfer{} protocol requires that all inputs to a balanced transfer \emph{prove} 
 that they own a \TUTXO{} which the \ShieldedAssetPool{} has already seen in the past.
