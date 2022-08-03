@@ -7,7 +7,7 @@ The following notation is used throughout this specification:
     \item If $x : T$ then $x$ is a value and $T$ is a type, denoted $T : \Type$, and we say that $x$ \emph{has type} $T$.
     \item $\Bool$ is the type of booleans with values $\True$ and $\False$.
     \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{type of functions} from $A$ to $B$ as $A \to B : \Type$.
-    \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{product type} over $A$ and $B$ as $A \times B : \Type$ with constructor $(\dash, \dash) : A \to (B \to A \times B)$.
+    \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{product type} over $A$ and $B$ as $A \times B : \Type$ with constructor $(\dash, \dash) : A \to (B \to A \times B)$. Depending on context, we may omit the constructor and inline the pair into another constructor/destructor. For example, if $f : A \times B \to C$ we can denote $f((a, b))$ as $f(a, b)$ to reduce the number of parentheses.
     \item For any type $T : \Type$, we define $\Option(T) : \Type$ as the inductive type with constructors:
         \begin{align*}
             \None &: \Option(T) \\
