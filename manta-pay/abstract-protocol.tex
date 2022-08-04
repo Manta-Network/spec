@@ -90,33 +90,6 @@ In the following section, we outline the formal specifications for all of the \e
 
     \textbf{Notation}: For convenience, we may refer to $\KA.\agree(\sk, \textsf{D})$ as $\KA.\agree_{\textsf{D}}(\sk)$ for all $\sk : \SecretKey$ and $\textsf{D} : \PublicKey$.
 
-\begin{definitiontoc}{Message Authentication Code}
-    A \emph{message authentication code} $\MAC$ is given by the schema:
-    \begin{align*}
-        \SecretKey &: \Type \\
-        \Message   &: \Type \\
-        \Tag       &: \Type \\
-        \sign      &: \SecretKey \times \Message \to \Tag \\
-        \verify    &: \SecretKey \times \Message \times \Tag \to \Bool
-    \end{align*}
-    with the following properties:
-    \begin{itemize}
-        \item \textbf{Completeness}: For all $\sk : \SecretKey$, $m : \Message$, we have that $\verify(\sk, m, \sign(\sk, m)) = \True$.
-        \item \textbf{Unforgeability}: For any key $\sk : \SecretKey$ and efficient adversary $\mathcal{A}_\sk$ with oracle access to $\sign(\sk, \dash)$ the following probability is negligible:
-            \[
-                \Prob{
-                    \verify(\sk, m, t) = \True
-                }{
-                    (m, t) \sim \mathcal{A}_\sk \\
-                    m \not\in \mathcal{Q}(\mathcal{A}_\sk)
-                }
-            \]
-            where $\mathcal{Q}(\mathcal{A}_\sk)$ denotes the set of queries that $\mathcal{A}_\sk$ makes to the oracle during its strategy.
-    \end{itemize}
-
-    \textbf{Note}: In the case that the secret key should not be known by the verifier, one can use a signature scheme instead.
-\end{definitiontoc}
-
 \begin{definitiontoc}{Signature Scheme}
     A \emph{signature scheme} $\SIG$ is defined by the schema:
     \begin{align*}
@@ -151,23 +124,6 @@ In the following section, we outline the formal specifications for all of the \e
     \end{itemize}
 \end{definitiontoc}
 
-\begin{definitiontoc}{Message Digest Cipher}
-    A \emph{message digest cipher} $\MDC$ is the following scheme:
-    \begin{align*}
-        \SecretKey &: \Type \\
-        \mathbb{F} &: \Type \\
-        H          &: \SecretKey \times \mathbb{F} \to \mathbb{F} \\
-        \left(\dash\,\oplus\,\dash\right) &: \mathbb{F}^2 \to \mathbb{F} \\
-        \left(\dash\,\ominus\,\dash\right) &: \mathbb{F}^2 \to \mathbb{F}
-    \end{align*}
-    where $H$ is a suitable Hash Function and $\oplus$ and $\ominus$ fulfill the following right-invertibility constraint for all $x, y : \mathbb{F}$
-    \[(x \oplus y) \ominus y = x\]
-    From these primitives we build a block-based encryption scheme. Given a plaintext $P = [P_0, P_1, \cdots, P_{k-1}]: \mathbb{F}^k$ and a key schedule $K = [K_0, K_1, \cdots, K_{k-1}] : \SecretKey^k$ we can encrypt to a ciphertext $C = [C_0, C_1, \cdots, C_{k-1}] : \mathbb{F}^k$ by sequentially applying the following for each round:
-    \[C_i := P_i \oplus H(K_i, C_{i-1}), \;\; i \in \{0,1,\cdots, k-1\}\]
-    where $C_{-1}: \mathbb{F}$ is some secret initialization value. For decryption we use the reverse operation
-    \[P_i := C_i \ominus H(K_i, C_{i-1})\]
-    \textbf{Note}: This encryption scheme is not \emph{authenticating} in-and-of-itself and requires some strategy like Encrypt-then-MAC for authentication.
-\end{definitiontoc}
 
 \begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
     A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
@@ -310,14 +266,14 @@ For the \Transfer{} protocol we use a multi-layered system of keys:
 Here we define each key and its function in the \Transfer{} protocol.
 
 \begin{definition}[Spending Key]
-    Given a key-agreement scheme $\KA$ with compatible randomized key-derivation function $\rKDF$ we have:
+    Given a key-agreement scheme $\KA$ with randomized key-derivation function $\rKDF$ we have:
     \[\SpendingKey := \KA.\SecretKey\]
 
-    which can be randomized by $\rKDF.\Randomness$. The spending key must also be compatible with a signature scheme $\SIG$ who's underlying key derivation matches $\KA$ and $\rKDF$. 
+    which can be randomized by $\rKDF.\Randomness$.
 \end{definition}
 
 \begin{definition}[Proof Authorizing Key]
-    Given a key-agreement scheme $\KA$ with compatible randomized key-derivation function $\rKDF$ and with a signature scheme $\SIG$ we have:
+    Given a key-agreement scheme $\KA$ with randomized key-derivation function $\rKDF$ and with a signature scheme $\SIG$ we have:
     \[\ProofAuthorizingKey := \KA.\PublicKey\]
 
     where a given $\sk : \SpendingKey$ derives the proof-authorizing key by
@@ -502,7 +458,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 \end{definition}
 
 \begin{definition}[\Transfer{} Sources and Sinks]
-    A \Source{} (or a \Sink{}) is an \PublicAsset{} representing a public input (or output) of a \Transfer{}.
+    A \Source{} (or a \Sink{}) is a \PublicAsset{} representing a public input (or output) of a \Transfer{}.
 \end{definition}
 
 \begin{definition}[\Transfer{} Object]

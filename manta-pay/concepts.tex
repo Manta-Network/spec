@@ -46,8 +46,8 @@ Participants in \MantaPay{} are represented by their addresses, but they are not
 
 \subsection{Ledger}
 
-We model a blockchain as a byzantine fault tolerance replicated state
-machine with append only state, a.k.a ledger. When interacting with the blockchain, we call the entity who
+We model a blockchain as a byzantine fault tolerance~\cite{bft} replicated state
+machine~\cite{smr}, a.k.a ledger. When interacting with the blockchain, we call the entity who
 initiates the interaction (e.g., sending a transfer request) the user; the entity who verifies the interaction and
 logs it into the blockchain the validator (also known as miner in other contents). Users interact with the
 blockchain by sending amendment requests to the ledger. The amendment is appended to the database once
