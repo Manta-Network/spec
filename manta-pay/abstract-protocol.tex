@@ -330,7 +330,8 @@ Here we define each key and its function in the \Transfer{} protocol.
         \rKDF.\Output   &= \KA.\PublicKey \\
         \SIG.\SecretKey &= \KA.\SecretKey \\
         \SIG.\PublicKey &= \KA.\PublicKey \\
-        \SIG.\derive    &= \KA.\derive
+        \SIG.\derive    &= \KA.\derive \\
+        \KDF^\vk.\SecretKey &= \KA.\PublicKey
     \end{align*}
 \end{definition}
 
@@ -369,7 +370,8 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
         \TUTXOSet.\Item        &= \TUTXO \\
         \aHPKEin.\KA           &= \KeySchedule.\KA \\
         \aHPKEout.\KA          &= \KeySchedule.\KA \\
-        \ValidTransfer         &: \NIZK.\Statement \\
+        \HASH.\Input &= \TUTXO \\
+        \ValidTransfer         &: \NIZK.\Statement 
     \end{align*}
     where \ValidTransfer{} is defined below.
 \end{definition}
@@ -561,17 +563,17 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 Now that the prover has constructed the proof, the underlying spending keys need to authorize the transaction before it can be sent to the \Ledger{}.
 
 \begin{definition}[Proof Authorization]
-    Given a transfer post $T: \TransferPost{}$ and a set of spending keys $S = \set{(\sk_i, \alpha_i)}$ where $(\sk_i, \alpha_i)$ come from the $i$th spender associated to the $T.\senders_i$, we have the following signature:
-    \[\Sigma := \set{\SIG.\sign(\rKDF.\rand_\alpha(\sk), T) | (\sk, \alpha) \in S}\]
+    Given a transfer post $P: \TransferPost{}$ and a set of spending keys $S = \set{(\sk_i, \alpha_i)}$ where $(\sk_i, \alpha_i)$ come from the $i$th spender associated to the $P.\senders_i$, we have the following signature:
+    \[\Sigma := \set{\SIG.\sign(\rKDF.\rand_\alpha(\sk), P) | (\sk, \alpha) \in S}\]
 
     which can be verified by the ledger with 
-    \[\forall_i\SIG.\verify(T.\senders_i.\ak_\alpha, T, \Sigma_i) = \True\]
+    \[\forall_i\SIG.\verify(P.\senders_i.\ak_\alpha, P, \Sigma_i) = \True\]
 \end{definition}
 
 Now that the transfer post has been signed by the owners of the spending keys, it can be sent up to the \Ledger{}.
 
 \begin{definition}[\Ledger{}-side \Transfer{} Validity]
-    To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
+    To check that the transfer post $P$ represents a valid \Transfer{}, the ledger checks the following:
     \begin{itemize}
         \item \textbf{Signature Check}: All the signatures associated to the transactions are valid.
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
@@ -626,7 +628,7 @@ For \MantaPay{} participants to use the \Transfer{} protocol, they will need to 
 \end{algorithmic}
 \end{algorithm*}
 
-Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single (atomic) action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single (atomic) action that the user can take, performing a withdrawal from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
 
 \footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
 
