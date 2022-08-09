@@ -4,7 +4,7 @@
 
 In the following section, we define the algebraic objects that are used throughout the paper and the \MantaPay{} protocol. 
 
-\begin{definition}
+\begin{definitiontoc}{Ring of scalars}
     A \emph{ring (of scalars)} consists of a set $R$ together with two binary operations:
     \begin{align*}
         +_R \colon R \times R \longrightarrow R \\
@@ -15,9 +15,9 @@ In the following section, we define the algebraic objects that are used througho
         \item $+_R$ is associative, commutative, has an identity element $0_R$ and every element $r \in R$ has an inverse, denoted by $-r$. 
         \item $\cdot$ is bilinear w.r.t. $+_R$, associative, commutative and has an identity element $1$.
     \end{itemize}
-\end{definition}
+\end{definitiontoc}
 
-\begin{definition}\label{defn:group}
+\begin{definitiontoc}{Group}\label{defn:group}
     A \emph{group} over the ring of scalars $R$\footnote{Technically speaking, this is an $R$-module. When $R$ = $\mathbb{Z}$, then this definition is indeed a group in the mathematical sense.} consists of a set $G$ together with two maps
     \begin{align*}
         +_G \colon G \times G \longrightarrow G \\
@@ -28,7 +28,7 @@ In the following section, we define the algebraic objects that are used througho
         \item $+_G$ is associative, commutative, has an identity element $0_G$ and every element $g \in G$ has an inverse, denoted by $-g$. 
         \item $\cdot_G$ is bilinear w.r.t. both $+_G$ and $+_R$. For all $r_1, r_2 \in R$, $g \in G$, we have $(r_1 \cdot r_2) \cdot g = r_1 \cdot (r_2 \cdot g)$ and $1 \cdot g = g$.
     \end{itemize}
-\end{definition}
+\end{definitiontoc}
 
 
 \textbf{Example}: For most practical applications, $G = E$ will be an elliptic curve defined over a finite field $R = \mathbb{F}$.
@@ -101,22 +101,6 @@ In the following section, we outline the formal specifications for all of the \e
     \textbf{Note}: This abstract definition covers many different cases of key related functions. The security properties of a specific $\KDF$ are outlined wherever it's used.
 \end{definitiontoc}
 
-\begin{definitiontoc}{Randomizable Key-Derivation Function}
-    A \emph{randomizable key derivation function} $\rKDF$ extends a $\KDF$ scheme by adding the following randomization:
-    \begin{align*}
-        \Randomness             &: \Type \\
-        \RandomnessDistribution &: \mathfrak{D}\bra{\Randomness} \\
-        \rand^I                 &: \Randomness \times \Input \to \Input \\
-        \rand^O                 &: \Randomness \times \Output \to \Output
-    \end{align*}
-    where $\rand$ can be denoted without the type marker if the context is clear. The scheme has the following properties:
-    \begin{itemize}
-        \item \textbf{Random Derivation}: For all $x : \Input$ and $\alpha : \Randomness$, we have $\rand(\alpha, \derive(x)) = \derive(\rand(\alpha, x))$.
-    \end{itemize}
-
-    \textbf{Notation}: For convenience, we may refer to $\rand(\alpha, x)$ by $\rand_\alpha(x)$ and refer to $\rand_\alpha(\derive(x))$ by $\derive_\alpha(x)$.
-\end{definitiontoc}
-
 \begin{definitiontoc}{Key-Agreement Scheme}
     A \emph{key-agreement scheme} $\KA$ is defined by the schema:
     \begin{align*}
@@ -130,13 +114,28 @@ In the following section, we outline the formal specifications for all of the \e
     with the following properties:
     \begin{itemize}
         \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
-        \item \textbf{Passive Security}: Even if an adversary eavedrops on the network communication, she cannot forge the agreed secret unless she knows how to find a preimage for \derive{} which should be as hard as a known hard cryptography problem like the Diffie-Hellman Problem.
+        \item \textbf{Passive Security}: Even if an adversary eavesdrops on the network communication, she cannot forge the agreed secret unless she knows how to find a preimage for \derive{} which should be as hard as a known hard cryptography problem like the Diffie-Hellman Problem.
         \item \textbf{Known-key Security}: Suppose an adversary learned a shared secret from a past session, then, the adversary does not gain any additional information by combining the past key and public visible data for the purpose of deducing future shared secrets.
         \item \textbf{No Key Control}: The shared secrets are determined by both parties, neither party can control the outcome of the shared secret by restricting it to lie in some predetermined small set.
     \end{itemize}
 \end{definitiontoc}
 
     \textbf{Notation}: For convenience, we may refer to $\KA.\agree(\sk, \textsf{D})$ as $\KA.\agree_{\textsf{D}}(\sk)$ for all $\sk : \SecretKey$ and $\textsf{D} : \PublicKey$.
+
+    \begin{definitiontoc}{$G$-Key-Agreement Scheme}
+        A \emph{$G$-Key-Agreement Scheme $G$-$\KA$} is a key-agreement scheme where
+        \begin{itemize}
+            \item $G$ is a group over the ring of scalars $R$,
+            \item \SecretKey \ = $R$,
+            \item \PublicKey \ = $G$.
+        \end{itemize}
+        satisfying $\derive(r \cdot sk) = r \cdot \derive (sk)$ for all $r, sk \colon \SecretKey$. Equivalently, in multiplicative notation, it reads $\derive(r \cdot sk) = \derive (sk)^r$.
+    \end{definitiontoc}
+
+    \textbf{Notation}: Often we omit the group $G$ in the notation and refer to $G\mhyphen\KA$ as $\KA$.
+    \begin{remark*}
+        One can also define $G$-Key-Derivation Functions and $G$-Signature Schemes in a completely analogous manner. More generally, any cryptographic primitive with a derive function admits this structure. 
+    \end{remark*}
 
 \begin{definitiontoc}{Signature Scheme}
     A \emph{signature scheme} $\SIG$ is defined by the schema:
@@ -154,6 +153,9 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Completeness}: For all $\sk : \SecretKey$, $m : \Message$, and any signature $\sigma \sim \sign(\sk, m)$, we have that $\verify(\derive(\sk), m, \sigma) = \True$.
     \end{itemize}
 \end{definitiontoc}
+
+
+
 
 \begin{definitiontoc}{Symmetric-Key Encryption Scheme} \label{def:abstract-symm}
     An \emph{authenticated one-time symmetric-key encryption scheme} $\SYM$ is defined by the schema:
@@ -243,29 +245,42 @@ In the following section, we outline the formal specifications for all of the \e
             \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
         \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
             \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
-        \item We say that $(x, w) : \PublicInput \times \SecretInput$ has the property of being a $\satisfying$ input whenever
-            \[\satisfying^P_\pk(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
+        \item Given $P \colon \Statement$ and $\pk \colon \ProvingKey$, we define the function
+        \begin{align*}
+            \satisfying^P_\pk : \PublicInput \times \SecretInput \longrightarrow \Bool, 
+        \end{align*}
+        which is true if $\exists \pi : \Proof$ such that $\Some(\pi) \in \prove^P_\pk(x, w)$ and false otherwise. If $\satisfying^P_\pk (x, w) = \True$, we call the pair $(x,w)$ a \emph{satisfying input}.
     \end{itemize}
 
     Every $\NIZK$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
 
     \begin{itemize}
         \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
-        \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
-            \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}\bra{\PublicInput \times \Proof}\]
-             there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
+        \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$ such that the probability 
+        \[
+            \Prob{
+                \verify_\vk(x, \pi) = \True
+            }{
+                (\pk, \vk) \sim \keys(P) \\
+                (x, \pi) \sim \mathcal{A}(\pk, \vk)
+            }
+        \]
+            is non-negligible, there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
             \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}\bra{\SecretInput}\]
-            such that the following probability is negligible:
-            \[
+            such that the difference
+            \[ \left|
                 \Prob{
-                    \satisfying^P_\pk(x, w) = \False \\
-                    \verify_\vk(x, w) = \True
+                \verify_\vk(x, \pi) = \True
+            }{
+                (\pk, \vk) \sim \keys(P) \\
+                (x, \pi) \sim \mathcal{A}(\pk, \vk)
+            } - \Prob{
+                    \satisfying^P_\pk(x, w) = \True
                 }{
-                    (\pk, \vk) \sim \keys(P) \\
-                    (x, \pi) \sim \mathcal{A}(\pk, \vk) \\
                     w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
-                }
+                } \right| 
             \]
+            is negligible.
         \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
             \[
                 \Prob{
@@ -299,9 +314,9 @@ For the \Transfer{} protocol we use a multi-layered system of keys:
     \begin{mdframed}[leftmargin=0.125\textwidth, rightmargin=0.125\textwidth]
         \begin{center}
             \begin{tikzcd}
-                &  & \sk \arrow[lldd, "\rand_\alpha"'] \arrow[rrdd, "\derive"] & & & & & & \\
+                &  & \sk \arrow[lldd, "\cdot \alpha"'] \arrow[rrdd, "\derive"] & & & & & & \\
                 & & & & & & & & \\
-                \sk_\alpha \arrow[rrdd, "\derive"'] & & & & \ak \arrow[lldd, "\rand_\alpha"] \arrow[rr, "\KDF^\vk"] & & \vk \arrow[rr, "\agree_\textsf{D}"] & & (\textsf{D}, \pk_\textsf{D}) \\
+                \sk_\alpha \arrow[rrdd, "\derive"'] & & & & \ak \arrow[lldd, "\cdot \alpha"] \arrow[rr, "\KDF"] & & \vk \arrow[rr, "\agree_\textsf{D}"] & & (\textsf{D}, \pk_\textsf{D}) \\
                 & & & & & & & & \\
                 & & \ak_\alpha & & & & & &
 \end{tikzcd}
@@ -314,27 +329,25 @@ For the \Transfer{} protocol we use a multi-layered system of keys:
 Here we define each key and its function in the \Transfer{} protocol.
 
 \begin{definition}[Spending Key]
-    Given a key-agreement scheme $\KA$ with randomized key-derivation function $\rKDF$ we have:
+    Given a $G$-key-agreement scheme $\KA$ we define:
     \[\SpendingKey := \KA.\SecretKey\]
-
-    which can be randomized by $\rKDF.\Randomness$.
 \end{definition}
 
 \begin{definition}[Proof Authorizing Key]
-    Given a key-agreement scheme $\KA$ with randomized key-derivation function $\rKDF$ and with a signature scheme $\SIG$ we have:
+    Given a $G$-key-agreement scheme $\KA$ and a signature scheme $\SIG$ we have:
     \[\ProofAuthorizingKey := \KA.\PublicKey\]
 
     where a given $\sk : \SpendingKey$ derives the proof-authorizing key by
     \[\ak := \KA.\derive(\sk)\]
 
-    This key can be randomized by $\alpha : \rKDF.\Randomness$ to get
-    \[\ak_\alpha := \rKDF.\rand_\alpha(\ak)\]
+    This key can be twisted by $\alpha : \KA.\SecretKey$ to get
+    \[\ak_\alpha := \alpha \cdot \ak\]
 
-    which is also equal to the key-agreement derivation of the randomized secret key
-    \[\ak_\alpha = \KA.\derive(\rKDF.\rand_\alpha(\sk))\]
+    which is also equal to the key-agreement derivation of the twisted secret key
+    \[\ak_\alpha = \KA.\derive(\alpha \cdot \sk)\]
 
     To authorize a message $m$, the owner of $\sk$ can perform the following signature algorithm:
-    \[\sigma \sim \SIG.\sign(\rKDF.\rand_\alpha(\sk), m)\]
+    \[\sigma \sim \SIG.\sign(\alpha \cdot \sk, m)\]
 
     which can then be verified against $\ak_\alpha$ with
     \[\SIG.\verify(\ak_\alpha, m, \sigma)\]
@@ -343,10 +356,10 @@ Here we define each key and its function in the \Transfer{} protocol.
 \end{definition}
 
 \begin{definition}[Viewing Key]
-    Given a proof-authorizing key, we require a $\KDF^\vk$ of type
-    \[\KDF^\vk : \ProofAuthorizingKey \to \ViewingKey\]
+    Given a proof-authorizing key, we require a $\KDF$ of type
+    \[\KDF : \ProofAuthorizingKey \to \ViewingKey\]
     where $\ViewingKey$ is of type $\KA.\SecretKey$ so that it can be available for the $\KA$ key-agreement scheme so that we have
-    \[\vk := \KDF^\vk(\ak)\]
+    \[\vk := \KDF(\ak)\]
 \end{definition}
 
 \begin{definition}[Shielded Address]
@@ -359,9 +372,8 @@ Here we define each key and its function in the \Transfer{} protocol.
 \begin{definition}[Key Schedule]
     A $\KeySchedule$ is a collection of implementations of the following abstract cryptographic primitives as described in the above definitions:
     \begin{itemize}
-        \item \textbf{Key-Agreement Scheme}: $\KA$
-        \item \textbf{Randomized Key-Derivation Scheme}: $\rKDF$
-        \item \textbf{Viewing Key Derivation Function}: $\KDF^\vk$
+        \item \textbf{$G$-Key-Agreement Scheme}: $\KA$
+        \item \textbf{Viewing Key Derivation Function}: $\KDF$
         \item \textbf{Proof Authorization Signature}: $\SIG$
     \end{itemize}
     with the following notational conventions:
@@ -374,12 +386,12 @@ Here we define each key and its function in the \Transfer{} protocol.
     \end{align*}
     with the following constraints:
     \begin{align*}
-        \rKDF.\Input    &= \KA.\SecretKey \\
-        \rKDF.\Output   &= \KA.\PublicKey \\
+        \KA.\PublicKey &= \KA.\SharedSecret \\
         \SIG.\SecretKey &= \KA.\SecretKey \\
         \SIG.\PublicKey &= \KA.\PublicKey \\
         \SIG.\derive    &= \KA.\derive \\
-        \KDF^\vk.\SecretKey &= \KA.\PublicKey
+        \KDF.\SecretKey &= \KA.\PublicKey \\
+        \KDF.\PublicKey &= \KA.\SecretKey
     \end{align*}
 \end{definition}
 
