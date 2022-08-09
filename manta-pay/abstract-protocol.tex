@@ -1,5 +1,53 @@
 \lsection{Abstract Protocol}{abstract-protocol}
 
+\subsection{Algebra}
+
+In the following section, we define the algebraic objects that are used throughout the paper and the \MantaPay{} protocol. 
+
+\begin{definition}
+    A \emph{ring (of scalars)} consists of a set $R$ together with two binary operations:
+    \begin{align*}
+        +_R \colon R \times R \longrightarrow R \\
+        \cdot \colon R \times R \longrightarrow R
+    \end{align*}
+    satisfying the following properties:
+    \begin{itemize}
+        \item $+_R$ is associative, commutative, has an identity element $0_R$ and every element $r \in R$ has an inverse, denoted by $-r$. 
+        \item $\cdot$ is bilinear w.r.t. $+_R$, associative, commutative and has an identity element $1$.
+    \end{itemize}
+\end{definition}
+
+\begin{definition}\label{defn:group}
+    A \emph{group} over the ring of scalars $R$\footnote{Technically speaking, this is an $R$-module. When $R$ = $\mathbb{Z}$, then this definition is indeed a group in the mathematical sense.} consists of a set $G$ together with two maps
+    \begin{align*}
+        +_G \colon G \times G \longrightarrow G \\
+        \cdot \colon R \times G \longrightarrow G
+    \end{align*}
+    satisfying the following properties:
+    \begin{itemize}
+        \item $+_G$ is associative, commutative, has an identity element $0_G$ and every element $g \in G$ has an inverse, denoted by $-g$. 
+        \item $\cdot_G$ is bilinear w.r.t. both $+_G$ and $+_R$. For all $r_1, r_2 \in R$, $g \in G$, we have $(r_1 \cdot r_2) \cdot g = r_1 \cdot (r_2 \cdot g)$ and $1 \cdot g = g$.
+    \end{itemize}
+\end{definition}
+
+
+\textbf{Example}: For most practical applications, $G = E$ will be an elliptic curve defined over a finite field $R = \mathbb{F}$.
+
+\textbf{Notation}: From now on, we will denote both $+_G$ and $+_R$ by $+$, and $0_G$ and $0_R$ by $0$, without it leading to confusion. 
+
+\textbf{Notation}: Sometimes, instead of additive notation as in Definition~\ref{defn:group}, we will use multiplicative notation for groups. This means we will denote $g_1 + g_2$ as $g_1 g_2$, and $r g$ as $g^r$. 
+
+The following properties of groups will be referred to throughout the text. 
+
+\begin{definition} We say that a group $G$ over a finite finite field $\mathbb{F}$ satisfies the
+    \begin{enumerate}
+        \item \emph{discrete logarithm hardness assumption} if, given $g, h=g^a \in G$, there is no efficient algorithm that can compute $a = \log_g (h) \in \mathbb{F}$.
+        \item \emph{computational Diffie-Hellman hardness assumption} if, given $g, g_1 = g^a, g_2 = g^b$, there is no efficient algorithm that can compute $g^{ab}$.
+        \item \emph{decisional Diffie-Hellman hardness assumption} if there is no efficient algorithm that can distinguish the triples $(g^a, g^b, g^{ab})$ and $(g^a, g^b, g^c)$.
+    \end{enumerate}
+    
+\end{definition}
+
 \subsection{Abstract Cryptographic Schemes}
 
 In the following section, we outline the formal specifications for all of the \emph{cryptographic schemes} used in the \MantaPay{} protocol.
