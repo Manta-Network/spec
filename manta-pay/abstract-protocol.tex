@@ -145,12 +145,13 @@ In the following section, we outline the formal specifications for all of the \e
         \Message      &: \Type \\
         \Signature    &: \Type \\
         \derive       &: \SecretKey \to \PublicKey \\
-        \sign         &: \SecretKey \times \Message \to \mathfrak{D}\bra{\Signature} \\
+        \sign         &: \SecretKey \times \Message \to \mathfrak{D}\bra{\Signature}\\
         \verify       &: \PublicKey \times \Message \times \Signature \to \Bool
     \end{align*}
     with the following properties:
     \begin{itemize}
         \item \textbf{Completeness}: For all $\sk : \SecretKey$, $m : \Message$, and any signature $\sigma \sim \sign(\sk, m)$, we have that $\verify(\derive(\sk), m, \sigma) = \True$.
+        \item \textbf{Existencial unforgeability against CMA}: Fix $k : \SecretKey$, and denote $pk = \derive(k)$. An adversary who knows the public key $pk$ and can make any number of queries $m_i: \Message$, obtaining valid signatures $\sigma_i \sim \sign(k, m_i)$ cannot forge a pair $(m, \sigma) \not= (m_i, \sigma_i)$ for all $i$ such that $\verify(pk, m, \sigma) = \True$.
     \end{itemize}
 \end{definitiontoc}
 
@@ -225,6 +226,19 @@ In the following section, we outline the formal specifications for all of the \e
             \[\Some(z, w) := \prove(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
     \end{itemize}
 \end{definitiontoc}
+
+\begin{definitiontoc}{Duplex Sponge}
+    A \emph{duplex sponge} $\DS$ is defined by the schema:
+    \begin{align*}
+        \Item       &: \Type \\
+        \StateT     &: \Type \\
+        \absorb     &: \List\langle\Item\rangle \times \StateT \to \StateT \\
+        \squeeze    &: \mathbb{Z} \times \StateT \to \List\langle\Item\rangle
+    \end{align*}
+\end{definitiontoc}
+    
+
+
 
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
     A \emph{non-interactive zero-knowledge proving system} $\NIZK$ is defined by the schema:
@@ -415,22 +429,22 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
-        \UTXO         &:= \COM^{\UTXO}.\Output \\
-        \TUTXO        &:= \PublicAsset \times \UTXO \times \Bool \times \tUTXOID \\
+        \SUTXO        &:= \COM^{\UTXO}.\Output \\
+        \UTXO         &:= \VersionTag \times \Bool \times \PublicAsset \times \SUTXO \\
         \VoidNumber   &:= \COM^{\VN}.\Output \\
         \IncomingNote &:= \KeySchedule.\ShieldedAddress \times \COM^\UTXO.\Randomness \times \Asset \\
         \OutgoingNote &:= \Asset \\
-        \TUTXOSet     &:= \DCA
+        \UTXOSet     &:= \DCA
     \end{align*}
     and the following constraints:
     \begin{align*}
         \COM^{\UTXO}.\Input    &= \KeySchedule.\ShieldedAddress \times \Asset \\
         \COM^{\VN}.\Randomness &= \KeySchedule.\ProofAuthorizingKey \\
         \COM^{\VN}.\Input      &= \UTXO \\
-        \TUTXOSet.\Item        &= \TUTXO \\
+        \UTXOSet.\Item        &= \UTXO \\
         \aHPKEin.\KA           &= \KeySchedule.\KA \\
         \aHPKEout.\KA          &= \KeySchedule.\KA \\
-        \HASH.\Input &= \TUTXO \\
+        \HASH.\Input            &= \UTXO \\
         \ValidTransfer         &: \NIZK.\Statement 
     \end{align*}
     where \ValidTransfer{} is defined below.
