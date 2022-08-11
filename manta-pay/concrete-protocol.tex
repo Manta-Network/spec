@@ -86,4 +86,4 @@ For this protocol, we use \texttt{BN254} as our outer (pairing-friendly) curve w
 
 \subsection{\AssetValue{} Bounds Check}
 
-In order to implement the balanced transfer relation one needs to ensure that the amount of input value is equal to the amount of output value. However, since we're working over finite fields, the na\"ive arithmetic wraps past zero and is vulnerable to range-based attacks. Instead we constrain every \AssetValue{} to be less than some bound $\mathcal{V}$ and that every sum over those values is also less than $\mathcal{V}$. Since we're using \texttt{BLS12-381} we are safe to use $\mathcal{V} = 2^{128}$.
+In order to implement the balanced transfer relation one needs to ensure that the amount of input value is equal to the amount of output value. However, since we're working over finite fields, the na\"ive arithmetic wraps past zero and is vulnerable to range-based attacks. Instead we constrain every \AssetValue{} to be less than some bound $\mathcal{V}$ and that every sum over those values is also less than $\mathcal{V}$. Since we're using \texttt{BN254} we are safe to use $\mathcal{V} = 2^{128}$.
