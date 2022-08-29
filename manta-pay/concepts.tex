@@ -54,7 +54,37 @@ There are two kinds of \Note{s} in the \MantaPay{} protocol, \emph{incoming} \No
 
 \lsubsection{\ShieldedPool{}}{concept-shielded-pool}
 
+The \ShieldedPool{} is a data structure that contains the necessary data to enable the \MantaPay{} \Transfer{} protocol. The \ShieldedPool{} is made up of the following three general storage groups:
 
+\begin{itemize}
+    \item \UTXO{} Storage: Contains all of the \UTXO{s} that have ever been created along with their \IncomingNote{s}
+    \item \Nullifier{} Storage: Contains all of the \Nullifier{s} that have ever been created along with their \OutgoingNote{s}
+    \item Public Pool Account: The public account of the pool itself that holds a backing of all the \zkAsset{s} held in the \UTXO{s} in the pool. Depositing into or withdrawing out of the pool has to go through this account.
+\end{itemize}
+
+There are two general requirements on the \UTXO{} and \Nullifier{} storage items:
+
+\begin{enumerate}
+    \item Fast non-membership query for \UTXO{s} and \Nullifier{s}
+    \item Fast insertion and insertion-order iteration over $(\UTXO{}, \IncomingNote{})$ and $(\Nullifier{}, \OutgoingNote{})$ pairs
+\end{enumerate}
+
+In order to satisfy both of these requirements we have the following breakdown of the storage:
+
+\begin{itemize}
+    \item \UTXO{} Storage:
+        \begin{itemize}
+            \item $\UTXOSet: \UTXO \to \Bool$
+            \item $\UTXOStorageInsertionOrder: \mathbb{N} \to (\UTXO, \IncomingNote)$
+        \end{itemize}
+    \item \Nullifier{} Storage:
+        \begin{itemize}
+            \item $\NullifierSet: \Nullifier \to \Bool$
+            \item $\NullifierStorageInsertionOrder: \mathbb{N} \to (\Nullifier, \OutgoingNote)$
+        \end{itemize}
+\end{itemize}
+
+where we use the sets for fast non-membership checks and the insertion order maps for insertion-order preserving insertion and iteration.
 
 %\lsubsection{Ledger}{concept-ledger}
 %

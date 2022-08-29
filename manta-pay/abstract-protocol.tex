@@ -4,43 +4,152 @@
 
 In the following section, we outline the formal specifications for all of the \emph{cryptographic schemes} used in the \MantaPay{} protocol.
 
-% \begin{definitiontoc}{Commitment Scheme}
-%     A \emph{commitment scheme} $\COM$ is defined by the schema:
-%     \begin{align*}
-%         \Randomness             &: \Type \\
-%         \Input                  &: \Type \\
-%         \Output                 &: \Type \\
-%         \RandomnessDistribution &: \mathfrak{D}(\Randomness) \\
-%         \commit                 &: \Randomness \times \Input \to \Output
-%     \end{align*}
-%     with the following properties:
-%     \begin{itemize}
-%         \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Randomness$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
-%         \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \RandomnessDistribution}$ and \\ $\set{\commit(r,y) \,|\, r \sim \RandomnessDistribution}$ are \emph{computationally indistinguishable}.
-%     \end{itemize}
-% 
-%     \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM_r(x)$.
-% \end{definitiontoc}
+\begin{definitiontoc}{Commitment Scheme}
+    A \emph{commitment scheme} $\COM$ is defined by the schema:
+    \begin{align*}
+        \Randomness             &: \Type \\
+        \Input                  &: \Type \\
+        \Output                 &: \Type \\
+        \commit                 &: \Randomness \times \Input \to \Output
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Binding}: It is infeasible to find an $x, y : \Input$ and $r, s: \Randomness$ such that $x \ne y$ and $\commit(r,x) = \commit(s,y)$.
+        \item \textbf{Hiding}: For all $x, y : \Input$, the distributions $\set{\commit(r,x) \,|\, r \sim \Randomness}$ and \\ $\set{\commit(r,y) \,|\, r \sim \Randomness}$ are \emph{computationally indistinguishable}.
+    \end{itemize}
+    \textbf{Notation}: For convenience, we may refer to $\COM.\commit(r,x)$ by $\COM(r, x)$.
+\end{definitiontoc}
 
-% \begin{definitiontoc}{Hash Function}
-%     A \emph{hash function} $\HASH$ is defined by the schema:
-%     \begin{align*}
-%         \Input  &: \Type \\
-%         \Output &: \Type \\
-%         \hash   &: \Input \to \Output
-%     \end{align*}
-%     with the following properties:
-%     \begin{itemize}
-%         \item \textbf{Collision Resistance}: It is infeasible to find $a, b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
-%         \item \textbf{Pre-Image Resistance}: Given $y : \Output$, it is infeasible to find an $x : \Input$ such that $\hash(x) = y$.
-%         \item \textbf{Second Pre-Image Resistance}: Given $a : \Input$, it is infeasible to find another $b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
-%     \end{itemize}
-% 
-%     We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into a separate \Randomness{} and \Input{} space.
-% 
-%     \textbf{Notation}: For convenience, we may refer to $\HASH.\hash(x)$ by $\HASH(x)$.
-% \end{definitiontoc}
-% 
+\begin{definitiontoc}{Hash Function}
+    A \emph{hash function} $\HASH$ is defined by the schema:
+    \begin{align*}
+        \Input  &: \Type \\
+        \Output &: \Type \\
+        \hash   &: \Input \to \Output
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Collision Resistance}: It is infeasible to find $a, b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
+        \item \textbf{Pre-Image Resistance}: Given $y : \Output$, it is infeasible to find an $x : \Input$ such that $\hash(x) = y$.
+        \item \textbf{Second Pre-Image Resistance}: Given $a : \Input$, it is infeasible to find another $b : \Input$ such that $a \ne b$ and $\hash(a) = \hash(b)$.
+    \end{itemize}
+
+    We can also ask that a hash function be \emph{binding} or \emph{hiding} as in the above \emph{Commitment Scheme} definition if we partition the $\Input$ space into a separate \Randomness{} and \Input{} space.
+
+    \textbf{Notation}: For convenience, we may refer to $\HASH.\hash(x)$ by $\HASH(x)$.
+\end{definitiontoc}
+
+\begin{definitiontoc}{Authenticated Encryption}
+    An \emph{authenticated encryption} scheme $\AUTH$ is defined by the schema:
+    \begin{align*}
+        \Key        &: \Type \\
+        \Plaintext  &: \Type \\
+        \Ciphertext &: \Type \\
+        \Tag        &: \Type \\
+        \encrypt    &: \Key \times \Plaintext \to \Tag \times \Ciphertext \\
+        \decrypt    &: \Key \times \Tag \times \Ciphertext \to \Option(\Plaintext)
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Correctness}: For a given $k : \Key$, $p : \Plaintext$, we have that $\decrypt(k, \encrypt(k, p)) = \Some(p)$.
+        \item \TODO{...}
+    \end{itemize}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Dynamic Cryptographic Accumulator}
+    A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
+    \begin{align*}
+        \Item     &: \Type \\
+        \Output   &: \Type \\
+        \Witness  &: \Type \\
+        \StateT   &: \Type \\
+        \current  &: \StateT \to \Output \\
+        \insertF  &: \Item \times \StateT \to \StateT \\
+        \contains &: \Item \times \StateT \to \Option(\Output \times \Witness) \\
+        \verify   &: \Item \times \Output \times \Witness \to \Bool
+    \end{align*}
+    with the following properties:
+    \begin{itemize}
+        \item \textbf{Unique Accumulated Values}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
+            Then, if we collect the accumulated values for these states, $z_i := \current(s_i)$, there should be exactly $\abs{I}$-many unique values, one for each state update.
+        \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
+            \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
+            Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
+            \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
+    \end{itemize}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
+    A \emph{non-interactive zero-knowledge proving system} $\NIZK$ is defined by the schema:
+    \begin{align*}
+        \Statement    &: \Type \\
+        \ProvingKey   &: \Type \\
+        \VerifyingKey &: \Type \\
+        \PublicInput  &: \Type \\
+        \SecretInput  &: \Type \\
+        \Proof        &: \Type \\
+        \keys         &: \Statement \to \mathfrak{D}(\ProvingKey \times \VerifyingKey) \\
+        \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}(\Option(\Proof)) \\
+        \verify       &: \VerifyingKey \times \PublicInput \times \Proof \to \Bool
+    \end{align*}
+    \textbf{Notation}: We use the following notation for a $\NIZK$:
+    \begin{itemize}
+        \item We write the $\Statement$ and $\ProvingKey$ arguments of $\prove$ in the superscript and subscript respectively,
+            \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
+        \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
+            \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
+        \item We say that $(x, w) : \PublicInput \times \SecretInput$ has the property of being a $\satisfying$ input whenever
+            \[\satisfying^P_\pk(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
+    \end{itemize}
+
+    Every $\NIZK$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
+
+    \begin{itemize}
+        \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
+        \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
+            \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\PublicInput \times \Proof)\]
+             there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
+            \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\SecretInput)\]
+            such that the following probability is negligible:
+            \[
+                \Prob{
+                    \satisfying^P_\pk(x, w) = \False \\
+                    \verify_\vk(x, w) = \True
+                }{
+                    (\pk, \vk) \sim \keys(P) \\
+                    (x, \pi) \sim \mathcal{A}(\pk, \vk) \\
+                    w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
+                }
+            \]
+        \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
+            \[
+                \Prob{
+                    \satisfying^P_\pk(x, w) = \True \\
+                    \mathcal{D}(\pi) = \True
+                }{
+                    (\pk, \vk) \sim \keys(P) \\
+                    (x, w) \sim \mathcal{D}(\pk, \vk) \\
+                    \Some(\pi) \sim \prove^P_\pk(x, w)
+                }
+                \,\,\text{and}\,\,
+                \Prob{
+                    \satisfying^P_\pk(x, w) = \True \\
+                    \mathcal{D}(\pi) = \True
+                }{
+                    (\pk, \vk) \sim \mathcal{S}(P) \\
+                    (x, w) \sim \mathcal{D}(\pk, \vk) \\
+                    \pi \sim \mathcal{S}(x)
+                }
+            \]
+        \item \textbf{Succinctness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\Some(\pi) \sim \prove(P, \pk, x, w)$, then $\abs{\pi} = \mathcal{O}(1)$, and $\verify(\vk, x, \pi)$ runs in time $\mathcal{O}(\abs{x})$.
+    \end{itemize}
+\end{definitiontoc}
+
+\begin{definitiontoc}{Cryptographic Group}
+    We define a \emph{cryptographic group} $(G, p, g)$ as some finite cyclic group $G$, of prime order $p$ with generator $g$ where the discrete logarithm problem is hard, namely, given $X \in G$ it is infeasible to find $x$ such that $X = g^x$.
+\end{definitiontoc}
+
 % \begin{definitiontoc}{Key-Agreement Scheme}
 %     A \emph{key-agreement scheme} $\KA$ is defined by the schema:
 %     \begin{align*}
@@ -97,97 +206,6 @@ In the following section, we outline the formal specifications for all of the \e
 %         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
 %     \end{align*}
 %     \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
-% \end{definitiontoc}
-% 
-% \begin{definitiontoc}{Dynamic Cryptographic Accumulator}
-%     A \emph{dynamic cryptographic accumulator} $\DCA$ is defined by the schema:
-%     \begin{align*}
-%         \Item     &: \Type \\
-%         \Output   &: \Type \\
-%         \Witness  &: \Type \\
-%         \StateT   &: \Type \\
-%         \current  &: \StateT \to \Output \\
-%         \insertF  &: \Item \times \StateT \to \StateT \\
-%         \contains &: \Item \times \StateT \to \Option(\Output \times \Witness) \\
-%         \verify   &: \Item \times \Output \times \Witness \to \Bool
-%     \end{align*}
-%     with the following properties:
-%     \begin{itemize}
-%         \item \textbf{Unique Accumulated Values}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequence of states:
-%             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
-%             Then, if we collect the accumulated values for these states, $z_i := \current(s_i)$, there should be exactly $\abs{I}$-many unique values, one for each state update.
-%         \item \textbf{Provable Membership}: For any initial state $s : \StateT$ and any list of items $I : \List(\Item)$ we can generate the sequences of states:
-%             \[s_0 := s, \,\,\,\,\, s_{i + 1} := \insertF(I_i, s_i)\]
-%             Then, if we collect the states $s_i$ into a set $S$, we have the following property for all $s \in S$ and $t \in I$,
-%             \[\Some(z, w) := \contains(t, s), \,\,\,\,\, \verify(t, z, w) = \True\]
-%     \end{itemize}
-%     %\TODO{add finite capacity constraint, something like $\insertF : \Item \times \StateT \to \Option(\StateT)$ where it fails when capacity is reached}
-% \end{definitiontoc}
-% 
-% \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
-%     A \emph{non-interactive zero-knowledge proving system} $\NIZK$ is defined by the schema:
-%     \begin{align*}
-%         \Statement    &: \Type \\
-%         \ProvingKey   &: \Type \\
-%         \VerifyingKey &: \Type \\
-%         \PublicInput  &: \Type \\
-%         \SecretInput  &: \Type \\
-%         \Proof        &: \Type \\
-%         \keys         &: \Statement \to \mathfrak{D}(\ProvingKey \times \VerifyingKey) \\
-%         \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}(\Option(\Proof)) \\
-%         \verify       &: \VerifyingKey \times \PublicInput \times \Proof \to \Bool
-%     \end{align*}
-%     \textbf{Notation}: We use the following notation for a $\NIZK$:
-%     \begin{itemize}
-%         \item We write the $\Statement$ and $\ProvingKey$ arguments of $\prove$ in the superscript and subscript respectively,
-%             \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
-%         \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
-%             \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
-%         \item We say that $(x, w) : \PublicInput \times \SecretInput$ has the property of being a $\satisfying$ input whenever
-%             \[\satisfying^P_\pk(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
-%     \end{itemize}
-% 
-%     Every $\NIZK$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
-% 
-%     \begin{itemize}
-%         \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
-%         \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
-%             \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\PublicInput \times \Proof)\]
-%              there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
-%             \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\SecretInput)\]
-%             such that the following probability is negligible:
-%             \[
-%                 \Prob{
-%                     \satisfying^P_\pk(x, w) = \False \\
-%                     \verify_\vk(x, w) = \True
-%                 }{
-%                     (\pk, \vk) \sim \keys(P) \\
-%                     (x, \pi) \sim \mathcal{A}(\pk, \vk) \\
-%                     w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
-%                 }
-%             \]
-%         \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
-%             \[
-%                 \Prob{
-%                     \satisfying^P_\pk(x, w) = \True \\
-%                     \mathcal{D}(\pi) = \True
-%                 }{
-%                     (\pk, \vk) \sim \keys(P) \\
-%                     (x, w) \sim \mathcal{D}(\pk, \vk) \\
-%                     \Some(\pi) \sim \prove^P_\pk(x, w)
-%                 }
-%                 \,\,\text{and}\,\,
-%                 \Prob{
-%                     \satisfying^P_\pk(x, w) = \True \\
-%                     \mathcal{D}(\pi) = \True
-%                 }{
-%                     (\pk, \vk) \sim \mathcal{S}(P) \\
-%                     (x, w) \sim \mathcal{D}(\pk, \vk) \\
-%                     \pi \sim \mathcal{S}(x)
-%                 }
-%             \]
-%         \item \textbf{Succinctness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\Some(\pi) \sim \prove(P, \pk, x, w)$, then $\abs{\pi} = \mathcal{O}(1)$, and $\verify(\vk, x, \pi)$ runs in time $\mathcal{O}(\abs{x})$.
-%     \end{itemize}
 % \end{definitiontoc}
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
