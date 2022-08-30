@@ -150,64 +150,6 @@ In the following section, we outline the formal specifications for all of the \e
     We define a \emph{cryptographic group} $(G, p, g)$ as some finite cyclic group $G$, of prime order $p$ with generator $g$ where the discrete logarithm problem is hard, namely, given $X \in G$ it is infeasible to find $x$ such that $X = g^x$.
 \end{definitiontoc}
 
-% \begin{definitiontoc}{Key-Agreement Scheme}
-%     A \emph{key-agreement scheme} $\KA$ is defined by the schema:
-%     \begin{align*}
-%         \SecretKey    &: \Type \\
-%         \PublicKey    &: \Type \\
-%         \SharedSecret &: \Type \\
-%         \derive       &: \SecretKey \to \PublicKey \\
-%         \agree        &: \SecretKey \times \PublicKey \to \SharedSecret
-%     \end{align*}
-%     with the following properties:
-%     \begin{itemize}
-%         \item \textbf{Agreement}: For all $\sk_1, \sk_2 : \SecretKey$, $\agree(\sk_1, \derive(\sk_2)) = \agree(\sk_2, \derive(\sk_1))$
-%         \item \textbf{Passive Security}: Even if an adversary eavedrops on the network communication, she cannot forge the agreed secret unless she knows how to find a preimage for \derive{} which should be as hard as a known hard cryptography problem like the Diffie-Hellman Problem.
-%         \item \textbf{Known-key Security}: Suppose an adversary learned a shared secret from a past session, then, the adversary does not gain any additional information by combining the past key and public visible data for the purpose of deducing future shared secrets.
-%         \item \textbf{No Key Control}: The shared secrets are determined by both parties, neither party can control the outcome of the shared secret by restricting it to lie in some predetermined small set.
-%     \end{itemize}
-% \end{definitiontoc}
-% 
-% \begin{definitiontoc}{Symmetric-Key Encryption Scheme} \label{def:abstract-symm}
-%     A \emph{one-time symmetric-key encryption scheme} $\SYM$ is defined by the schema:
-%     \begin{align*}
-%         \Key &: \Type \\
-%         \Plaintext &: \Type \\
-%         \Ciphertext &: \Type \\
-%         \encrypt &: \Key \times \Plaintext \to \Ciphertext \\
-%         \decrypt &: \Key \times \Ciphertext \to \Option(\Plaintext)
-%     \end{align*}
-%     with the following properties:
-%     \begin{itemize}
-%         \item \textbf{Soundness}: For all keys $k : \Key$ and plaintexts $p : \Plaintext$, we have that
-%             \[\decrypt(k, \encrypt(k, p)) = \Some(p)\]
-%         \item \textbf{Security Requirement}: The symmetric-key encryption scheme must be one-time (INT-CTXT $\land$ IND-CPA)-secure \cite{BC2000AC}. ``One-time'' means that an honest protocol participant will almost surely encrypt only one message with a given key; however, the adversary could make many adaptive chosen ciphertext queries for a given key.
-%     \end{itemize}
-% \end{definitiontoc}
-% 
-% \begin{definitiontoc}{Key-Derivation Function}
-%     A \emph{key-derivation function} $\KDF$ defined over a symmetric-key encryption scheme $\SYM$ and a key-agreement scheme $\KA$ is a function of type:
-%     \[\KDF : \KA.\SharedSecret \to \SYM.\Key\]
-% \end{definitiontoc}
-% 
-% \begin{definitiontoc}{Hybrid Public Key Encryption Scheme}
-%     A \emph{hybrid public key encryption scheme} \cite{irtf-cfrg-hpke-12} $\HPKE$ is an encryption scheme made up of a symmetric-key encryption scheme $\SYM$, a key-agreement scheme $\KA$, and a key-derivation function $\KDF$ to convert from $\KA.\SharedSecret$ to $\SYM.\Key$. We can define the following encryption and decryption algorithms:
-%     \begin{itemize}
-%         \item Encryption: Given an ephemeral secret key $\esk: \KA.\SecretKey$, a public key $\pk: \KA.\PublicKey$, and plaintext $p : \SYM.\Plaintext$, we produce the pair
-%             \[m : \KA.\PublicKey \times \SYM.\Ciphertext := \left(\KA.\derive(\esk), \SYM.\encrypt(\KDF(\KA.\agree(\esk, \pk)), p)\right)\]
-%         \item Decryption: Given a secret key $\sk : \KA.\SecretKey$, and an encrypted message, as above, $m := (\epk, c)$, we can decrypt $m$, producing the plaintext,
-%             \[p : \Option(\SYM.\Plaintext) := \SYM.\decrypt(\KDF(\KA.\agree(\sk, \epk)), c)\]
-%             which should decrypt successfully if the $\KA.\PublicKey$ that $m$ was encrypted with is the derived key of $\sk : \KA.\SecretKey$.
-%     \end{itemize}
-% 
-%     \textbf{Notation}: We denote the above \emph{encrypted message} type as $\Message := \SYM.\Ciphertext \times \KA.\PublicKey$, and the above two algorithms by
-%     \begin{align*}
-%         \encrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Plaintext \to \Message \\
-%         \decrypt &: \KA.\SecretKey \times \KA.\PublicKey \times \SYM.\Ciphertext \to \Option(\SYM.\Plaintext)
-%     \end{align*}
-%     \textbf{Security Properties}: The HPKE constructed from $\KA$, $\KDF$, and $\SYM$ is required to be CCA2-secure and key-private \cite{BBDP01AC}. \\
-% \end{definitiontoc}
-
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
 %Given a choice of $\HPKE$ we have the following definitions:
