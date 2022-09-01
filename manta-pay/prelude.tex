@@ -59,7 +59,7 @@
 \newcommand{\Prob}[2]{\mathrm{Pr}\scalebox{0.88}{\ensuremath{\left[\!\!\begin{array}{c}#1\end{array} \middle| \begin{array}{l}#2\end{array}\!\!\right]}}}
 \newcommand{\bra}[1]{\langle{#1}\rangle}
 
-\newcommand{\absorb}{{\textsf{absorb}}}
+\newcommand{\AUTH}{{\textsf{AUTH}}}
 \newcommand{\Alice}{{\textsf{Alice}}}
 \newcommand{\AssetId}{{\textsf{AssetId}}}
 \newcommand{\AssetValue}{{\textsf{AssetValue}}}
@@ -80,12 +80,12 @@
 \newcommand{\Concat}{{\textsf{Concat}}}
 \newcommand{\Cout}{{\textsf{C}_\textsf{out}}}
 \newcommand{\DCA}{{\textsf{DCA}}}
+\newcommand{\DS}{{\textsf{DS}}}
 \newcommand{\Decrypt}{{\textsf{Decrypt}}}
 \newcommand{\DerivePublic}{{\textsf{DerivePublic}}}
 \newcommand{\Derive}{{\textsf{Derive}}}
 \newcommand{\Digest}{{\textsf{Digest}}}
 \newcommand{\Diversifier}{{\textsf{Diversifier}}}
-\newcommand{\DS}{{\textsf{DS}}}
 \newcommand{\EK}{{\textsf{EK}}}
 \newcommand{\EncryptedMessage}{{\textsf{EncryptedMessage}}}
 \newcommand{\EncryptedNote}{{\textsf{EncryptedNote}}}
@@ -127,6 +127,9 @@
 \newcommand{\Next}{{\textsf{Next}}}
 \newcommand{\None}{{\textsf{None}}}
 \newcommand{\Note}{{\textsf{Note}}}
+\newcommand{\NullifierSet}{{\textsf{NullifierSet}}}
+\newcommand{\NullifierStorageInsertionOrder}{{\textsf{NullifierStorageInsertionOrder}}}
+\newcommand{\Nullifier}{{\textsf{Nullifier}}}
 \newcommand{\Option}{{\textsf{Option}}}
 \newcommand{\OutgoingNote}{{\textsf{OutgoingNote}}}
 \newcommand{\Output}{{\textsf{Output}}}
@@ -137,7 +140,6 @@
 \newcommand{\Poseidon}{{\textbf{Poseidon}}}
 \newcommand{\PrepareZeroes}{{\textsf{PrepareZeroes}}}
 \newcommand{\PrivateTransfer}{{\textsf{PrivateTransfer}}}
-\newcommand{\SecretAsset}{{\textsf{SecretAsset}}}
 \newcommand{\ProofAuthorizationKey}{{\textsf{ProofAuthorizationKey}}}
 \newcommand{\ProofAuthorizeKey}{{\textsf{ProofAuthorizeKey}}}
 \newcommand{\ProofAuthorizingKey}{{\textsf{ProofAuthorizingKey}}}
@@ -159,8 +161,10 @@
 \newcommand{\Reclaim}{{\textsf{Reclaim}}}
 \newcommand{\Root}{{\textsf{Root}}}
 \newcommand{\SIG}{{\textsf{SIG}}}
+\newcommand{\SUTXO}{{\textsf{sUTXO}}}
 \newcommand{\SYM}{{\textsf{SYM}}}
 \newcommand{\Sample}{{\textsf{Sample}}}
+\newcommand{\SecretAsset}{{\textsf{SecretAsset}}}
 \newcommand{\SecretInput}{{\textsf{SecretInput}}}
 \newcommand{\SecretKeyDistribution}{{\textsf{SecretKeyDistribution}}}
 \newcommand{\SecretKey}{{\textsf{SecretKey}}}
@@ -171,6 +175,7 @@
 \newcommand{\ShieldedAddress}{{\textsf{ShieldedAddress}}}
 \newcommand{\ShieldedAssetPool}{{\textsf{ShieldedAssetPool}}}
 \newcommand{\ShieldedIdentity}{{\textsf{ShieldedIdentity}}}
+\newcommand{\ShieldedPool}{{\textsf{ShieldedPool}}}
 \newcommand{\Signature}{{\textsf{Signature}}}
 \newcommand{\Sink}{{\textsf{Sink}}}
 \newcommand{\Some}{{\textsf{Some}}}
@@ -179,8 +184,9 @@
 \newcommand{\SpendingKey}{{\textsf{SpendingKey}}}
 \newcommand{\StateT}{{\textsf{State}}}
 \newcommand{\Statement}{{\textsf{Statement}}}
-\newcommand{\SUTXO}{{\textsf{sUTXO}}}
 \newcommand{\TAG}{{\textsf{tag}}}
+\newcommand{\TUTXOSet}{{\textsf{tUTXOSet}}}
+\newcommand{\TUTXO}{{\textsf{tUTXO}}}
 \newcommand{\Tag}{{\textsf{Tag}}}
 \newcommand{\TransferConfiguration}{{\textsf{TransferConfiguration}}}
 \newcommand{\TransferPost}{{\textsf{TransferPost}}}
@@ -189,16 +195,16 @@
 \newcommand{\Trapdoor}{{\textsf{Trapdoor}}}
 \newcommand{\True}{{\textsf{True}}}
 \newcommand{\Type}{{\textsf{Type}}}
-\newcommand{\TUTXO}{{\textsf{tUTXO}}}
-\newcommand{\TUTXOSet}{{\textsf{tUTXOSet}}}
-\newcommand{\UTXO}{{\textsf{UTXO}}}
 \newcommand{\UTXOSet}{{\textsf{UTXOSet}}}
+\newcommand{\UTXOStorageInsertionOrder}{{\textsf{UTXOStorageInsertionOrder}}}
+\newcommand{\UTXO}{{\textsf{UTXO}}}
 \newcommand{\VALUE}{{\textsf{value}}}
 \newcommand{\VN}{{\textsf{VN}}}
 \newcommand{\ValidTransfer}{{\textsf{ValidTransfer}}}
 \newcommand{\Value}{{\textsf{Value}}}
 \newcommand{\VerifyingKey}{{\textsf{VerifyingKey}}}
 \newcommand{\Verify}{{\textsf{Verify}}}
+\newcommand{\VersionTag}{{\textsf{VersionTag}}}
 \newcommand{\ViewKey}{{\textsf{ViewKey}}}
 \newcommand{\ViewingKey}{{\textsf{ViewingKey}}}
 \newcommand{\VoidNumberSet}{{\textsf{VoidNumberSet}}}
@@ -210,6 +216,7 @@
 \newcommand{\aHPKEin}{{\aHPKE^\textsf{in}}}
 \newcommand{\aHPKEout}{{\aHPKE^\textsf{out}}}
 \newcommand{\aHPKE}{{\textsf{aHPKE}}}
+\newcommand{\absorb}{{\textsf{absorb}}}
 \newcommand{\addr}{{\textsf{addr}}}
 \newcommand{\agree}{{\textsf{agree}}}
 \newcommand{\ak}{{\textsf{ak}}}
@@ -238,8 +245,8 @@
 \newcommand{\len}{{\textsf{len}}}
 \newcommand{\lift}{{\textsf{lift}}}
 \newcommand{\mint}{{\textsf{mint}}}
-\newcommand{\nza}{{\textsf{nza}}}
 \newcommand{\note}{{\textsf{note}}}
+\newcommand{\nza}{{\textsf{nza}}}
 \newcommand{\opk}{{\textsf{opk}}}
 \newcommand{\osk}{{\textsf{osk}}}
 \newcommand{\out}{{\textsf{out}}}
@@ -258,9 +265,9 @@
 \newcommand{\reclaim}{{\textsf{reclaim}}}
 \newcommand{\remainder}{{\textsf{remainder}}}
 \newcommand{\rk}{{\textsf{rk}}}
-\newcommand{\sa}{{\textsf{sa}}}
-\newcommand{\satisfying}{{\textsf{satisfying}}}
 \newcommand{\saiz}{{\textsf{saiz}}}
+\newcommand{\satisfying}{{\textsf{satisfying}}}
+\newcommand{\sa}{{\textsf{sa}}}
 \newcommand{\secret}{{\textsf{secret}}}
 \newcommand{\select}{{\textsf{select}}}
 \newcommand{\senders}{{\textsf{senders}}}
@@ -278,6 +285,7 @@
 \newcommand{\stateF}{{\textsf{state}}}
 \newcommand{\sutxo}{{\textsf{sutxo}}}
 \newcommand{\svk}{{\textsf{svk}}}
+\newcommand{\tUTXOID}{{\textsf{tUTXOID}}}
 \newcommand{\tagin}{{\TAG_\textsf{in}}}
 \newcommand{\tagout}{{\TAG_\out}}
 \newcommand{\total}{{\textsf{total}}}
@@ -285,15 +293,14 @@
 \newcommand{\trapdoor}{{\textsf{trapdoor}}}
 \newcommand{\truncate}{{\textsf{truncate}}}
 \newcommand{\tutxo}{{\textsf{tutxo}}}
-\newcommand{\tUTXOID}{{\textsf{tUTXOID}}}
 \newcommand{\update}{{\textsf{update}}}
+\newcommand{\utxos}{{\textsf{utxos}}}
 \newcommand{\utxo}{{\textsf{utxo}}}
 \newcommand{\verify}{{\textsf{verify}}}
 \newcommand{\version}{{\textsf{version}}}
-\newcommand{\VersionTag}{{\textsf{VersionTag}}}
 \newcommand{\view}{{\textsf{view}}}
 \newcommand{\vk}{{\textsf{vk}}}
 \newcommand{\vn}{{\textsf{vn}}}
 \newcommand{\xmark}{\ding{55}}
-
-\mathchardef\mhyphen="2D
+\newcommand{\zkAddress}{{\textsf{zkAddress}}}
+\newcommand{\zkAsset}{{\textsf{zkAsset}}}

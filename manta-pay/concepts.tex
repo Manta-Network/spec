@@ -1,20 +1,24 @@
 \lsection{Concepts}{concepts}
-\subsection{Assets}
 
-\Asset{} is the fundamental currency object in the \MantaPay{} protocol. An asset $a : \Asset$ is a tuple
+\lsubsection{\zkAsset{s}}{concept-zkasset}
+
+The \zkAsset{} is the fundamental currency object in the \MantaPay{} protocol. An asset $a : \zkAsset$ is a tuple
 \[a = (a.\ID, a.\VALUE) : \AssetId \times \AssetValue\]
-where the \AssetId{} encodes the type of currency stored in $a$ and the \AssetValue{} encodes how many units of that currency are stored in $a$.  \MantaPay{} is a \emph{decentralized anonymous payment} protocol which facilitiates the private ownership and private transfer of \Asset{} objects. 
+where the \AssetId{} encodes the type of currency stored in $a$ and the \AssetValue{} encodes how many units of that currency are stored in $a$.  \MantaPay{} is a \emph{decentralized anonymous payment} protocol which facilitiates the private ownership and private transfer of \zkAsset{s}. 
 
+\zkAsset{s} are the basic building-blocks of \emph{transactions} which consume a set of input \zkAsset{s} and produce a set of transformed output \zkAsset{s}. To preserve the economic value stored in \zkAsset{s}, the sum of the input \AssetValue{s} must balance the sum of the output \AssetValue{s}, and all assets in a single transaction must have the same \AssetId{}\footnotemark{}.\footnotetext{It is beyond the scope of this paper to discuss transactions with inputs and outputs that feature different \AssetId{s}, like those that would be featured in a \emph{decentralized anonymous exchange}.} This is called a \emph{balanced transfer}: no value is created or destroyed in the process. The \MantaPay{} protocol uses a distributed algorithm called \Transfer{} to perform balanced transfers and ensure that they are valid.
 
-We use \PublicAsset{} and \SecretAsset{} to explicitly describe whether an \Asset{} is visible to public.
-More specifically, whenever an \Asset{} is being used in a public setting, we refer to it as a \PublicAsset{}, 
-but when the \AssetId{} and/or \AssetValue{} of a particular \Asset{} is meant to be hidden from public view, we refer to the \Asset{} as either \emph{secret}, \emph{private}, \emph{hidden}, or \emph{shielded} with \SecretAsset{} type.
+\lsubsection{\UTXO{s}}{concept-utxo}
 
-\Asset{s} are the basic building-blocks of \emph{transactions} which consume a set of input \Asset{s} and produce a set of transformed output \Asset{s}. To preserve the economic value stored in \Asset{s}, the sum of the input \AssetValue{s} must balance the sum of the output \AssetValue{s}, and all assets in a single transaction must have the same \AssetId{}\footnotemark{}.\footnotetext{It is beyond the scope of this paper to discuss transactions with inputs and outputs that feature different \AssetId{s}, like those that would be featured in a \emph{decentralized anonymous exchange}.} This is called a \emph{balanced transfer}: no \AssetValue{} is created or destroyed in the process. The \MantaPay{} protocol uses a distributed algorithm called \Transfer{} to perform balanced transfers and ensure that they are valid.
+But \zkAsset{s} are not private on their own. A \UTXO{} is a container for a \zkAsset{} that hides its value and its owner and is the main object that \MantaPay{} uses to transfer the spending power of \zkAsset{s} between different protocol participants. A \UTXO{} is a cryptographic commitment along with some associated data that represents a spendable subset of an account stored in the protocol. In the \MantaPay{} protocol, \UTXO{s} come in two flavors, \emph{opaque} and \emph{transparent}. The \emph{opaque} \UTXO{s} are completely private and they do not reveal the owner or underlying asset contained in them, whereas \emph{transparent} \UTXO{s} reveal the underlying asset but not the owner. The \emph{opaque} \UTXO{} is used for the private transfer of \zkAsset{s} and the \emph{transparent} \UTXO{} is used to give programability to \zkAsset{s} whenever the \MantaPay{} protocol lives in the same environment as other smart contracts by allowing contracts to control the \AssetId{} and \AssetValue{} stored in the \emph{transparent} \UTXO{}.
 
-\lsubsection{Addresses}{addresses}
+\lsubsection{\Nullifier{s}}{concept-nullifier}
 
-In order for \MantaPay{} participants to receive \Asset{s} via the \Transfer{} protocol, they create a \emph{shielded addresses} which they use as identifiers to represent them on the ledger.
+One of the important ways that privacy is preserved for \zkAsset{s} across many transactions is that the exact transaction where a \UTXO{} is spent is not known to the public. Instead, only the owner of the \zkAsset{}, or anyone with the appropriate viewing key, can know this information. The \Nullifier{} is another cryptographic commitment that takes the place of the \UTXO{} when it is spent and it is cryptographically hard for any particular \UTXO{} to be derived from its \Nullifier{}.
+
+\lsubsection{\zkAddress{es}}{concept-zkaddress}
+
+In order for \MantaPay{} participants to receive \zkAsset{s} via the \Transfer{} protocol, they create \emph{zk-addresses} which they use as identifiers to represent them on the ledger.
 
 \begin{center}
     \vspace{1em}
@@ -22,7 +26,7 @@ In order for \MantaPay{} participants to receive \Asset{s} via the \Transfer{} p
         \begin{center}
             \begin{tikzcd}
                 & \sk \arrow[ld] \arrow[rd] & & & \\
-                \sk_\alpha \arrow[rd] & & \ak \arrow[ld] \arrow[r] & \vk \arrow[r] & (\textsf{D}, \pk_\textsf{D}) \\
+                \sk_\alpha \arrow[rd] & & \ak \arrow[ld] \arrow[r] & \vk \arrow[r] & \pk \\
                 & \ak_\alpha & & &
             \end{tikzcd}
         \end{center}
@@ -34,84 +38,77 @@ In order for \MantaPay{} participants to receive \Asset{s} via the \Transfer{} p
 \MantaPay{} uses four kinds of keys all derived from a base secret, spending key $\sk$, which give the following kinds of privileged access in the protocol:
 
 \begin{itemize}
-    \item \textbf{Shielded Address} (\send{}): Access to the shielded address $(\textsf{D}, \pk_\textsf{D})$ gives the user the right to send \Asset{s} to the owner of the associated $\sk$. The diversifier $\textsf{D}$ allows the owner of a given $\sk$ key to generate many shielded addresses with the same backing spend authority.
+    \item \textbf{\zkAddress{}} (\send{}): Access to the zk-address $\pk$ gives the user the right to send \zkAsset{s} to the owner of the associated $\sk$. 
     \item \textbf{Viewing Key} (\view{}): Access to the viewing key $\vk$ gives the user the right to view all transactions for the owner of the associated $\sk$.
-    \item \textbf{Proof Authorization Key} (\prove{}): Proof authorization key $\ak$ gives the user the right to build the transaction proof on behalf of the owner of $\sk$. 
-    In the cases of delegating proof generation, i.e. using hardware wallet to control the $sk$ or signing associated data in transparent UTXOs, 
-    the owner of the secret key generates a randomizer $\alpha$ and sends it to the prover which generates the proof. The owner then signs the transaction against $\ak_\alpha$ with their randomized key $\sk_\alpha$ which proves that they have knowledge of $\sk$.
+    \item \textbf{Proof Authorization Key} (\prove{}): Proof authorization key $\ak$ gives the user the right to build the $\Transfer$ proof on behalf of the owner of $\sk$. This key is used when delegating proof generation to a semi-trusted entity while still protecting the spending rights associated to the $\sk$, for example, if a hardware wallet holds $\sk$ it can ask a more capable computer to produce the $\Transfer$ proof for it without sending the spending rights off of the hardware wallet.
     \item \textbf{Spending Key} (\spend{}): Access to the spending key $\sk$ gives total control over the assets owned by this secret, including spending, proof generation, and viewing.
 \end{itemize}
 
-Participants in \MantaPay{} are represented by their addresses, but they are not unique representations, since one participant may have access to more than one secret key. See \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, proving, viewing, and receiving.
+Participants in \MantaPay{} are represented by their zk-addresses, but they are not unique representations, since one participant may have access to more than one secret key. See \autoref{sec:addresses-and-key-components} for more information on how these keys are constructed and used for spending, proving, viewing, and receiving.
 
-\subsection{Ledger}
+\lsubsection{\Note{s}}{concept-note}
 
-We model a blockchain as a byzantine fault tolerance~\cite{bft} replicated state
-machine~\cite{smr}, a.k.a ledger. When interacting with the blockchain, we call the entity who
-initiates the interaction (e.g., sending a transfer request) the user; the entity who verifies the interaction and
-logs it into the blockchain the validator (also known as miner in other contents). Users interact with the
-blockchain by sending amendment requests to the ledger. The amendment is appended to the database once
-validators approve the request. For simplicity, we assume 1) the ledger is synchronized, and the block finality
-is instant; 2) the validators are trusted for liveness and completeness. The underlying consensus protocol
-that validators employ is indeed orthogonal to this paper. What is also of out the scope of this paper is
-the governance token for the underlying blockchain. We nonetheless assume that the senders of our protocol
-holds enough governance tokens to send the transactions.
+The encrypted \Note{} is the primary means of communication in the \MantaPay{} protocol. For a \zkAddress{} owner to know that they have received a \zkAsset{} and can now spend it they decrypt \Note{s} with their viewing key to discover how much of an asset they have received and what information they need to spend it. The \Note{} is also used to keep track of the balances of an entire account over its transaction history.
 
-More specifically, \MantaPay{}'s ledger state \Ledger{} consists of two parts: the public ledger as \PublicLedger{}, and the shielded asset pool as \ShieldedAssetPool{}.
+There are two kinds of \Note{s} in the \MantaPay{} protocol, \emph{incoming} \Note{s} and \emph{outgoing} \Note{s}. The \IncomingNote{} is attached to every new \UTXO{} and contains the same \zkAsset{} as the \UTXO{} and also a secret randomizer used to hide the \UTXO{} commitment. The \OutgoingNote{} is attached to every new \Nullifier{} and contains the same \zkAsset{} as the \UTXO{} that the \Nullifier{} is marking. When performing accounting over a \zkAddress{} to measure how much of a particular \AssetId{} that address controls, the \AssetValue{} stored in the \IncomingNote{s} should be \emph{added} to the running total whereas the \AssetValue{} stored in the \OutgoingNote{s} should be \emph{subtracted} from the running total as they represent inflows and outflows respectively.
 
-\begin{center}
-    \vspace{1em}
-    \begin{mdframed}[leftmargin=0.2\textwidth, rightmargin=0.2\textwidth]
-        \begin{center}
-            \begin{tikzcd}
-                && \UTXOSet \arrow[ld, "\spend" description, bend right] \\
-                \PublicLedger \arrow[r, "\mint"', bend right]
-                & \textbf{\Transfer} \arrow[l, "\reclaim"', bend right]
-                \arrow[rd, "\spend" description]
-                \arrow[ru, "\allocate" description, bend right] & \\
-                && \VoidNumberSet
-            \end{tikzcd}
-        \end{center}
-    \end{mdframed}
-    \vspace{-1em}
-    \captionof{figure}{Life cycle of an \Asset{}.}
-\end{center}
+\lsubsection{\ShieldedPool{}}{concept-shielded-pool}
 
-The \ShieldedAssetPool{} is made up of three parts that are used to enforce the balanced transfer of \SecretAsset{s} among anonymous participants:
+The \ShieldedPool{} is a data structure that contains the necessary data to enable the \MantaPay{} \Transfer{} protocol. The \ShieldedPool{} is made up of the following three general storage groups:
+
+\begin{itemize}
+    \item \UTXO{} Storage: Contains all of the \UTXO{s} that have ever been created along with their \IncomingNote{s}
+    \item \Nullifier{} Storage: Contains all of the \Nullifier{s} that have ever been created along with their \OutgoingNote{s}
+    \item Public Pool Account: The public account of the pool itself that holds a backing of all the \zkAsset{s} held in the \UTXO{s} in the pool. Depositing into or withdrawing out of the pool has to go through this account.
+\end{itemize}
+
+There are two general requirements on the \UTXO{} and \Nullifier{} storage items:
 
 \begin{enumerate}
-    \item \autoref{sec:ledger-utxo-set} \UTXOSet{}: The \UTXOSet{} is a collection of ownership claims to subsets of the \ShieldedAssetPool{} (called \UTXO{s}), each one refering to an allocated \SecretAsset{} transfered to a participant of the protocol.
-    \item \autoref{sec:ledger-encrypted-notes} \EncryptedNote{s}: For every \UTXO{} there is a matching \EncryptedNote{} which contains information necessary to spend the \SecretAsset{}, which can be used to \emph{provably reconstruct} the \UTXO{} convincing the \Ledger{} of unique ownership. The \EncryptedNote{} can only be decrypted by the recipient of the \SecretAsset{} or the designated viewer of the \UTXO{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
-    \item \autoref{sec:ledger-void-number-set} \VoidNumberSet{}: The \VoidNumberSet{} is a collection of commitments, like \UTXO{s}, but which track the \emph{spent state} of a \SecretAsset{} and are used to prove to the \Ledger{} that a \SecretAsset{} is spent \emph{exactly one time}. 
+    \item Fast non-membership query for \UTXO{s} and \Nullifier{s}
+    \item Fast insertion and insertion-order iteration over $(\UTXO{}, \IncomingNote{})$ and $(\Nullifier{}, \OutgoingNote{})$ pairs
 \end{enumerate}
 
-The operation of these different parts of the \ShieldedAssetPool{} is elaborated in the following subsections.
+In order to satisfy both of these requirements we have the following breakdown of the storage:
 
-\lsubsubsection{\UTXO{s} and the \UTXOSet{}}{ledger-utxo-set}
-
-An \emph{unspent transaction output}, or \UTXO{} for short, represents a claim to the output of a balanced transfer which has 
-\emph{not yet been spent}. A \UTXO{} is a tuple
-\begin{align*}
-    \utxo = (\version, \transparent, \pa, \sutxo): \VersionTag \times \Bool \times \PublicAsset \times \SUTXO
-\end{align*}
-where
 \begin{itemize}
-    \item \version: \VersionTag{} keeps track of the \MantaPay{} protocol version in which the \UTXO{} was minted.  
-    \item \transparent: \Bool{} is \True{} if and only if the \Asset{} encoded by the \UTXO{} is public.
-    \item \pa: \PublicAsset{} represents the \emph{public outputs} of a transfer.
-    \item \sutxo: \SUTXO{} represents the \emph{private outputs} of a transfer. 
+    \item \UTXO{} Storage:
+        \begin{itemize}
+            \item $\UTXOSet: \UTXO \to \Bool$
+            \item $\UTXOStorageInsertionOrder: \mathbb{N} \to (\UTXO, \IncomingNote)$
+        \end{itemize}
+    \item \Nullifier{} Storage:
+        \begin{itemize}
+            \item $\NullifierSet: \Nullifier \to \Bool$
+            \item $\NullifierStorageInsertionOrder: \mathbb{N} \to (\Nullifier, \OutgoingNote)$
+        \end{itemize}
 \end{itemize}
-Every balanced transfer generates some number of \UTXO{s} and these \UTXO{s} are stored in the \UTXOSet{} 
-of the \ShieldedAssetPool{}. A \UTXO{} can only be claimed by the participant who owns the underlying \Asset{}, where ownership means 
-\emph{knowledge of the correct spending key} and the \Transfer{} protocol requires that all inputs to a balanced transfer \emph{prove} 
-that they own a \UTXO{} which the \ShieldedAssetPool{} has already seen in the past.
-The \UTXOSet{} is \emph{append-only} since it represents the past state of \emph{unspent} \Asset{s}. \UTXO{s} can only be added to the 
-\UTXOSet{} as outputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
 
-\lsubsubsection{\EncryptedNote{s}}{ledger-encrypted-notes}
+where we use the sets for fast non-membership checks and the insertion order maps for insertion-order preserving insertion and iteration.
 
-In order to find out what \SecretAsset{} a \UTXO{} is connected to, every \UTXO{} comes with an associated \EncryptedNote{} which stores two pieces of information, the underlying (\AssetId{}, \AssetValue{}), and an ephemeral public key, a value which allows the new owner of the \SecretAsset{} to reconstruct the \UTXO{}. Being able to \emph{provably reconstruct} a correct \UTXO{} is a prerequisite to ownership and the ability to spend the \SecretAsset{} in the future. Once a participant spends a \SecretAsset{} that they can decrypt, they build a new \EncryptedNote{} for the next participant that they sent their \SecretAsset{s} to, so that they can then spend it, and so on. This is called the \emph{in-band secret distribution}.
+%\lsubsection{Ledger}{concept-ledger}
+%
+%Preserving the economic value of \zkAsset{s} requires more than just balanced transfers. It also requires that \zkAsset{s} are owned by exactly one address at a time, namely, that the ability to spend a \zkAsset{} can be proved before a transfer and revoked after a transfer. It is not simply the \emph{information-content} of an \zkAsset{} that should be transfered, but the \emph{ability to spend the asset in the future}, which should be transfered. To enforce this second invariant we can use a public ledger\footnotemark{} that keeps track of the movement of \zkAsset{s} from one participant to another.\footnotetext{A public (or private) ledger is not enough to solve the \emph{provable-ownership problem} or the \emph{double-spending problem}. A \emph{consensus mechanism} is also required to ensure that all participants agree on the current state and state transformations of the ledger. The design and specification of the consensus mechanism that secures a \MantaPay{} ledger is beyond the scope of this paper.} Unfortunately, using a public ledger alone does not allow participants to remain anonymous, so \MantaPay{} extends the public ledger by adding a special account called the \emph{shielded asset pool} which is responsible for keeping track of the \Asset{s} which have been anonymized by the protocol. We denote the three ledger types in the protocol as follows: the public ledger as \PublicLedger{}, the shielded asset pool as \ShieldedAssetPool{}, and the combined ledger we denote \Ledger{}.
+%
+%The \ShieldedAssetPool{} is made up of three parts that are used to enforce the balanced transfer of \Asset{s} among anonymous participants:
 
-\lsubsubsection{\VoidNumber{s} and the \VoidNumberSet{}}{ledger-void-number-set}
+%\begin{enumerate}
+%    \item \autoref{sec:ledger-utxo-set} \UTXOSet{}: The \UTXOSet{} is a collection of ownership claims to subsets of the \ShieldedAssetPool{} (called \UTXO{s}), each one refering to an allocated \Asset{} transfered to a participant of the protocol.
+%    \item \autoref{sec:ledger-encrypted-notes} \EncryptedNote{s}: For every \UTXO{} there is a matching \EncryptedNote{} which contains information necessary to spend the \Asset{}, which can be used to \emph{provably reconstruct} the \UTXO{} convincing the \Ledger{} of unique ownership. The \EncryptedNote{} can only be decrypted by the recipient of the \Asset{} or the designated viewer of the \UTXO{}, specifically, the correct viewing key $\vk$. See \autoref{sec:addresses} for more.
+%    \item \autoref{sec:ledger-nullifier-set} \NullifierSet{}: The \NullifierSet{} is a collection of commitments, like \UTXO{s}, but which track the \emph{spent state} of an \Asset{} and are used to prove to the \Ledger{} that an \Asset{} is spent \emph{exactly one time}. 
+%\end{enumerate}
 
-Once the ability to spend a \SecretAsset{} is extracted from a $(\UTXO, \EncryptedNote)$ pair, the \ShieldedAssetPool{} requires another commitment in order to spend the \SecretAsset{}, transfering it to another participant. This commitment, called the \VoidNumber{}, represents the revocation of the right to spend the \SecretAsset{} in the future, and ensures that the same \SecretAsset{} cannot be spent twice. Like the \UTXOSet{}, the \VoidNumberSet{} is \emph{append-only} since it represents the past state of \emph{spent} \SecretAsset{s}. \VoidNumber{s} can only be added to the \VoidNumberSet{} as inputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
+% The operation of these different parts of the \ShieldedAssetPool{} is elaborated in the following subsections.
+
+% \lsubsubsection{\UTXO{s} and the \UTXOSet{}}{ledger-utxo-set}
+
+%An \emph{unspent transaction output}, or \UTXO{} for short, represents a claim to the output of a balanced transfer which has otherwise \emph{not yet been spent}. Every balanced transfer can produce some number of \emph{public outputs}, represented by \Asset{s}, and/or \emph{private outputs}, represented by \UTXO{s}, and these \UTXO{s} are stored in the \UTXOSet{} of the \ShieldedAssetPool{}. A \UTXO{} can only be claimed by the participant who owns the underlying \Asset{}, where ownership means \emph{knowledge of the correct spending key} and the \Transfer{} protocol requires that all inputs to a balanced transfer \emph{prove} that they own a \UTXO{} which the \ShieldedAssetPool{} has already seen in the past. The \UTXOSet{} is \emph{append-only} since it represents the past state of \emph{unspent} \Asset{s}. \UTXO{s} can only be added to the \UTXOSet{} as outputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
+
+%\lsubsubsection{\EncryptedNote{s}}{ledger-encrypted-notes}
+%
+%In order to find out what \Asset{} a \UTXO{} is connected to, every \UTXO{} comes with an associated \EncryptedNote{} which stores two pieces of information, the underlying \Asset{}, and an ephemeral public key, a value which allows the new owner of the \Asset{} to reconstruct the \UTXO{}. Being able to \emph{provably reconstruct} a correct \UTXO{} is a prerequisite to ownership and the ability to spend the \Asset{} in the future. Once a participant spends an \Asset{} that they can decrypt, they build a new \EncryptedNote{} for the next participant that they sent their \Asset{s} to, so that they can then spend it, and so on. This is called the \emph{in-band secret distribution}.
+
+% \lsubsubsection{\Nullifier{s} and the \NullifierSet{}}{ledger-nullifier-set}
+
+%Once the ability to spend an \Asset{} is extracted from a $(\UTXO, \EncryptedNote)$ pair, the \ShieldedAssetPool{} requires another commitment in order to spend the \Asset{}, transfering it to another participant. This commitment, called the \Nullifier{}, represents the revocation of the right to spend the \Asset{} in the future, and ensures that the same \Asset{} cannot be spent twice. Like the \UTXOSet{}, the \NullifierSet{} is \emph{append-only} since it represents the past state of \emph{spent} \Asset{s}. \Nullifier{s} can only be added to the \NullifierSet{} as inputs in the execution of a \Transfer{} which the \Ledger{} checks for correctness.
+
