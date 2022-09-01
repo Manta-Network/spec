@@ -1,15 +1,10 @@
 \lsection{Introduction}{introduction}
 
-\MantaPay{} aims to solve the long-standing privacy problems facing cryptocurrencies in the Web3 age. At its heart, it uses various cryptographic constructions including NIZK (non-interactive zero knowledge proof) systems to ensure user privacy from \emph{first principles}.
+\MantaPay{} aims to solve the long-standing privacy problems facing cryptocurrencies. At its heart, it uses various cryptographic constructions including NIZK (non-interactive zero knowledge proof) systems to ensure user privacy from \emph{first principles} and to build the foundational layer for programmable private money. The \MantaPay{} protocol provides the following features:
 
-\begin{table}[h]
-    \centering
-    \begin{tabular}{|l|l|l|l|l|} \hline
-        Protocol                 & Cryptographic Primitives & Abitrary Nomination & Multi-Asset \\ \hline \hline
-        ZCash (Sapling)          & NIZK                     & \cmark   & \xmark      \\ \hline
-        Monero                   & RingCT/NIZK              & \cmark   & \xmark      \\ \hline
-        zk.money (Aztec)         & NIZK                     & \xmark   & \cmark      \\ \hline
-        MantaPay \input{version} & NIZK                     & \cmark   & \cmark      \\ \hline
-    \end{tabular}
-    \caption{Comparison of \MantaPay{} with previous constructions} \label{tab:overview}
-\end{table}
+\begin{enumerate}
+    \item Elastic Multi-Asset Shielded Pool: A shielded pool for every kind of asset with elastic annonymity set resizing
+    \item Verifiable Viewing Keys: Opt-in transaction transparency with audit correctness assurance
+    \item Programmable \zkAsset{s}: New Transparent \UTXO{} model allowing programmability layers to be built on top of the shielded pool
+    \item Delegated Proof Generation: Decoupling the spending access from the proof generation access gives hardware wallets native support for \zkAsset{s}
+\end{enumerate}
