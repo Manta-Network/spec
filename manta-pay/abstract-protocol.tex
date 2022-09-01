@@ -147,40 +147,61 @@ In the following section, we outline the formal specifications for all of the \e
 \end{definitiontoc}
 
 \begin{definitiontoc}{Cryptographic Group}
-    We define a \emph{cryptographic group} $(G, p, g)$ as some finite cyclic group $G$, of prime order $p$ with generator $g$ where the discrete logarithm problem is hard, namely, given $X \in G$ it is infeasible to find $x$ such that $X = g^x$.
+    We define a \emph{cryptographic group} $(G, p, g)$ as some finite cyclic group $G$, of prime order $p$ with generator $g$ where the discrete logarithm problem is hard, namely, given $X \in G$ it is infeasible to find $x$ such that $X = g^x$. We may omit the prime $p$ when convenient.
 \end{definitiontoc}
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
 
-%Given a choice of $\HPKE$ we have the following definitions:
-%
-%\begin{definition}[Spending Key]
-%    A \SpendingKey{} is the following pair of keys:
-%    \begin{align*}
-%        \spend &: \HPKE.\KA.\SecretKey \\
-%        \view  &: \HPKE.\KA.\SecretKey
-%    \end{align*}
-%    The second secret key, $\view$, is called the \ViewingKey{}.
-%\end{definition}
-%
-%\begin{definition}[Receiving Key]
-%    A \ReceivingKey{} is the following pair of keys:
-%    \begin{align*}
-%        \spend &: \HPKE.\KA.\PublicKey \\
-%        \view  &: \HPKE.\KA.\PublicKey
-%    \end{align*}
-%    which is derived from a spending key $\sk : \SpendingKey$ with the following algorithm:
-%    \begin{align*}
-%        \rk.\spend &:= \KA.\derive(\sk.\spend) \\
-%        \rk.\view  &:= \KA.\derive(\sk.\view) 
-%    \end{align*}
-%\end{definition}
-%
-%A keypair $(\sk, \rk) : \SpendingKey \times \ReceivingKey$, represents the ability to spend and receive \Asset{s} as a unique \emph{representative participant} on the \Ledger. Any user of the \MantaPay{} protocol can create many such keypairs, but each one represents a different participant and \Asset{s} must be transfered between them using the \Transfer{} protocol as if they were independently owned by different users. A \ReceivingKey{} can be used to receive any number of \Asset{s} and the \SpendingKey{} can be used to spend any number of those \Asset{s}. See \autoref{sec:abstract-semantic-transactions} for the protocol used to spend a subset of \Asset{s} owned by a single user.
-%
-%\textbf{Important}: To every spending key $\sk : \SpendingKey$ we have an assoicated viewing key $\vk : \ViewingKey := \sk.\view$ which allows the owner to decrypt the encrypted messages associated to $\sk$, but does not contain enough information to perform a spend with those \Asset{s}. This can be used for account auditing purposes, and for removing anonymity, but sharing this key should be done with caution.
-%
-%In general, one may have a collection of viewing keys which can be used to separate the encrypted notes into different sets, by key. This way only certain transactions can be de-anonymized by certain parties.
+For the \Transfer{} protocol we use a multi-layered system of keys:
+
+\begin{center}
+    \vspace{1em}
+    \begin{mdframed}[leftmargin=0.125\textwidth, rightmargin=0.125\textwidth]
+        \begin{center}
+            \begin{tikzcd}
+                &  & \sk \arrow[lldd, "(\dash)\,\cdot\,\alpha"'] \arrow[rrdd, "(\dash)\,\cdot\,g"] & & & & & & \\
+                & & & & & & & & \\
+                \sk_\alpha \arrow[rrdd, "(\dash)\,\cdot\,g"'] & & & & \ak \arrow[lldd, "(\dash)\,\cdot\,\alpha"] \arrow[rr, "\KDF^\vk"] & & \vk \arrow[rr, "(\dash)\,\cdot\,g"] & & \pk \\
+                & & & & & & & & \\
+                & & \ak_\alpha & & & & & &
+\end{tikzcd}
+        \end{center}
+    \end{mdframed}
+    \vspace{-1em}
+    \captionof{figure}{Detailed Key Schedule for \MantaPay{} where $\alpha$ is a random scalar and $g$ is a generator.}
+\end{center}
+
+Here we define each key and its function in the \Transfer{} protocol:
+
+\begin{definition}[Key Schedule]
+    A $\KeySchedule$ is a collection of implementations of the following abstract cryptographic primitives as described in the above definitions:
+    \begin{itemize}
+        \item \textbf{Cryptographic Group}: $(G, p, g)$
+        \item \textbf{Viewing Key Derivation Function}: $\KDF^\vk$
+        \item \textbf{Proof Authorization Signature}: $\SIG$
+    \end{itemize}
+    with the following notational conventions:
+    \begin{align*}
+        \SpendingKey         &:= \mathbb{Z}_p \\
+        \ProofAuthorizingKey &:= G \\
+        \ViewingKey          &:= \mathbb{Z}_p \\
+        \zkAddress           &:= G
+    \end{align*}
+    with the following constraints:
+    \begin{align*}
+        \SIG.\SecretKey &= \mathbb{Z}_p \\
+        \SIG.\PublicKey &= G \\
+        \SIG.\derive    &= (\dash)\,\cdot\,g
+    \end{align*}
+    To derive the \zkAddress{}, $\pk$, we use the following:
+    \[\sk \quad\mapsto\quad \ak := \sk \cdot g \quad\mapsto\quad \vk := \KDF^\vk(\ak) \quad\mapsto\quad \pk := \vk \cdot g\]
+    For signing a message $m$ with a randomized key, the owner of the \SpendingKey{}, $\sk$, and owner of the \ProofAuthorizingKey{}, $\ak$, perform the following protocol:
+    \begin{enumerate}
+        \item Spender samples $\alpha$ randomly and sends it to prover.
+        \item Prover computes $\ak_\alpha := \alpha \cdot \ak$ and binds it to the message $m$ and sends the message to spender.
+        \item Spender computes $\sk_\alpha := \alpha \cdot \sk$ and checks that $\ak_\alpha = \sk_\alpha \cdot g$ and signs the message $m$ with $\sk_\alpha$.
+    \end{enumerate}
+\end{definition}
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
