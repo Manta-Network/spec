@@ -1,12 +1,58 @@
-\lsection{Context}{context}
+\lsection{Context}{Context}
 
-The context is this. Definitely gonna cite Groth16 \cite{groth16} at some point.
-\subsection{Groth16 Protocol}
+\subsection{Circuit}
+Throughout this paper, by circuit we mean a \emph{Rank-1 Constraint System (R1CS)}. It is defined as a system of equations over $\mathbb{F}_r$ of the form 
+\begin{align}
+\sum_{i=0}^m a_i u_{i, q} \cdot \sum_{i=0}^m a_i v_{i, q} = \sum_{i=0}^m a_i w_{i, q}, \qquad q = 1, \dots, n, \label{eqn: r1cs}
+\end{align}
+where $a_0 = 1$. This system of equations, in the context of zero-knowledge proofs, is to be understood as follows:
+\begin{itemize}
+\item The numbers $u_{i, q}, v_{i, q}, w_{i, q}$ are constants in $\mathbb{F}_r$ which represent the operations performed in an arithmetic circuit. Here constant means constant in the protocol, e.g. \MantaPay{} will have a fixed set of $u_{i, q}, v_{i, q}, w_{i, q}$.
+\item The numbers $\phi = (a_1, \dots, a_\ell)$ are the public inputs. In \MantaPay{}, these correspond to the \TransferPost{}, excluding the proof.
+\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the witnesses. In \MantaPay{}, these correspond to the elements of the \Transfer{} which are not part of the \TransferPost{}.
+\item An R1CS defines the following binary relation
+\begin{align}
+R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, \dots, a_m), \ \eqref{eqn: r1cs} \textrm{ is satisfied} \right\} \subset \mathbb{F}_r^\ell \times \mathbb{F}_r^{m-\ell}
+\end{align}
+\item The statements that can be proved in this terminology are of the form: for a given circuit \eqref{eqn: r1cs} and public input $\phi$, there exists\footnote{and I know} a witness $w$ such that $(\phi, w) \in R$.
+\end{itemize}
 
-\subsection{MPC Parameter Generation}
+\subsection{Quadratic Arithmetic Programmes}
+\emph{Quadratic Arithmetic Programmes (QAPs)} give an alternative way to describe a circuit, equivalent to R1CS. A QAP is a system of polynomial equations of the form
+\begin{align}
+\sum_{i=0}^m a_i u_i(X) \cdot \sum_{i=0}^m a_i v_i(X) \equiv \sum_{i=0}^m a_i w_i(X) \mod t(X), \label{eqn: qap}
+\end{align}
+where 
+\begin{itemize}
+\item $u_i(X), v_i(X), w_i(X) \in \mathbb{F}_r[X]$ are degree $n-1$ polynomials, and $t(X) \in \mathbb{F}_r[X]$ is a degree $n$ polynomial, all of which are fixed for the protocol.
+\item The numbers $\phi = (a_1, \dots, a_\ell)$ are the public inputs.
+\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the witnesses.
+\item A QAP defines the following binary relation
+\begin{align}
+R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, \dots, a_m), \ \eqref{eqn: qap} \textrm{ is satisfied} \right\} \subset \mathbb{F}_r^\ell \times \mathbb{F}_r^{m-\ell}
+\end{align}
+\item The statements that can be proved in this terminology are of the form: for a given circuit \eqref{eqn: qap} and public input $\phi$, there exists a witness $w$ such that $(\phi, w) \in R$.
+\end{itemize}
 
-\subsection{Phase Structure}
+\subsection{The Groth16 \Setup{} function}
+Let us now recall how the Groth16 \Setup{} function works in the \MantaPay{} protocol. We start with 
+\begin{itemize}
+\item The pairing curve BN254 \cite{BN254}, which consists of a triple of elliptic curves $(\mathbb{G}_1, \mathbb{G}_2,\mathbb{G}_T) $ and a non-degenerate bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$. We fix generators $g$ and $h$ of $\mathbb{G}_1$ and $\mathbb{G}_2$, respectively. Note that $\textrm{ord}(g) = \textrm{ord}(h) = r$ is prime, and that $e(g,h)$ generates a subgroup of order $r$ of $\mathbb{G}_T \cong F_{p^{12}}^*$.
+\item The \MantaPay{} circuit, encoded as a QAP $\{u_i(X), v_i(X), w_i(X), t(X)\}$.
+\end{itemize}
+First, we randomly sample the simulation trapdoor $\tau = (\alpha, \beta, \delta, x) \leftarrow \mathbb{F}_r^*$. Second, we compute:
+\begin{align*}
+\sigma_1 = \left[ \left(\alpha, \beta, \delta, \{ x^i \}_{i=0}^{n-1},\left\{  \beta u_i(x) + \alpha v_i(x) + w_i(x) \right\}_{i=0}^\ell, \left\{  \frac{\beta u_i(x) + \alpha v_i(x) + w_i(x)}{\delta} \right\}_{i=\ell+1}^m, \left\{ \frac{x^i t(x)}{\delta} \right\}_{i=0}^{n-2} \right) \right]_1 \\
+\sigma_2 = \left[ \left( \beta, \delta,  \{ x^i \}_{i=0}^{n-1} \right) \right]_2
+\end{align*} 
+where $[y]_1 = y \cdot g$ and $[y]_2 = y \cdot h$ for all $y \in \mathbb{F}_r$. Then we return $\sigma = (\sigma_1, \sigma_2)$. The goal of the trusted setup is to provide the provers and verifiers with $\sigma$ without anyone knowing $\tau$.
+\subsection{Phase 1}
 
-\lsection{Scope}{scope}
+The parameters above split naturally into two classes. The first class consists of those which only depend on the elliptic curves and not on the circuit, i.e., on the QAP. These parameters, namely
+\begin{align}
+KZG = ( [\alpha]_1, [\beta]_1, \{ [x^i]_1 \}_{i=0}^{n-1}, [\beta]_2, \{ [x^i]_2 \}_{i=0}^{n-1} ) 
+\end{align}
+are known as the \emph{Kate--Zaverucha--Goldberg (KZG)} commitments. Since these parameters don't depend on the specifics of the circuit, we take them from the Perpetual Powers of Tau (PPoT) project \cite{PPoT}, a multi-party computation similar to our trusted setup described below, with a $1$-to-$N$ security assumption. To ensure its soundness, we have personally verified each contribution to PPoT.
 
-The scope is this
+\subsection{Phase 2}
+The rest of the Groth16 parameters do depend on the circuit, so we have the corresponding values for the \MantaPay{} circuit. The rest of the paper is devoted to explaining in detail the multi-party computation known as the trusted setup ceremony which we perform to make sure the remaining Groth16 parameters are computed safely.
