@@ -2,4 +2,29 @@
 
 \subsection{Goals}
 
+\begin{itemize}
+    \item Anonymity: Pre-registration only requires a Twitter handle and an email address, none of which needs to be linked to your identity.
+    \item Server coordination: The ceremony will be coordinated by a server, which will: \begin{itemize}
+        \item Manage the contribution queue for the participants, supporting priority tiers.
+        \item Ensure that only pre-registered participants with valid signatures are allowed to take part in the ceremony.
+        \item Ensure that no more than one participant is contributing at a given time.
+        \item Ensure that no participant contributes more than once.
+        \item Inform the participants about their queue/contribution status. 
+        \item Check the validity proof of the proposed contributions before adding them to the ceremony.
+        \item After a successful contribution, return its hash to the participant.
+    \end{itemize}
+    \item Updatable: More contributions can be added to the ceremony at later stages if desired.
+    \item Verifiable: The ceremony and all its contributions can be verified by independent auditors. We ensure that is the case by:
+    \begin{itemize}
+        \item Publishing the transcript of the ceremony, including the validity proof and hash of each contribution.
+        \item Asking participants to publish their hashes in independent locations, e.g. Twitter.
+        \item Distributing an open-source verification library. 
+    \end{itemize}
+\end{itemize}
+
 \subsection{Non-Goals}
+
+\begin{itemize}
+    \item Permisionless: We require participants to pre-register to contribute to the ceremony. However, registration is open to anyone with a Twitter account and an email address.
+    \item Support for independently computed contributions: The ceremony only supports those contributions done through the server with our client. However, the server code is open-source and the transcript of the ceremony is publicly available for audits.
+\end{itemize}
