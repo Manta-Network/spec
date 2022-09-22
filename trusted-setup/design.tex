@@ -33,6 +33,9 @@ Contribution phase consists of repeated Rounds, each of which looks like:
 \item Coordinator archives PK, chall, proof.
 \end{enumerate}
 
+\subsection{Messaging Protocol}
+TODO 
+
 \subsection{Server State Machine}
 Responsibilities:
 \begin{itemize}
@@ -46,7 +49,7 @@ Responsibilities:
 State: 
 \begin{itemize}
     \item Registry: Registry
-    \item MpcState: (ProverKey x Challenge x Proof) x no. circuits
+    \item MpcState: (ProverKey x Challenge x Proof) x no. circuits (TODO: How explicitly should be mention the multiple parallel circuits?)
     \item Transcript: ( ditto ) x no. rounds
 \end{itemize}
 Methods:
