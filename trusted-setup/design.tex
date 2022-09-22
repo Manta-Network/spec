@@ -1,4 +1,106 @@
 \lsection{Design}{design}
 \subsection{Ceremony Protocol}
+Has 2 parties: Contributor, Coordinator. They exchange messages according to MessagingProtocol.
+
+Protocol has Initialization phase and Contribution phase. 
+
+Input to Initialization phase: 
+\begin{itemize}
+    \item KZG Phase 1 param.s (ref. def.) 
+    \item circuit description(s) (ref. def.).
+\end{itemize}
+Output of Initialization phase:
+\begin{itemize}
+    \item Groth16 ProverKey (ref. def.) $PK_0$
+    \item Initial Challenge $Chall_0$
+\end{itemize}
+
+Contribution phase consists of repeated Rounds, each of which looks like:
+\begin{enumerate}
+\item Coordinator send (PK, chall)(n) to Contributor(n).
+\item Contributor calls Contribute:
+    \begin{enumerate}
+        \item Sample Randomness
+        \item Compute contribution (ref. def.)
+        \item Generate proof (order?)
+    \end{enumerate}
+\item Contributor sends (PK, proof)(n+1) to Coordinator (signed message verification occurs)
+\item Coordinator calls Verify:
+    \begin{enumerate}
+        \item Compute chall(n+1) from PK, chall(n)? (anything else?)
+        \item Verify(proof(n+1), chall(n+1), PK(n), PK(n+1))
+    \end{enumerate}
+\item Coordinator archives PK, chall, proof.
+\end{enumerate}
+
 \subsection{Server State Machine}
+Responsibilities:
+\begin{itemize}
+    \item Parameter Initialization (see above)
+    \item Contribution verification
+    \item Signature verification 
+    \item Registry maintenance
+    \item Queue management
+    \item Contribution archive 
+\end{itemize}
+State: 
+\begin{itemize}
+    \item Registry: Registry
+    \item MpcState: (ProverKey x Challenge x Proof) x no. circuits
+    \item Transcript: ( ditto ) x no. rounds
+\end{itemize}
+Methods:
+\begin{itemize}
+    \item Initialize
+    \item Enqueue 
+    \item ParseMessage
+    \item VerifyContribution
+    \item SendMessage
+\end{itemize}
+Operation:
+\begin{enumerate}
+    \item Initialize
+    \item Concurrent Loop: Coordinate Contributions (TODO: Flow chart)
+    \begin{enumerate}
+        \item ParseMessage (contribute). 
+        \item Consult Registry, SendMessage (either QueuePosition or MpcState) 
+        \item Await ContributionResponse, ParseMessage to yield Contribution
+        \item Verify Contribution 
+        \item Update MpcState, update Registry
+        \item Add Contribution to Transcript
+    \end{enumerate}
+    \item Concurrent Loop: Queue Management
+    \begin{enumerate}
+        \item ParseMessage (JoinQueue), yield ParticipantId
+        \item Consult Registry
+        \item Enqueue (if Participant has not contributed)
+    \end{enumerate}
+\end{enumerate}
+
 \subsection{Client State Machine}
+Responsibilities:
+\begin{itemize}
+    \item Ed25519 keypair generation
+    \item Message Signing
+    \item Contribution Computation
+\end{itemize}
+State:
+\begin{itemize}
+    \item Keypair: SignatureKeypair
+    \item Randomness: PRNG
+\end{itemize}
+Methods:
+\begin{itemize}
+    \item GenerateKeypair
+    \item RequestState
+    \item Contribute
+\end{itemize}
+Operation:
+\begin{enumerate}
+    \item GenerateKeypair, initialize own state
+    \item RequestState: send signed message asking for the MpcState
+    \item Await StateResponse 
+    \item Contribute, send signed ContributeRequest
+    \item Output Attestation
+\end{enumerate}
+(Mention nonce management? Or is that an internal detail to signatures?)
