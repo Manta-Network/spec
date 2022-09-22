@@ -54,15 +54,19 @@ A decentralized way to generate $\sigma$ without revealing $\tau$ is to compute 
 
 The key security property of this MPC is that its security is ensured by having at least one honest participant. An honest participant is one who keeps their private input $\tau_i$ from all other participants, ideally by permanently clearing it from their system's memory after participation. Put differently, this \emph{1-out-of-N} honest participants guarantee states that to determine the toxic waste $\tau$ requires the collusion of \emph{all} participants in the MPC. 
 
-By soliciting contributions to the MPC from a diverse set of participants, we increase the difficulty of such collusion. Note that any individual with a stake in the security of \MantaPay{} can guarantee this personally, simply by participating honestly in this MPC.
+By soliciting contributions to the MPC from a diverse set of participants, we increase the difficulty of such collusion. Note that any individual with a stake in the security of \MantaPay{} can guarantee this personally, simply by participating honestly in the \Setup{} MPC.
 
-\subsection{Phase 1}
+\subsection{Phase Structure}
 
-The parameters above split naturally into two classes. The first class consists of those which only depend on the elliptic curves and not on the circuit, i.e., on the QAP. These parameters, namely
+The full \Setup{} MPC splits usefully into two \emph{phases} (todo cite Bowe Gabizon 19). In \emph{Phase 1} we generate a modified KZG setup (todo cite KZG) which is \emph{universal} in the sense that these parameters may be used by any ZK circuit of small enough size. In \emph{Phase 2} we derive $\sigma$ from the output of Phase 1. The parameters generated in Phase 2 are \emph{circuit-specific}: they depend on the QAP description of the circuit \eqref{eqn: qap} and must be computed separately for each ZK circuit.
+
+\subsubsection{Phase 1}
+
+The first class consists of those which only depend on the elliptic curves and not on the circuit, i.e., on the QAP. These parameters, namely
 \begin{align}
 KZG = ( [\alpha]_1, [\beta]_1, \{ [x^i]_1 \}_{i=0}^{n-1}, [\beta]_2, \{ [x^i]_2 \}_{i=0}^{n-1} ) 
 \end{align}
 are known as the \emph{Kate--Zaverucha--Goldberg (KZG)} commitments. Since these parameters don't depend on the specifics of the circuit, we take them from the Perpetual Powers of Tau (PPoT) project \cite{PPoT}, a multi-party computation similar to our trusted setup described below, with a $1$-to-$N$ security assumption. To ensure its soundness, we have personally verified each contribution to PPoT.
 
-\subsection{Phase 2}
+\subsubsection{Phase 2}
 The rest of the Groth16 parameters do depend on the circuit, so we have the corresponding values for the \MantaPay{} circuit. The rest of the paper is devoted to explaining in detail the multi-party computation known as the trusted setup ceremony which we perform to make sure the remaining Groth16 parameters are computed safely.
