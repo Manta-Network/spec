@@ -496,40 +496,40 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
 
 For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their \zkAsset{s} and use them to build \TransferPost{s} to send to the \Ledger{}. The balance of any participant is the sum of the balances of their \zkAsset{s}, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their balance, the participant would need to accumulate all of the relevant fragments into a large enough \zkAsset{} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
 
-%\begin{algorithm*}
-%\caption{Semantic Transaction Algorithm}
-%\begin{algorithmic}
-%    \Procedure {BuildTransaction}{$\sk$, $\mathcal{B}$, $\total$, $\rk$}
-%        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples pairs from $\mathcal{B}$ that total at least $\total$}
-%        \If{$\len(B) = 0$}
-%            \State \textsf{return} $[\,]$ \Comment{Insufficient Balance}
-%        \EndIf
-%        \State $P \gets [\,]$ \Comment{Allocate a new list for \TransferPost{s}}
-%        \While{$\len(B) > N$} \Comment{While there are enough pairs to make another \Transfer}
-%            \State $A \gets [\,]$
-%            \For{$b \in \next(B, N)$} \Comment{Get the next $N$ pairs from $B$}
-%                \State $S \gets \BuildSenders_\sk(b)$
-%                \State $[acc, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$ \Comment{Build a new accumulator and zeroes}
-%                \State $P \gets P + \TransferPost(\Transfer([], S, [acc, zs...], []))$
-%                \State $(A, Z) \gets (A + (acc.\tilde{d}, acc.\asset.\VALUE), Z + zs)$ \Comment{Save $acc$ for the next loop, $zs$ for the end}
-%            \EndFor
-%            \State $B \gets A + \remainder(B, N)$
-%        \EndWhile
-%        \State $S \gets \PrepareZeroes_\sk(N, B, Z, P)$ \Comment{Use $Z$ and \Mint{s} to make $B$ go up to $N$ in size.}
-%        \State $R \gets \BuildReceiver_\sk(\rk, S)$
-%        \State $[c, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$
-%        \State \textsf{return} $P + \TransferPost(\Transfer([], S, [R, c, zs...], []))$
-%    \EndProcedure
-%\end{algorithmic}
-%\end{algorithm*}
-%
-%Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single action that the user can take, performing a withdrawl from their shielded balance. To describe such a \emph{semantic transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
-%
-%\footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
-%
-%For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\KA.\PublicKey \times \AssetValue\right)$, a set of key-balance pairs for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\rk : \ReceivingKey$. We can then compute 
-%\[\textsc{BuildTransaction}(\sk, \mathcal{B}, \total, \rk)\]
-%to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\rk$.
-%
-%If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathcal{B}$ should be updated accordingly, removing all of the pairs which were used in the \Transfer{}. Wallets should also handle the more complex case when only some of the \Transfer{s} succeed in which case they need to be able to continue retrying the transaction until they are finally resolved. Since the only \Transfer{} which sends \Asset{s} out of the control of the user is the last one (and it recursively depends on the previous \Transfer{s}), then it is safe to continue from a partially resolved state with a simple retry of the $\textsc{BuildTransaction}$ algorithm.
+\begin{algorithm*}
+\caption{Batched Transaction Algorithm}
+\begin{algorithmic}
+    \Procedure {BuildBatch}{$\sk$, $\mathcal{B}$, $\total$, $\pk$}
+        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples coins from $\mathcal{B}$ that total at least $\total$}
+        \If{$\len(B) = 0$}
+            \State \textsf{return} $[\,]$ \Comment{Insufficient Balance}
+        \EndIf
+        \State $P \gets [\,]$ \Comment{Allocate a new list for \TransferPost{s}}
+        \While{$\len(B) > N$} \Comment{While there are enough pairs to make another \Transfer}
+            \State $A \gets [\,]$
+            \For{$b \in \next(B, N)$} \Comment{Get the next $N$ pairs from $B$}
+                \State $S \gets \BuildSenders_\sk(b)$
+                \State $[acc, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$ \Comment{Build a new accumulator and zeroes}
+                \State $P \gets P + \TransferPost(\Transfer([], S, [acc, zs...], []))$
+                \State $(A, Z) \gets (A + acc, Z + zs)$ \Comment{Save $acc$ for the next loop, $zs$ for the end}
+            \EndFor
+            \State $B \gets A + \remainder(B, N)$
+        \EndWhile
+        \State $S \gets \PrepareZeroes_\sk(N, B, Z, P)$ \Comment{Use $Z$ and \Mint{s} to make $B$ go up to $N$ in size.}
+        \State $R \gets \BuildReceiver_\sk(\pk, S)$
+        \State $[c, zs...] \gets \BuildAccumulatorAndZeroes_\sk(S)$
+        \State \textsf{return} $P + \TransferPost(\Transfer([], S, [R, c, zs...], []))$
+    \EndProcedure
+\end{algorithmic}
+\end{algorithm*}
+
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single atomic action that the user can take, performing a withdrawl from their balance. To describe such a \emph{batched transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
+
+\footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
+
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\Bool \times \F \times \AssetValue\right)$, a set of transparenct-blinder-balance triples for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\pk : \zkAddress$. We can then compute 
+\[\textsc{BuildBatch}(\sk, \mathcal{B}, \total, \pk)\]
+to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\pk$.
+
+If all of the \Transfer{s} are accepted by the ledger, the balance state $\mathcal{B}$ should be updated accordingly, removing all of the pairs which were used in the \Transfer{}. Wallets should also handle the more complex case when only some of the \Transfer{s} succeed in which case they need to be able to continue retrying the transaction until they are finally resolved. Since the only \Transfer{} which sends \zkAsset{s} out of the control of the user is the last one (and it recursively depends on the previous \Transfer{s}), then it is safe to continue from a partially resolved state with a simple retry of the $\textsc{BuildBatch}$ algorithm.
 
