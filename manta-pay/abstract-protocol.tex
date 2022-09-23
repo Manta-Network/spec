@@ -450,12 +450,12 @@ To finish the transfer, the \SpendingKey{} for the $\Transfer.\ak : \ProofAuthor
     where $\Transfer.\public$ returns \SenderPost{s} for each \Sender{} in $T$ and \ReceiverPost{s} for each \Receiver{} in $T$, keeping \Source{s} and \Sink{s} as they are, and $\Transfer.\secret$ returns all the rest of $T$ which is not part of the output of $\Transfer.\public$.
 \end{definition}
 
-Now we can sign this body with $\sk_\alpha : \SpendingKey := \sk \cdot \alpha$ where the signature scheme has $\TransferPostBody$ as the $\SIG.\Message$ type:
+Now we can sign this body with $\sk_\alpha : \SpendingKey := \sk \cdot \alpha$ where the signature scheme has $\TransferPostBody$ as the $\SIG.\Message$ type and we use $\ak_\alpha$ as the verifying key:
 
 \begin{definition}[\Transfer{} Post]
     A \TransferPost{} is the following tuple:
     \begin{align*}
-        \sigma &: \Option(\SIG.\Signature) \\
+        \sigma &: \Option(\SIG.\VerifyingKey \times \SIG.\Signature) \\
         \body  &: \TransferPostBody
     \end{align*}
     Note that the $\sigma$ value is optional. This is inhabited whenever the number of \Sender{s} in a transaction is positive.
@@ -463,31 +463,39 @@ Now we can sign this body with $\sk_\alpha : \SpendingKey := \sk \cdot \alpha$ w
 
 Now that a participant has constructed a transfer post $P : \TransferPost$ they can send it to the \Ledger{} for verification. 
 
-%\begin{definition}[\Ledger{}-side \Transfer{} Validity]
-%    To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
-%    \begin{itemize}
-%        \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
-%        \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\sinks$ exist.
-%        \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
-%        \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\senders$ are unique, and no \VoidNumber{} in $P.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
-%        \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\receivers$ are unique, and no \UTXO{} in $P.\receivers$ has already been stored on the ledger.
-%        \item \textbf{Verify \Transfer{}}: Check that $\NIZK.\verify_\vk(P.\sources \,||\, P.\senders \,||\, P.\receivers \,||\, P.\sinks, P.\pi) = \True$.
-%    \end{itemize}
-%\end{definition}
-%
-%\begin{definition}[\Ledger{} \Transfer{} Update]
-%    After checking that a given \TransferPost{} $P$ is valid, the \Ledger{} updates its state by performing the following changes:
-%    \begin{itemize}
-%        \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances using the \Source{s} and \Sink{s} present in $P$.
-%        \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
-%        \item \textbf{\VoidNumberSet{} Update}: The new \VoidNumber{s} are appended to the \VoidNumberSet{}.
-%    \end{itemize}
-%\end{definition}
+\begin{definition}[\Ledger{}-side \Transfer{} Validity]
+    To check that $P$ represents a valid \Transfer{}, the ledger checks the following:
+    \begin{itemize}
+        \item \textbf{Verify Signature}: Check that $\SIG.\verify(P.\sigma_0, P.\sigma_1, P.\body) = \True$. This check is only performed if the transfer shape includes at least one \Sender{}.
+        \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\body.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
+        \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\body.\sinks$ exist.
+        \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\body.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
+        \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\body.\senders$ are unique, and no \VoidNumber{} in $P.\body.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
+        \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\body.\receivers$ are unique, and no \UTXO{} in $P.\body.\receivers$ has already been stored on the ledger.
+        \item \textbf{Verify \Transfer{}}: Check that the following relation holds:
+            \begin{align*}
+                \NIZK.\verify_\vk(& \\
+                    &P.\sigma_0 \,||\, P.\body.\ID \,||\, P.\body.\sources \,||\, P.\body.\senders \,||\, P.\body.\receivers \,||\, P.\body.\sinks, \\
+                    &P.\body.\pi \\
+                ) = \True
+            \end{align*}
+            where $P.\sigma_0$ is included whenever the transfer shape includes at least one \Sender{} and $P.\body.\ID$ is included whenever the transfer shape includes at least one of \Source{s} or \Sink{s}.
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[\Ledger{} \Transfer{} Update]
+    After checking that a given \TransferPost{} $P$ is valid, the \Ledger{} updates its state by performing the following changes:
+    \begin{itemize}
+        \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances using the \Source{s} and \Sink{s} present in $P$.
+        \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
+        \item \textbf{\VoidNumberSet{} Update}: The new \VoidNumber{s} are appended to the \VoidNumberSet{}.
+    \end{itemize}
+\end{definition}
 
 \lsubsection{Batched Transactions}{abstract-batched-transactions}
 
-%For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their shielded assets and use them to build \TransferPost{s} to send to the \Ledger{}. The \emph{shielded balance} of any participant is the sum of the balances of their shielded assets, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their shielded balance, the participant would need to accumulate all of the relevant fragments into a large enough \emph{shielded asset} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
-%
+For \MantaPay{} participants to use the \Transfer{} protocol, they will need to keep track of the current state of their \zkAsset{s} and use them to build \TransferPost{s} to send to the \Ledger{}. The balance of any participant is the sum of the balances of their \zkAsset{s}, but this balance may be fragmented into arbitrarily many pieces, as each piece represents an independent asset that the participant received as the output of some \Transfer{}. To then spend a subset of their balance, the participant would need to accumulate all of the relevant fragments into a large enough \zkAsset{} to spend all at once, building a collection of \TransferPost{s} to send to the \Ledger{}.
+
 %\begin{algorithm*}
 %\caption{Semantic Transaction Algorithm}
 %\begin{algorithmic}
