@@ -13,6 +13,8 @@ The \Coordinator{} computes an initial state $\sigma_0$ and challenge point $c_0
 \end{equation*} 
 The inputs to \initialize{} are the R1CS descriptions \eqref{eqn: r1cs} of some ZK circuits and modified KZG parameters \eqref{eq: kzg} (the output of a prior Phase 1 ceremony). The function \initialize{} computes $\sigma_0$, a Groth16 proving key with $\delta = 1$ (see \eqref{eq: prover_key}), and an initial challenge point $c_0$.
 
+Note that \initialize{} is deterministic and the circuit descriptions and KZG parameters are public. Therefore any observer may verify that \Coordinator{} completed this step correctly.
+
 \subsubsection*{Contribution Round}
 
 The $n^{\text{th}}$ round of contribution begins with the state $\sigma_{n-1}$ and challenge $c_{n-1}$ of the previous round. \Contributor{} $C_n$ will interact with \Coordinator{} to produce the next state $\sigma_{n}$ and a proof $\pi_{n}$ that it was computed according to the protocol. The round consists of these steps:
@@ -55,7 +57,7 @@ To organize the contributions, the \Coordinator{} performs:
 \end{itemize}
 
 \subsubsection*{State}
-A state machine acts os \Coordinator{}. Its state consists of:
+A state machine acts as \Coordinator{}. Its state consists of:
 \begin{itemize}
     \item \Registry{}: For each participant, a record of their public signing key and whether they have already contributed to the ceremony.
     \item \MpcState{}: The current pair $(\sigma_n, c_n)$ (see above). 
@@ -94,29 +96,32 @@ If any of the above checks do not pass, the \Coordinator{} responds with an appr
 TODO: Flow chart would express this nicely
 
 \subsection{Client State Machine}
-Responsibilities:
+
+The duty of a \Contributor{} is to contribute according to the MPC protocol. To this end, a client state machine performs:
 \begin{itemize}
-    \item Ed25519 keypair generation
-    \item Message Signing
-    \item Contribution Computation
+    \item Ed25519 Keypair Generation: each \Contributor{} generates their own signature credentials.
+    \item Message Signing: messages to \Coordinator{} are signed.
+    \item Contribution: formed according to MPC protocol.
 \end{itemize}
-State:
-\begin{itemize}
-    \item Keypair: SignatureKeypair
-    \item Randomness: PRNG
-\end{itemize}
-Methods:
-\begin{itemize}
-    \item GenerateKeypair
-    \item RequestState
-    \item Contribute
-\end{itemize}
-Operation:
+
+\subsubsection*{State}
+The state of this machine is an immutable Ed25519 private key. The machine also needs access to some random oracle to perform keypair generation and contribution.
+
+This state is initialized by \generatekeypair{}, which generates an Ed25519 private/public keypair. Note that the same state can later be recovered by prompting users to enter their private key or seed phrase.
+
+\subsubsection*{Operation}
+
 \begin{enumerate}
-    \item GenerateKeypair, initialize own state
-    \item RequestState: send signed message asking for the MpcState
-    \item Await StateResponse 
-    \item Contribute, send signed ContributeRequest
-    \item Output Attestation
+    \item Initialize state.
+    \item Send signed \QueryRequest{} to \Coordinator{}. Await response containing \MpcState{} and challenge, $(\sigma_{n-1}, c_{n-1})$.
+    \item Compute $(\sigma_n, \pi_n) = $ \contribute{}$(\sigma_{n-1}, c_{n-1})$.
+    \begin{enumerate}
+        \item Sample random $\delta$
+        \item Transform $\sigma_{n-1}$ by $\delta$ to get $\sigma_n$
+        \item Produce ratio proof $\pi_n$ 
+    \end{enumerate}
+    \item Send signed \UpdateRequest{} to \Coordinator{}. Await response confirming submission.
+    \item Clear $\delta$ from memory.
 \end{enumerate}
-(Mention nonce management? Or is that an internal detail to signatures?)
+
+The first and last steps of this protocol have famously led to participants sampling $\delta$ using randomness from Chernobyl and later smashing their computers to clear it from memory. An ambitious participant can easily modify our implementation (todo: cite code) to accommodate exotic sources of randomness.
