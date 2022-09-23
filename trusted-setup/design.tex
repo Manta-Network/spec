@@ -7,7 +7,11 @@ The protocol is initialized by the \Coordinator{} and proceeds in repeated round
 
 \subsubsection*{Initialization}
 
-The \Coordinator{} calls a function \initialize{} whose inputs are the R1CS descriptions \eqref{eqn: r1cs} of some ZK circuits and modified KZG parameters \eqref{eq: kzg} (the output of a prior Phase 1 ceremony). The function \initialize{} computes from these inputs a Groth16 proving key with $\delta = 1$ (see \eqref{eq: prover_key}) and an initial challenge point. We denote these $\sigma_0$ and  $c_0$, respectively.
+The \Coordinator{} computes an initial state $\sigma_0$ and challenge point $c_0$ as 
+\begin{equation*}
+    (\sigma_0, c_0) =  \initialize{}(\text{circuits, KZG parameters})
+\end{equation*} 
+The inputs to \initialize{} are the R1CS descriptions \eqref{eqn: r1cs} of some ZK circuits and modified KZG parameters \eqref{eq: kzg} (the output of a prior Phase 1 ceremony). The function \initialize{} computes $\sigma_0$, a Groth16 proving key with $\delta = 1$ (see \eqref{eq: prover_key}), and an initial challenge point $c_0$.
 
 \subsubsection*{Contribution Round}
 
@@ -36,48 +40,58 @@ This process repeats until all \Contributor{}s have made their contribution. At 
 TODO 
 
 \subsection{Server State Machine}
-Responsibilities:
+
+The \Coordinator{} role is performed by a central server. The \Coordinator{}'s duties are to enforce the MPC protocol and organize the contributions. To enforce the MPC protocol, the \Coordinator{} performs:
 \begin{itemize}
-    \item Parameter Initialization (see above)
-    \item Contribution verification
-    \item Signature verification 
-    \item Registry maintenance
-    \item Queue management
-    \item Contribution archive 
+    \item Parameter Initialization: a reproducible initial state $\sigma_0$ is computed from public data.
+    \item Contribution Verification: each contribution to the ceremony is checked to conform to the MPC protocol.
+    \item Contribution Archival: each successful contribution to the ceremony is recorded, together with a cryptographic proof that it conforms to the MPC protocol.
 \end{itemize}
-State: 
+To organize the contributions, the \Coordinator{} performs:
 \begin{itemize}
-    \item Registry: Registry
-    \item MpcState: (ProverKey x Challenge x Proof) x no. circuits (TODO: How explicitly should be mention the multiple parallel circuits?)
-    \item Transcript: ( ditto ) x no. rounds
+    \item Registry Maintenance: a registry of participants records who is authorized to submit contributions to the ceremony and the public keys with which they will sign their messages.
+    \item Signature verification: all messages from a \Contributor{} to the \Coordinator{} will be signed.
+    \item Queue management: during the ceremony, participants are ordered in a queue.
 \end{itemize}
-Methods:
+
+\subsubsection*{State}
+A state machine acts os \Coordinator{}. Its state consists of:
 \begin{itemize}
-    \item Initialize
-    \item Enqueue 
-    \item ParseMessage
-    \item VerifyContribution
-    \item SendMessage
+    \item \Registry{}: For each participant, a record of their public signing key and whether they have already contributed to the ceremony.
+    \item \MpcState{}: The current pair $(\sigma_n, c_n)$ (see above). 
+    \item \Transcript{}: The history of MPC States and proofs (see above).
+    \item \Queue{}: an ordering of the participants waiting to contribute. This may be a priority queue, if desired.
+    \item \TimedLock{}: a lock is given to the participant at the front of the queue while they compute their contribution. This lock times out after a specified duration and drops the participant from the queue.
 \end{itemize}
-Operation:
-\begin{enumerate}
-    \item Initialize
-    \item Concurrent Loop: Coordinate Contributions (TODO: Flow chart)
+
+\subsubsection*{State Changes}
+The state of the machine may change by calls to these functions:
+\begin{itemize}
+    \item \initialize{}: set \MpcState{} to $(\sigma_0, c_0)$ (see above).
+    \item \enqueue{}(\ParticipantId{}): check that participant is registered and has not already contributed. If so, add to end of \Queue{}.
+    \item \verify{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$: check that the latest contribution conforms to MPC protocol. If so, compute challenge $c_n$, update \MpcState{} to $(\sigma_n, c_n)$, and update \Transcript{} and \Registry. Update \Queue{} and \TimedLock{}.
+\end{itemize}
+
+\subsubsection*{Operation}
+The \Coordinator{} state machine initializes its state and then listens for messages and processes these according to the messaging protocol (see above). Two types of messages are recognized, \QueryRequest{} and \UpdateRequest{}. The state machine responds in the following way to each request:
+\begin{itemize}
+    \item \QueryRequest{}
     \begin{enumerate}
-        \item ParseMessage (contribute). 
-        \item Consult Registry, SendMessage (either QueuePosition or MpcState) 
-        \item Await ContributionResponse, ParseMessage to yield Contribution
-        \item Verify Contribution 
-        \item Update MpcState, update Registry
-        \item Add Contribution to Transcript
+        \item Parse \ParticipantId{} from request. 
+        \item Consult \Registry{}, confirm participant is registered and has not contributed. 
+        \item Consult \Queue{}; if participant is not in \Queue{}, call \enqueue{}.
+        \item Consult \Queue{}; if participant is at front of \Queue{}, send a message containing \MpcState{} to participant and set \TimedLock{}. Otherwise, send participant a message containing their current position in \Queue{}.
     \end{enumerate}
-    \item Concurrent Loop: Queue Management
+    \item \UpdateRequest{}
     \begin{enumerate}
-        \item ParseMessage (JoinQueue), yield ParticipantId
-        \item Consult Registry
-        \item Enqueue (if Participant has not contributed)
+        \item Parse \ParticipantId{} from request. Check that the \TimedLock{} refers to this participant.
+        \item Parse state, proof $(\sigma_n, \pi_n)$ from request. 
+        \item Call \verify{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$.
     \end{enumerate}
-\end{enumerate}
+\end{itemize}
+If any of the above checks do not pass, the \Coordinator{} responds with an appropriate error message.
+
+TODO: Flow chart would express this nicely
 
 \subsection{Client State Machine}
 Responsibilities:
