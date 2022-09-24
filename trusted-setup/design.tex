@@ -39,39 +39,67 @@ The $n^{\text{th}}$ round of contribution begins with the state $\sigma_{n-1}$ a
 This process repeats until all \Contributor{}s have made their contribution. At the end (assuming all contributions were valid) we have a Groth16 prover key $\sigma$ with $\delta = \delta_1 \cdot \delta_2 \cdot \ldots \cdot \delta_n $ and a \Transcript{} $T = \{ (\sigma_i, \pi_i, c_i) \}_{i=1}^N $ recording all contributions to the ceremony and allowing a third-party to verify that $\sigma$ was computed according to protocol.
 
 \subsection{Messaging Protocol}\label{sec: MessagingProtocol}
-TODO 
+
+In each round, the \Coordinator{} and \Contributor{} communicate via (unencrypted?) messages. Messages from the \Contributor{} to the \Coordinator{} are signed with an Ed25519 signature. The \Coordinator{} accepts only those messages with a valid signature whose public verifying key belongs to a \Registry{} of participants. The \Registry{} and signature checks prevent a DDoS attack on the ceremony in which malicious participants fill up the contribution queue and intentionally time-out without contributing.
+
+The \Contributor{} sends one of two messages to the \Coordinator{}: a \QueryRequest{} or an \UpdateRequest{}. Each message follows the format 
+\begin{center} 
+    (Participant ID | Domain Tag | Nonce | Payload). 
+\end{center}
+In a \QueryRequest{} the Payload is empty, whereas in an \UpdateRequest{} the Payload contains a new state and proof, $(\sigma_n, \pi_n)$. In both cases the message is serialized to bytes and signed with an Ed25519 signature.
+
+The \Coordinator{} responds to these messages according to the current state of the protocol:
+\begin{itemize}
+    \item \QueryRequest{}: the \Coordinator{} responds with a \QueryResponse{} containing:
+        \begin{itemize}
+            \item Current state $\sigma_{n-1}$ and challenge $c_{n-1}$, if \Contributor{} is at front of \Queue{} (see below).
+            \item \Contributor{}'s current position in \Queue{}, if \Contributor{} is not at front of queue.
+            \item Error messsage, if \Contributor{} has already participated in ceremony.
+        \end{itemize}
+    \item \UpdateRequest{}: the \Coordinator{} responds with an \UpdateResponse{} informing the \Contributor{} of whether their contribution was successfully verified.
+    \item If the message from \Contributor{} fails signature verification, the \Coordinator{} responds with the expected nonce for the \Contributor{}'s Participant ID. (If the Participant ID is invalid the \Coordinator{} ignores the message.)
+\end{itemize}
 
 \subsection{Server State Machine}
 
-The \Coordinator{} role is performed by a central server. The \Coordinator{}'s duties are to enforce the MPC protocol and organize the contributions. To enforce the MPC protocol, the \Coordinator{} performs:
+The \Coordinator{} role is performed by a central server state machine. The \Coordinator{}'s duties are to enforce the MPC protocol and organize the contributions. 
+
+To enforce the MPC protocol, the \Coordinator{} performs:
 \begin{itemize}
-    \item Parameter Initialization: a reproducible initial state $\sigma_0$ is computed from public data.
+    \item Parameter Initialization: a reproducible initial state $\sigma_0$ and initial challenge $c_0$ are computed from public data.
     \item Contribution Verification: each contribution to the ceremony is checked to conform to the MPC protocol.
-    \item Contribution Archival: each successful contribution to the ceremony is recorded, together with a cryptographic proof that it conforms to the MPC protocol.
+    \item Contribution Archival: each successful contribution to the ceremony is recorded, together with the proof that it conforms to the MPC protocol.
 \end{itemize}
 To organize the contributions, the \Coordinator{} performs:
 \begin{itemize}
     \item Registry Maintenance: a registry of participants records who is authorized to submit contributions to the ceremony and the public keys with which they will sign their messages.
-    \item Signature verification: all messages from a \Contributor{} to the \Coordinator{} will be signed.
-    \item Queue management: during the ceremony, participants are ordered in a queue.
+    \item Signature Verification: all messages from a \Contributor{} to the \Coordinator{} will be signed.
+    \item Queue Management: during the ceremony, participants are ordered in a queue.
 \end{itemize}
 
 \subsubsection*{State}
-A state machine acts as \Coordinator{}. Its state consists of:
+The above \Coordinator{} tasks are accomplished by a machine whose state consists of:
 \begin{itemize}
-    \item \Registry{}: For each participant, a record of their public signing key and whether they have already contributed to the ceremony.
+    \item \Registry{}: For each participant, a record of their public signing key, current signature nonce, and whether they have already contributed to the ceremony.
     \item \MpcState{}: The current pair $(\sigma_n, c_n)$ (see above). 
-    \item \Transcript{}: The history of MPC States and proofs (see above).
-    \item \Queue{}: an ordering of the participants waiting to contribute. This may be a priority queue, if desired.
+    \item \Transcript{}: The history of MPC states and proofs (see above).
+    \item \Queue{}: an ordering of the participants waiting to contribute. This may be a priority queue, if desired.\footnote{A priority queue can help defend against a DDoS attack in which malicious participants intentionally time out without contributing. If a participant times out too many times they can be de-prioritized, allowing more reliable participants to skip them in the queue.}
     \item \TimedLock{}: a lock is given to the participant at the front of the queue while they compute their contribution. This lock times out after a specified duration and drops the participant from the queue.
 \end{itemize}
 
 \subsubsection*{State Changes}
-The state of the machine may change by calls to these functions:
+The following function calls change the state of the machine:
 \begin{itemize}
     \item \initialize{}: set \MpcState{} to $(\sigma_0, c_0)$ (see above).
     \item \enqueue{}(\ParticipantId{}): check that participant is registered and has not already contributed. If so, add to end of \Queue{}.
-    \item \verify{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$: check that the latest contribution conforms to MPC protocol. If so, compute challenge $c_n$, update \MpcState{} to $(\sigma_n, c_n)$, and update \Transcript{} and \Registry. Update \Queue{} and \TimedLock{}.
+    \item \update{}: Compute \verify{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$ to check that the latest contribution conforms to MPC protocol. If so, 
+        \begin{itemize}
+            \item compute challenge $c_n$, update \MpcState{} to $(\sigma_n, c_n)$
+            \item Add $(\sigma_n, \pi_n, c_n)$ to \Transcript{}
+            \item Set participant's contribution status in \Registry. 
+            \item Update \Queue{} and \TimedLock{}.
+        \end{itemize}
+        If contribution is invalid, update only \Queue{} and \TimedLock{} (and downgrade participant's \Queue{} priority, if applicable).
 \end{itemize}
 
 \subsubsection*{Operation}
@@ -88,7 +116,7 @@ The \Coordinator{} state machine initializes its state and then listens for mess
     \begin{enumerate}
         \item Parse \ParticipantId{} from request. Check that the \TimedLock{} refers to this participant.
         \item Parse state, proof $(\sigma_n, \pi_n)$ from request. 
-        \item Call \verify{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$.
+        \item Call \update{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$.
     \end{enumerate}
 \end{itemize}
 If any of the above checks do not pass, the \Coordinator{} responds with an appropriate error message.
@@ -105,7 +133,7 @@ The duty of a \Contributor{} is to contribute according to the MPC protocol. To 
 \end{itemize}
 
 \subsubsection*{State}
-The state of this machine is an immutable Ed25519 private key. The machine also needs access to some random oracle to perform keypair generation and contribution.
+The state of this machine is an immutable Ed25519 private key. The machine also needs access to some random oracle to perform keypair generation and contribution. (TODO: The state also includes a signer, since it keeps track of nonces the state can change)
 
 This state is initialized by \generatekeypair{}, which generates an Ed25519 private/public keypair. Note that the same state can later be recovered by prompting users to enter their private key or seed phrase.
 
