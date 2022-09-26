@@ -53,11 +53,13 @@ Let us now recall how the Groth16 \Setup{} function works in the \MantaPay{} pro
 \item The \MantaPay{} circuit, encoded as a QAP $\{u_i(X), v_i(X), w_i(X), t(X)\}$.
 \end{itemize}
 All public parameters derive from a simulation trapdoor $\tau = (\alpha, \beta, \delta, x) \leftarrow \mathbb{F}_r^*$ (the famous ``toxic waste''). The Groth16 public parameters themselves are elements of $\Gone$ and $\Gtwo$, specifically
-\begin{align}\label{eq: prover_key} % TODO: Fix labeling
+\begin{equation}\label{eq: prover_key}
+    \begin{split} % TODO: Fix labeling
 \sigma_1 &= \left[ \left(\alpha, \beta, \delta, \{ x^i \}_{i=0}^{n-1},\left\{  \beta u_i(x) + \alpha v_i(x) + w_i(x) \right\}_{i=0}^\ell, \left\{  \frac{\beta u_i(x) + \alpha v_i(x) + w_i(x)}{\delta} \right\}_{i=\ell+1}^m, \left\{ \frac{x^i t(x)}{\delta} \right\}_{i=0}^{n-2} \right) \right]_1 \\
 \sigma_2 &= \left[ \left( \beta, \delta,  \{ x^i \}_{i=0}^{n-1} \right) \right]_2
-\end{align} 
-where $[y]_1 = y \cdot g$ and $[y]_2 = y \cdot h$ for all $y \in \mathbb{F}_r$. 
+    \end{split}
+\end{equation} 
+where we denote $[y]_1 = y \cdot g$ and $[y]_2 = y \cdot h$ for all $y \in \mathbb{F}_r$. 
 
 The output of \Setup{} is $\sigma = (\sigma_1, \sigma_2)$. These are the public parameters from which Groth16 proofs are formed. The trapdoor $\tau$ is \emph{not} public; indeed, a malicious prover with knowledge of $\tau$ could construct fraudulent proofs. The goal of the trusted setup is to generate $\sigma$ without revealing $\tau$.
 
@@ -68,7 +70,88 @@ The key security property of this MPC is that its security is ensured by having 
 
 By soliciting contributions to the MPC from a diverse set of participants, we increase the difficulty of such collusion. Note that any individual with a stake in the security of \MantaPay{} can guarantee this personally, simply by participating honestly in the \Setup{} MPC.
 
-(? Maybe mention verifiability of the MPC transcript?)
+\subsubsection{Groth 16 Phase 2 MPC}\label{sec: mpc_def}
+Here we define a secure, updateable, verifiable multi-party computation for the Groth16 \Setup{} function. 
+
+The MPC proceeds in $N$ Rounds of computation, each of which produces a \emph{state} $\sigma_n$, \emph{challenge} $c_n$, and \emph{proof} $\pi_n$. The triple $(\sigma_n, c_n, \pi_n)$ is computed recursively from the previous round's triple $(\sigma_{n-1}, c_{n-1}, \pi_{n-1})$ via functions \contribute{} and \challenge{}. A third function \verify{} allows any third party to verify from a transcript $T = \{ \sigma_n, c_n, \pi_n \}_{n=1,\ldots, N}$ that each participant computed \contribute{} correctly. 
+
+\begin{definition}[State]
+    The \emph{state} of the MPC is a Groth16 prover key \eqref{eq: prover_key}. We may denote this as 
+    \begin{equation}\label{eq: short sigma} \sigma = \left( \subsigma{}, \ldots \right) \end{equation} 
+    a shorthand for \eqref{eq: prover_key} that reminds us which parts of the prover key depend on $\delta$. Only these parts of the prover key are affected by the MPC; all terms summarized by the ellipsis remain invariant.
+\end{definition}
+
+\begin{definition}[Challenge]
+    \emph{Challenges} are outputs of a collision-resistant hash function $H$ (for example, Blake2 hash with 64-byte digest), computed as [todo]  %\eqref{eq: challenge}.
+\end{definition}
+
+% ? Would `Discrete Log Knowledge Proof' be a more descriptive name? 
+\begin{definition}[Consistent Pair]
+    A \emph{consistent pair} in the bilinear group $\Gone \times \Gtwo \to \Gt$ of size $r$ consists of two pairs $(a_1, b_1) \in \Gone \times \Gone $, $(a_2, b_2) \in \Gtwo \times \Gtwo$ satisfying 
+    \begin{equation}\label{eq: ratio}
+        e\left( a_1, b_2 \right) = e\left( a_2, b_1\right)
+    \end{equation}
+\end{definition}
+Consistent pairs can be used to prove the knowledge of discrete logs:
+
+The main idea is that the pairs satisfy \eqref{eq: ratio} only if there exists a scalar $\delta$ such that $b_1 = \delta \cdot a_1$ and $b_2 = \delta \cdot a_2$ (due to the non-degeneracy of $e$). Thus the following interactive protocol requires the \Prover{} to know the discrete log $\delta$ in order to pass:
+\begin{enumerate}
+    \item \Prover{} sends $(a_1, b_1)$ to \Verifier{}.
+    \item \Verifier{} sends challenge point $a_2 \in \Gtwo$ to \Prover{}.
+    \item \Prover{} sends matching point $b_2 \in \Gtwo$ to \Verifier{}.
+    \item \Verifier{} checks \eqref{eq: ratio}.
+\end{enumerate}
+In Step 3, a prover with knowledge of $\delta$ merely computes $b_2 = \delta \cdot a_2$. A prover without knowledge of $\delta$ must first solve a discrete log problem to find $b_2$, so this proof is sound for $r$ large enough.
+
+In practice, step 2 above is replaced by a Fiat-Shamir transform. % todo \ref{def: challenge}
+When this is the case, we define
+\begin{definition}[Ratio Proof]
+    A \emph{ratio proof} is a pair $(a_1, b_1) \in \Gone \times \Gone$ and a \emph{matching point} $b_2 \in \Gtwo$, together with a prescription for computing a \emph{challenge point} $a_2 \in \Gtwo$ from $a_1, b_1$ and public data, such that \eqref{eq: ratio} is satisfied. We will denote ratio proofs by $\pi$.
+\end{definition}
+
+In addition to making the above protocol non-interactive, the Fiat-Shamir step forms a \emph{contribution chain} by computing the challenge for Round $n$ from the data of Round $n-1$. Verifying the MPC means checking that state $\sigma_n$ was computed from state $\sigma_{n-1}$ using some $\delta$ attested to by a ratio proof $\pi_n$ whose $a_2$ challenge point is computed from (a commitment to) $\sigma_{n-1}, \sigma_n, \pi_{n-1}$, and the Round $n-1$ challenge point. % see verify def. below
+
+The two functions that enable computation in our MPC are \contribute{} and \challenge{}:
+
+\subsubsection*{fn \contribute{}}
+Inputs: $\sigma_{n-1}, c_{n-1}$, the state and challenge hash from Round $n-1$.
+
+Outputs: $\sigma_n, \pi_n$, the state and proof of Round $n$.
+
+Definition: 
+    \begin{enumerate}
+        \item Sample $\delta_n \in \mathbb{F}_r$
+        \item From $\sigma_{n-1}$ of the form \eqref{eq: short sigma}, compute 
+            \begin{equation*}
+                \sigma_n = \left( \newsigma , \ldots \right)
+            \end{equation*}
+        \item Form ratio proof $\pi_n$: Sample $a_1 \in \Gone$, compute $b_1 = \delta_n \cdot a_1$. Compute challenge point $a_2$ from $c_{n-1}, a_1, b_1$. Compute $b_2 = \delta_n \cdot a_2$ and let $\pi_n = (a_1, b_1, b_2)$.
+    \end{enumerate}
+
+\subsubsection*{fn \challenge{}}
+Inputs: $c_{n-1}, \sigma_{n-1}, \sigma_n, \pi_n$, the state and challenge hash from Round $n-1$ and the state and ratio proof from Round $n$.
+
+Outputs: $c_n$, the challenge hash of Round $n$.
+
+Definition: for some CRH $H$, let $c_n = H(c_{n-1} \vert \sigma_{n-1} \vert \sigma_n \vert \pi_n)$, the hash of the concatenated byte representations of each piece of data.
+
+Finally, for verification we have 
+
+\subsubsection*{fn \verify{}}
+Inputs: $c_{n-1}, \sigma_{n-1}, \sigma_n, \pi_n$ as above.
+
+Outputs: boolean, indicating whether $\sigma_n$ was formed from $\sigma_{n-1}$ according to protocol.
+
+Definition:
+\begin{enumerate}
+    \item Check that the Phase 2 invariants of $\sigma_{n-1}$ and $\sigma_n$ match.
+    \item Compute challenge point $a_2$ from $c_{n-1}$ and $a_1, b_1$ of $\pi_n$.
+    \item Check that $a_2,$ and $\pi_n = (a_1, b_1, b_2)$ form a consistent pair \eqref{eq: ratio}.
+    \item Check that $a_1, b_1$ of $\pi_n$ form a consistent pair with the $[\delta]_2$ points of $\sigma_{n-1}$ and $\sigma_n$. 
+    \item Check that the $[\delta]_1$ points of $\sigma_{n-1}, \sigma_n$ form a consistent pair with their $[\delta]_2$ points.
+    \item\label{testlabel} Check that the terms $\subsubsigma{}$ of $\sigma_{n-1}, \sigma_n$ form a consistent pair with the $[\delta]_2$ points. Here we reverse the order of the pair of $[\delta]_2$ points to account for the fact that $\subsubsigma{}$ is proportional to $\delta^{-1}$.
+\end{enumerate}
+In practice, Step \ref{testlabel} is performed quickly by computing random linear combinations of the points $\subsubsigma{}$ and checking this pair's consistency.
 
 \subsection{Phase Structure}
 
