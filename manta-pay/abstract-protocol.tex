@@ -55,7 +55,6 @@ In the following section, we outline the formal specifications for all of the \e
     \begin{itemize}
         \item \textbf{Correctness}: For a given $\sk : \SigningKey$, $r : \Randomness$, and $m : \Message$, we have that 
             \[\verify(\derive(\sk), \sign(\sk, r, m), m) = \True\]
-        \item \TODO{}
     \end{itemize}
 \end{definitiontoc}
 
@@ -72,7 +71,6 @@ In the following section, we outline the formal specifications for all of the \e
     with the following properties:
     \begin{itemize}
         \item \textbf{Correctness}: For a given $k : \Key$, $p : \Plaintext$, we have that $\decrypt(k, \encrypt(k, p)) = \Some(p)$.
-        \item \TODO{...}
     \end{itemize}
 \end{definitiontoc}
 
@@ -235,25 +233,13 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
         \item \textbf{Key Schedule}: $\KeySchedule$
         \item \textbf{Incoming Authenticated Encryption Scheme}: $\AUTHin$
         \item \textbf{Outgoing Authenticated Encryption Scheme}: $\AUTHout$
-        \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO}$
-        \item \textbf{Void Number Commitment Scheme}: $\COM^{\VN}$
+        \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO} : \F \times \G \times \Asset \to \F$
+        \item \textbf{Nullifier Commitment Scheme}: $\COM^{\textsf{N}} : \G \times \F \to \F$
+        \item \textbf{UTXO Hash Function}: $H^{\UTXO} : \Bool \times \Asset \times \F \to \F$
         \item \textbf{UTXO Dynamic Cryptographic Accumulator}: $\UTXOSet$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
-    with the following notational conventions:
-    \begin{align*}
-        \UTXO       &:= \COM^{\UTXO}.\Output \\
-        \VoidNumber &:= \COM^{\VN}.\Output \\
-    \end{align*}
-    and the following constraints:
-    \begin{align*}
-        \COM^{\UTXO}.\Input      &= \G \times \Asset \\
-        \COM^{\VN}.\Randomness   &= \G \\
-        \COM^{\VN}.\Input        &= \F \\
-        \UTXOSet.\Item           &= \F \\
-        \ValidTransfer           &: \NIZK.\Statement
-    \end{align*}
-    where \ValidTransfer{} is defined below.
+    where $\F$ is a prime field and $\G$ is a cryptographic group. The \Nullifier{} type is the output of $\COM^{\textsf{N}}$ and the \UTXO{} type is the tuple $\Bool \times \Asset \times \F$ where the last field element is the output of $\COM^{\UTXO}$.
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -271,7 +257,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         h      &: \F \\
         h_z    &: \UTXOSet.\Output \\
         h_w    &: \UTXOSet.\Witness \\
-        \vn    &: \VoidNumber \\
+        n      &: \Nullifier \\
         \esk   &: \Z_p \\
         \epk   &: \G \\
         \Cout  &: \AUTHout.\Ciphertext
@@ -283,9 +269,9 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \asset &:= \select(t, \sa, \pa) \\
         \cm    &:= \COM^{\UTXO}(r, \pk, \sa) \\
         \utxo  &:= (t, \pa, \cm) \\
-        h      &:= H(\utxo) \\
+        h      &:= H^{\UTXO}(\utxo) \\
         \Some\left(h_z, h_w\right) &:= \UTXOSet.\contains(h, \Ledger.\utxos()) \\
-        \vn    &:= \COM^{\VN}(\ak, h) \\
+        n      &:= \COM^{\textsf{N}}(\ak, h) \\
         \epk   &:= g \cdot \esk \\
         \Cout  &:= \AUTHout.\encrypt(\pk \cdot \esk, \select(t, \sa, \pa))
     \end{align*}
@@ -295,7 +281,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     A \SenderPost{} is the following tuple extracted from a \Sender{}:
     \begin{align*}
         h_z   &: \UTXOSet.\Output \\
-        \vn   &: \VoidNumber \\
+        n     &: \Nullifier \\
         \epk  &: \G \\
         \Cout &: \AUTHout.\Ciphertext
     \end{align*}
@@ -404,9 +390,9 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 S.\asset &:= \select(S.t, S.\sa, S.\pa) \\
                 S.\cm   &:= \COM^{\UTXO}(S.r, S.\pk, S.\sa) \\
                 S.\utxo &:= (S.t, S.\pa, S.\cm) \\
-                S.h     &:= H(S.\utxo) \\
+                S.h     &:= H^{\UTXO}(S.\utxo) \\
                 \UTXOSet.\verify(S.h, S.h_z, S.h_w) &= \True \\
-                S.\vn   &:= \COM^{\VN}(\ak, S.h) \\
+                S.n     &:= \COM^{\textsf{N}}(\ak, S.h) \\
                 S.\epk  &:= g \cdot S.\esk \\
                 S.\Cout &:= \AUTHout.\encrypt(\pk \cdot S.\esk, S.\asset)
             \end{align*}

@@ -22,37 +22,44 @@ Because our protocol relies on a cryptographic group which should be efficient i
 \[\X : \G \to \F \,\,\,\text{and}\,\,\, \Y : \G \to \F\]
 which we use below to insert group elements into field-only hash functions.
  
-For this protocol, we use \texttt{BN254} as our outer (pairing-friendly) curve with scalar field $\F$ and \texttt{BabyJubJub}~\cite{eip2494} as our inner curve with scalar field $\mathbb{S}$.
+For this protocol, we use \texttt{BN254} as our outer (pairing-friendly) curve with scalar field $\F$ and \texttt{BabyJubJub}~\cite{eip2494} as our inner curve with scalar field $\mathbb{S}$. For this protocol, we call the inner curve $\mathbb{G}$.
  
 \subsection{Concrete Cryptographic Schemes}
 
 \begin{definition}[Commitment Schemes]
-    % The protocol features two different commitment schemes: $\COM^{\UTXO}$ the \UTXO{} Commitment Scheme and $\COM^{\VN}$ the Void Number Commitment Scheme. Both commitment schemes use \Poseidon{} as the underlying cryptographic primitive. The \UTXO{} uses an arity-8 \Poseidon{} with the following mapping:
-    % \[\COM^{\UTXO}_r(\textsf{D}, \pkD, \asset) := \Poseidon_8(d, 0, r, \X(\textsf{D}), \Y(\textsf{D}), \X(\pkD), \Y(\pkD), \asset.\ID, \asset.\VALUE)\]
-    % where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/com-utxo})$.
-    % For the Void Number Commitment Scheme we use an arity-4 \Poseidon{} with the following mapping:
-    % \[\COM^{\VN}_\ak(\cm) := \Poseidon_4(\HashToScalar(\domainstr{manta-pay/1.0.0/com-vn}), 0, \X(\ak), \Y(\ak), \cm)\]
+    The protocol features two different commitment schemes: $\COM^{\UTXO}$ the \UTXO{} Commitment Scheme and $\COM^{\VN}$ the Void Number Commitment Scheme. Both commitment schemes use \Poseidon{} as the underlying cryptographic primitive. The \UTXO{} uses an arity-5 \Poseidon{} with the following mapping:
+    \[\COM^{\UTXO}(r, \pk, \asset) := \Poseidon_5(d, r, \X(\pk), \Y(\pk), \asset.\ID, \asset.\VALUE)\]
+    where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/com-utxo})$ the domain separation element.
+    For the Void Number Commitment Scheme we use an arity-3 \Poseidon{} with the following mapping:
+    \[\COM^{\VN}(\ak, h) := \Poseidon_3(d, \X(\ak), \Y(\ak), h)\]
+    where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/com-vn})$ the domain separation element.
+\end{definition}
+
+\begin{definition}[Hash Functions]
+    The protocol features two additional hash functions: $\KDF^{\vk}$ the viewing key derivation function and $H^{\UTXO}$ the \UTXO{} hash function. Both hash functions use \Poseidon{} as the underlying cryptographic primitive. The viewing key derivation function uses an arity-2 \Poseidon{}
+    \[\KDF^{\vk}(\ak) := \Poseidon_2(d, \X(\ak), \Y(\ak))\]
+    where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/kdf-vk})$ the domain separation element. Since the target type of this hash function is the scalar field $\mathbb{S}$ instead of $\F$, we reduce the result modulo the order of $\mathbb{S}$.
+    For the \UTXO{} hash function we use an arity-4 \Poseidon{}
+    \[H^{\UTXO}(t, \pa, \cm) := \Poseidon_4(d, t, \pa.\ID, \pa.\VALUE, \cm)\]
+    where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/utxo-hash})$ the domain separation element.
 \end{definition}
 
 \begin{definition}[Signature Scheme]
-    % For the signature scheme we use Schnorr signature over $\mathbb{G}$.
+    For the signature scheme we use Schnorr signature over the inner curve, $\mathbb{G}$.
 \end{definition}
 
 \begin{definition}[Authenticated Encryption Scheme]
-    % For $\SYM$ we use $\Poseidon_2$ as the hash function in a message digest cipher with key-schedule given by the following:
-    % \[K_i := \Poseidon_2(\HashToScalar(\domainstr{manta-pay/1.0.0/mdc-key-schedule}), K_0, K_{i-1})\]
+    For $\AUTHin$ and $\AUTHout$ we use the $\Poseidon$ permutation as the permutation of a duplex sponge encryption protocol.
 \end{definition}
 
 \begin{definition}[Dynamic Cryptographic Accumulator]
-    % For $\DCA$, we use a Merkle Tree with $\Poseidon_2$ as the inner node combining hash function and no leaf hash function. It is safe to omit the leaf hash function in this case because the leaf values are already the outputs of a hash function and cannot be directly controlled.
+    For $\DCA$, we use a Merkle Tree with $\Poseidon_2$ as the inner node combining hash function and no leaf hash function. It is safe to omit the leaf hash function in this case because the leaf values are already the outputs of a hash function and cannot be directly controlled.
 \end{definition}
 
 \begin{definition}[Non-Interactive Zero-Knowledge Proving System] \label{def:concrete-zkp}
-    % For $\NIZK$, the protocol can use any non-interactive zero-knowledge proving system like Groth16 \cite{KRRS21USENIX} and/or PLONK/PLONKUP~\cite{plonk,plonkup}. 
+    For $\NIZK$, the protocol can use any non-interactive zero-knowledge proving system like Groth16 \cite{KRRS21USENIX} and/or PLONK/PLONKUP~\cite{plonk,plonkup}. 
 \end{definition}
 
-% TODO: Move this to abstract protocol
-%
-% \subsection{\AssetValue{} Bounds Check}
-%
-% In order to implement the balanced transfer relation one needs to ensure that the amount of input value is equal to the amount of output value. However, since we're working over finite fields, the na\"ive arithmetic wraps past zero and is vulnerable to range-based attacks. Instead we constrain every \AssetValue{} to be less than some bound $\mathcal{V}$ and that every sum over those values is also less than $\mathcal{V}$. Since we're using \texttt{BN254} we are safe to use $\mathcal{V} = 2^{128}$.
+\subsection{\AssetValue{} Bounds Check}
+
+In order to implement the balanced transfer relation one needs to ensure that the amount of input value is equal to the amount of output value. However, since we're working over finite fields, the na\"ive arithmetic wraps past zero and is vulnerable to range-based attacks. Instead we constrain every \AssetValue{} to be less than some bound $\mathcal{V}$ and that every sum over those values is also less than $\mathcal{V}$. Since we're using \texttt{BN254} we are safe to use $\mathcal{V} = 2^{128}$.
