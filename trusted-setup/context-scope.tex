@@ -36,18 +36,20 @@ R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, 
 
 We derive the QAP description of a circuit from its R1CS description as follows:
 \begin{enumerate}
-    \item Choose $k$ as the minimal integer such that $2^k \geq n$. Fix $t(X) = X^{2^k} - 1$.
-    \item We derive the polynomial $u_i(X)$ from the R1CS vector $(u_{i,q})_{q=1}^n$ via a Lagrange basis $\{ L_q(x) \}_{q \in Q}$ for the domain $I$.  That is,
+    \item Choose $k$ as the minimal integer such that $2^k \geq n$. Let $t(X) = X^{2^k} - 1$.
+    \item We derive the polynomial $u_i(X)$ from the R1CS vector $(u_{i,q})_{q=1}^n$ via a Lagrange basis $\{ L_q(x) \}_{t(q) = 0}$ for the set of $2^k$-th roots of unity.  That is,
     \begin{equation}
-        u_i(X) = \sum_{q=1}^n u_{i,q} L_q(x) 
+        u_i(X) = \sum_{q=1}^n u_{i,q} L_q(X),
     \end{equation}
+    where we use the convention $u_{i,q} = 0$ for $q > n$.
+    \item We repeat the same procedure to define $v_i(X)$ and $w_i(X)$.
     \item The reader may readily check that \eqref{eqn: r1cs} is equivalent to \eqref{eqn: qap} with these definitions.
 \end{enumerate}
 
 \subsection{The Groth16 \Setup{} function}
 Let us now recall how the Groth16 \Setup{} function works in the \MantaPay{} protocol. We start with 
 \begin{itemize}
-\item The pairing curve BN254 \cite{BN254}, which consists of a triple of elliptic curves $(\mathbb{G}_1, \mathbb{G}_2,\mathbb{G}_T) $ and a non-degenerate bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$. We fix generators $g$ and $h$ of $\mathbb{G}_1$ and $\mathbb{G}_2$, respectively. Note that $\textrm{ord}(g) = \textrm{ord}(h) = r$ is prime, and that $e(g,h)$ generates a subgroup of order $r$ of $\mathbb{G}_T \cong F_{p^{12}}^*$.
+\item The pairing curve BN254 (see \cite{Naehrig10} and the references therein), which consists of a triple of elliptic curves $(\mathbb{G}_1, \mathbb{G}_2,\mathbb{G}_T) $ and a non-degenerate bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$. We fix generators $g$ and $h$ of $\mathbb{G}_1$ and $\mathbb{G}_2$, respectively. Note that $\textrm{ord}(g) = \textrm{ord}(h) = r$ is prime, and that $e(g,h)$ generates a subgroup of order $r$ of $\mathbb{G}_T \cong F_{p^{12}}^*$.
 \item The \MantaPay{} circuit, encoded as a QAP $\{u_i(X), v_i(X), w_i(X), t(X)\}$.
 \end{itemize}
 All public parameters derive from a simulation trapdoor $\tau = (\alpha, \beta, \delta, x) \leftarrow \mathbb{F}_r^*$ (the famous ``toxic waste''). The Groth16 public parameters themselves are elements of $\Gone$ and $\Gtwo$, specifically
