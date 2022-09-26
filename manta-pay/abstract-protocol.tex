@@ -64,9 +64,8 @@ In the following section, we outline the formal specifications for all of the \e
         \Key        &: \Type \\
         \Plaintext  &: \Type \\
         \Ciphertext &: \Type \\
-        \Tag        &: \Type \\
-        \encrypt    &: \Key \times \Plaintext \to \Tag \times \Ciphertext \\
-        \decrypt    &: \Key \times \Tag \times \Ciphertext \to \Option(\Plaintext)
+        \encrypt    &: \Key \times \Plaintext \to \Ciphertext \\
+        \decrypt    &: \Key \times \Ciphertext \to \Option(\Plaintext)
     \end{align*}
     with the following properties:
     \begin{itemize}
@@ -117,29 +116,42 @@ In the following section, we outline the formal specifications for all of the \e
             \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
         \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
             \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
-        \item We say that $(x, w) : \PublicInput \times \SecretInput$ has the property of being a $\satisfying$ input whenever
-            \[\satisfying^P_\pk(x, w) := \exists \pi : \Proof,\, \Some(\pi) \in \prove^P_\pk(x, w)\]
+        \item Given $P \colon \Statement$ and $\pk \colon \ProvingKey$, we define the function
+        \begin{align*}
+            \satisfying^P_\pk : \PublicInput \times \SecretInput \longrightarrow \Bool, 
+        \end{align*}
+        which is true if $\exists \pi : \Proof$ such that $\Some(\pi) \in \prove^P_\pk(x, w)$ and false otherwise. If $\satisfying^P_\pk (x, w) = \True$, we call the pair $(x,w)$ a \emph{satisfying input}.
     \end{itemize}
 
     Every $\NIZK$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
 
     \begin{itemize}
         \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
-        \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$,
-            \[\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\PublicInput \times \Proof)\]
-             there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
-            \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}(\SecretInput)\]
-            such that the following probability is negligible:
-            \[
+        \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$ such that the probability 
+        \[
+            \Prob{
+                \verify_\vk(x, \pi) = \True
+            }{
+                (\pk, \vk) \sim \keys(P) \\
+                (x, \pi) \sim \mathcal{A}(\pk, \vk)
+            }
+        \]
+            is non-negligible, there exists a polynomial-size extractor $\mathcal{E}_\mathcal{A}$
+            \[\mathcal{E}_\mathcal{A} : \ProvingKey \times \VerifyingKey \to \mathfrak{D}\bra{\SecretInput}\]
+            such that the difference
+            \[ \left|
                 \Prob{
-                    \satisfying^P_\pk(x, w) = \False \\
-                    \verify_\vk(x, w) = \True
+                \verify_\vk(x, \pi) = \True
+            }{
+                (\pk, \vk) \sim \keys(P) \\
+                (x, \pi) \sim \mathcal{A}(\pk, \vk)
+            } - \Prob{
+                    \satisfying^P_\pk(x, w) = \True
                 }{
-                    (\pk, \vk) \sim \keys(P) \\
-                    (x, \pi) \sim \mathcal{A}(\pk, \vk) \\
                     w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
-                }
+                } \right| 
             \]
+            is negligible.
         \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
             \[
                 \Prob{
@@ -244,6 +256,12 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
 
+We also make use of the following two functions:
+\begin{itemize}
+    \item $\iszero : T \to \Bool$ which returns $\True$ whenever the input element is equal to the zero element of $T$ (this function is only defined whenever $T$ has a well-defined zero element).
+    \item $\select : \Bool \times T \times T \to T$ which selects a value from a pair, using the left element if the input boolean is $\False$ and the right element if the input boolean is $\True$.
+\end{itemize}
+
 \begin{definition}[\Transfer{} Sender]
     A \Sender{} is the following tuple:
     \begin{align*}
@@ -265,7 +283,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
 
     A \Sender{}, $S$, is constructed from a public key $\pk : \zkAddress$ with the following algorithm:
     \begin{align*}
-        t      &:= \iszero(\sa) \\
+        t      &:= \iszero(\sa.\ID) \,\wedge\, \iszero(\sa.\VALUE) \\
         \asset &:= \select(t, \sa, \pa) \\
         \cm    &:= \COM^{\UTXO}(r, \pk, \sa) \\
         \utxo  &:= (t, \pa, \cm) \\
@@ -306,7 +324,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
     
     A \Receiver{}, $R$, is constructed in the following way:
     \begin{align*}
-        t      &:= \iszero(\sa) \\
+        t      &:= \iszero(\sa.\ID) \,\wedge\, \iszero(\sa.\VALUE) \\
         \asset &:= \select(t, \sa, \pa) \\
         \cm    &:= \COM^{\UTXO}(r, \pk, \sa) \\
         \utxo  &:= (t, \pa, \cm) \\
@@ -386,24 +404,24 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \]
         \item For all $S \in T.\senders$, the \Sender{} $S$ is well-formed:
             \begin{align*}
-                S.t     &:= \iszero(\sa) \\
-                S.\asset &:= \select(S.t, S.\sa, S.\pa) \\
-                S.\cm   &:= \COM^{\UTXO}(S.r, S.\pk, S.\sa) \\
-                S.\utxo &:= (S.t, S.\pa, S.\cm) \\
-                S.h     &:= H^{\UTXO}(S.\utxo) \\
-                \UTXOSet.\verify(S.h, S.h_z, S.h_w) &= \True \\
-                S.n     &:= \COM^{\textsf{N}}(\ak, S.h) \\
-                S.\epk  &:= g \cdot S.\esk \\
-                S.\Cout &:= \AUTHout.\encrypt(\pk \cdot S.\esk, S.\asset)
+                S.t      &= \iszero(S.\sa.\ID) \,\wedge\, \iszero(S.\sa.\VALUE) \\
+                S.\asset &= \select(S.t, S.\sa, S.\pa) \\
+                S.\cm    &= \COM^{\UTXO}(S.r, S.\pk, S.\sa) \\
+                S.\utxo  &= (S.t, S.\pa, S.\cm) \\
+                S.h      &= H^{\UTXO}(S.\utxo) \\
+                \iszero(S.\asset.\VALUE) &\,\vee\, \UTXOSet.\verify(S.h, S.h_z, S.h_w) = \True \\
+                S.n      &= \COM^{\textsf{N}}(\ak, S.h) \\
+                S.\epk   &= g \cdot S.\esk \\
+                S.\Cout  &= \AUTHout.\encrypt(\pk \cdot S.\esk, S.\asset)
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
-                R.t      &:= \iszero(R.\sa) \\
-                R.\asset &:= \select(R.t, R.\sa, R.\pa) \\
-                R.\cm    &:= \COM^{\UTXO}(R.r, R.\pk, R.\sa) \\
-                R.\utxo  &:= (R.t, R.\pa, R.\cm) \\
-                R.\epk   &:= g \cdot R.\esk \\
-                R.\Cin   &:= \AUTHin.\encrypt(R.\pk \cdot R.\esk, (R.r, R.\sa))
+                R.t      &= \iszero(R.\sa.\ID) \,\wedge\, \iszero(R.\sa.\VALUE) \\
+                R.\asset &= \select(R.t, R.\sa, R.\pa) \\
+                R.\cm    &= \COM^{\UTXO}(R.r, R.\pk, R.\sa) \\
+                R.\utxo  &= (R.t, R.\pa, R.\cm) \\
+                R.\epk   &= g \cdot R.\esk \\
+                R.\Cin   &= \AUTHin.\encrypt(R.\pk \cdot R.\esk, (R.r, R.\sa))
             \end{align*}
     \end{enumerate}
     \textbf{Notation}: This statement is denoted $\ValidTransfer$ and is assumed to be expressible as a \Statement{} of \NIZK{}.
