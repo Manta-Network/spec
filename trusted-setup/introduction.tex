@@ -2,12 +2,12 @@
 
 The \MantaPay{} protocol (ref. to the specs) guarantees transaction privacy by using the Groth16 \cite{groth16} Non-Interactive Zero-Knowledge Proving System (NIZK). In short, Groth16 is defined over a bilinear pairing of elliptic curves $e: \mathbb{G}_1 \times \mathbb{G}_2 \rightarrow \mathbb{G}_\tau$ with scalar field $\mathbb{F}_r$. Let $\phi \in \mathbb{F}_r^\ell$ denote the set of \emph{public inputs}, $w \in \mathbb{F}_r^{m-\ell}$ the set of \emph{witnesses}, whose knowledge we want to prove, and let $\tau \in (\mathbb{F}_r^{*})^4$ be a set of randomly generated numbers known as the \emph{simulation trapdoor}. Groth16 consists of four parts:
 \begin{itemize}
-\item $(\sigma, \tau) \leftarrow \Setup$: Randomly generates $\tau$, from which it computes $\sigma$, which consists of elliptic curve points in $\mathbb{G}_1$ and $\mathbb{G}_2$. $\sigma$ is to be understood as the proving and verifying keys for Groth16.
+\item $(\sigma, \tau) \leftarrow \Setup$: Randomly generates $\tau$, from which it computes $\sigma$, which consists of elliptic curve points in $\mathbb{G}_1$ and $\mathbb{G}_2$. $\sigma$ consists of the proving and verifying keys for Groth16.
 \item $\pi \leftarrow \Prove(\sigma, \phi, w)$: Computes a proof of knowledge of $w$, $\pi$, for a given setup $\sigma$ and public input $\phi$.
 \item $0, 1 \leftarrow \Verify(\sigma, \phi, \pi)$: Checks whether the proof $\pi$ is valid against the setup $\sigma$ and the public input $\phi$.
 \item $\pi \leftarrow \Sim(\tau, \phi)$: Simulates a proof that will always be valid when verified against the setup $\sigma$ corresponding to $\tau$ and the public input $\phi$.
 \end{itemize}
 
-It is important to note that the $\Sim$ function is what makes the Groth16 protocol zero-knowledge: you can compute a valid proof $\pi$ for any given setup $\sigma$ and public input $\phi$ without knowledge of the witness $w$, provided that you have access to the simulation trapdoor $\tau$. But $\Sim$ also makes Groth16 potentially insecure: if a malicious agent knew $\tau$ for a given $\sigma$, they could fabricate valid proofs for any statement regardless of its veracity. 
+It is important to note that the $\Sim$ function is what makes the Groth16 protocol zero-knowledge: you can compute a valid proof $\pi$ for any given setup $\sigma$ and public input $\phi$ without knowledge of the witness $w$, provided that you have access to the simulation trapdoor $\tau$. But $\Sim$ also points to a potential insecurity: if a malicious agent knew $\tau$ for a given $\sigma$, they could fabricate valid proofs for any witness, regardless of its veracity. 
 
-The goal of the \emph{trusted setup} is to provide a Groth16 setup $\sigma$ in a secure way, i.e., in such a way that nobody has access to the trapdoor $\tau$ that was used to compute it.
+The goal of the \emph{trusted setup} is to compute $\sigma$ in a secure way, i.e., in such a way that nobody has access to the trapdoor $\tau$ that was used to compute it.

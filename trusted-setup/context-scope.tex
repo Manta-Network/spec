@@ -7,14 +7,14 @@ Throughout this paper, by circuit we mean a \emph{Rank-1 Constraint System (R1CS
 \end{align}
 where $a_0 = 1$. This system of equations, in the context of zero-knowledge proofs, is to be understood as follows:
 \begin{itemize}
-\item The numbers $u_{i, q}, v_{i, q}, w_{i, q}$ are constants in $\mathbb{F}_r$ which represent the operations performed in an arithmetic circuit. Here constant means constant in the protocol, e.g. \MantaPay{} will have a fixed set of $u_{i, q}, v_{i, q}, w_{i, q}$.
+\item The numbers $u_{i, q}, v_{i, q}, w_{i, q}$ are constants in $\mathbb{F}_r$ which represent the operations performed in an arithmetic circuit. Here constant means constant in the circuit, e.g. each \MantaPay{} circuit will have a fixed set of $u_{i, q}, v_{i, q}, w_{i, q}$.
 \item The numbers $\phi = (a_1, \dots, a_\ell)$ are the public inputs. In \MantaPay{}, these correspond to the \TransferPost{}, excluding the proof.
-\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the witnesses. In \MantaPay{}, these correspond to the elements of the \Transfer{} which are not part of the \TransferPost{}.
-\item An R1CS defines the following binary relation
+\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the private witnesses. In \MantaPay{}, these correspond to the elements of the \Transfer{} which are not part of the \TransferPost{}.
+\item A R1CS defines the following binary relation
 \begin{align}
 R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, \dots, a_m), \ \eqref{eqn: r1cs} \textrm{ is satisfied} \right\} \subset \mathbb{F}_r^\ell \times \mathbb{F}_r^{m-\ell}
 \end{align}
-\item The statements that can be proved in this terminology are of the form: for a given circuit \eqref{eqn: r1cs} and public input $\phi$, there exists\footnote{and I know} a witness $w$ such that $(\phi, w) \in R$.
+\item The statements that can be proved in this terminology are of the form,  ``For a given circuit \eqref{eqn: r1cs} and public input $\phi$, I know a witness $w$ such that $(\phi, w) \in R$.''
 \end{itemize}
 
 \subsection{Quadratic Arithmetic Programs}
@@ -24,155 +24,64 @@ R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, 
 \end{align}
 where 
 \begin{itemize}
-\item $u_i(X), v_i(X), w_i(X) \in \mathbb{F}_r[X]$ are degree $n-1$ polynomials, and $t(X) \in \mathbb{F}_r[X]$ is a degree $n$ polynomial, all of which are fixed for the protocol.
+\item $u_i(X), v_i(X), w_i(X) \in \mathbb{F}_r[X]$ are degree $n-1$ polynomials, and $t(X) \in \mathbb{F}_r[X]$ is a degree $2^k$ polynomial (see below), all of which are fixed for the protocol.
 \item The numbers $\phi = (a_1, \dots, a_\ell)$ are the public inputs.
-\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the witnesses.
+\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the private witnesses.
 \item A QAP defines the following binary relation
 \begin{align}
 R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, \dots, a_m), \ \eqref{eqn: qap} \textrm{ is satisfied} \right\} \subset \mathbb{F}_r^\ell \times \mathbb{F}_r^{m-\ell}
 \end{align}
-\item The statements that can be proved in this terminology are of the form: for a given circuit \eqref{eqn: qap} and public input $\phi$, there exists a witness $w$ such that $(\phi, w) \in R$.
+\item The statements that can be proved in this terminology are of the form, ``For a given circuit \eqref{eqn: qap} and public input $\phi$, I know a witness $w$ such that $(\phi, w) \in R$.''
 \end{itemize}
 
 We derive the QAP description of a circuit from its R1CS description as follows:
 \begin{enumerate}
-    \item Choose $k$ as the minimal integer such that $2^k \geq n$. Let $t(X) = X^{2^k} - 1$.
+    \item Choose $k$ as the minimal integer such that $2^k \geq n$. Let $t(X) = X^{2^k} - 1$. This is the \emph{vanishing polynomial} for the set of $2^k$-th roots of unity in $\mathbb{F}_r$.
     \item We derive the polynomial $u_i(X)$ from the R1CS vector $(u_{i,q})_{q=1}^n$ via a Lagrange basis $\{ L_q(x) \}_{t(q) = 0}$ for the set of $2^k$-th roots of unity.  That is,
-    \begin{equation}
+    \begin{equation}\label{eq: interpolate}
         u_i(X) = \sum_{q=1}^n u_{i,q} L_q(X),
     \end{equation}
     where we use the convention $u_{i,q} = 0$ for $q > n$.
     \item We repeat the same procedure to define $v_i(X)$ and $w_i(X)$.
-    \item The reader may readily check that \eqref{eqn: r1cs} is equivalent to \eqref{eqn: qap} with these definitions.
 \end{enumerate}
+One may readily check that \eqref{eqn: r1cs} is equivalent to \eqref{eqn: qap} with these definitions.
 
 \subsection{The Groth16 \Setup{} function}
-Let us now recall how the Groth16 \Setup{} function works in the \MantaPay{} protocol. We start with 
+We now recall the Groth16 \Setup{} function. It is defined relative to two choices:
 \begin{itemize}
-\item The pairing curve BN254 (see \cite{Naehrig10} and the references therein), which consists of a triple of elliptic curves $(\mathbb{G}_1, \mathbb{G}_2,\mathbb{G}_T) $ and a non-degenerate bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$. We fix generators $g$ and $h$ of $\mathbb{G}_1$ and $\mathbb{G}_2$, respectively. Note that $\textrm{ord}(g) = \textrm{ord}(h) = r$ is prime, and that $e(g,h)$ generates a subgroup of order $r$ of $\mathbb{G}_T \cong F_{p^{12}}^*$.
-\item The \MantaPay{} circuit, encoded as a QAP $\{u_i(X), v_i(X), w_i(X), t(X)\}$.
+\item A pairing curve\footnote{We use BN254 (see \cite{Naehrig10} and the references therein)}, which consists of a triple of elliptic curves $(\mathbb{G}_1, \mathbb{G}_2,\mathbb{G}_T) $ and a non-degenerate bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$. We fix generators $g$ and $h$ of $\mathbb{G}_1$ and $\mathbb{G}_2$, respectively. We require that $g, h$, and $e(g,h)$ all have the same prime order $r$. 
+\item A circuit, encoded as a QAP $\{u_i(X), v_i(X), w_i(X), t(X)\}$.
 \end{itemize}
 All public parameters derive from a simulation trapdoor $\tau = (\alpha, \beta, \delta, x) \leftarrow \mathbb{F}_r^*$ (the famous ``toxic waste''). The Groth16 public parameters themselves are elements of $\Gone$ and $\Gtwo$, specifically
 \begin{equation}\label{eq: prover_key}
-    \begin{split} % TODO: Fix labeling
-\sigma_1 &= \left[ \left(\alpha, \beta, \delta, \{ x^i \}_{i=0}^{n-1},\left\{  \beta u_i(x) + \alpha v_i(x) + w_i(x) \right\}_{i=0}^\ell, \left\{  \frac{\beta u_i(x) + \alpha v_i(x) + w_i(x)}{\delta} \right\}_{i=\ell+1}^m, \left\{ \frac{x^i t(x)}{\delta} \right\}_{i=0}^{n-2} \right) \right]_1 \\
-\sigma_2 &= \left[ \left( \beta, \delta,  \{ x^i \}_{i=0}^{n-1} \right) \right]_2
+    \begin{split} % TODO: Why are there raw powers of x in sigma2 ?
+\sigma_1 = \Biggl[ \alpha, \beta, \delta, 
+    \left\{u_i(x) \right\}_{i=0}^m, &
+    \left\{v_i(x) \right\}_{i=0}^m, 
+    \left\{ (\beta u_i(x) + \alpha v_i(x) + w_i(x)) \right\}_{i=0}^\ell, \\
+    & \left\{  \frac{\beta u_i(x) + \alpha v_i(x) + w_i(x)}{\delta} \right\}_{i=\ell+1}^m, 
+    \left\{ \frac{x^i t(x)}{\delta} \right\}_{i=0}^{n-2}  \Biggr]_1 \\
+\sigma_2 = \left[ \left( \beta, \delta, \left\{ v_i(x) \right\}_{i=0}^m \right) \right]_2
     \end{split}
 \end{equation} 
-where we denote $[y]_1 = y \cdot g$ and $[y]_2 = y \cdot h$ for all $y \in \mathbb{F}_r$. 
+where we denote $[y]_1 = y \cdot g$ and $[y]_2 = y \cdot h$ for all $y \in \mathbb{F}_r$. These public parameters make up the Groth 16 proving and verifying keys.
 
-The output of \Setup{} is $\sigma = (\sigma_1, \sigma_2)$. These are the public parameters from which Groth16 proofs are formed. The trapdoor $\tau$ is \emph{not} public; indeed, a malicious prover with knowledge of $\tau$ could construct fraudulent proofs. The goal of the trusted setup is to generate $\sigma$ without revealing $\tau$.
+The public output of \Setup{} is $\sigma = (\sigma_1, \sigma_2)$. These are the public parameters from which Groth16 proofs are formed. The trapdoor $\tau$ is \emph{not} public; indeed, a malicious prover with knowledge of $\tau$ could construct fraudulent proofs. The goal of the trusted setup is to compute $\sigma$ without revealing $\tau$.
 
 \subsection{Multi-Party Computation}
-A decentralized way to generate $\sigma$ without revealing $\tau$ is to compute $\sigma$ in such a way that $\tau$ becomes a shared secret split among a diverse set of participants. This may be achieved via \emph{secure multi-party computation} (MPC). The MPC we employ is a protocol for computing $\sigma$ incrementally from private inputs $\tau_i$ belonging to participants $P_i$ in the computation. 
+A decentralized way to compute $\sigma$ without revealing $\tau$ is to compute $\sigma$ in such a way that $\tau$ becomes a shared secret split among a diverse set of participants. This may be achieved via \emph{secure multi-party computation} (MPC). The MPC we employ is a protocol for computing $\sigma$ incrementally from private inputs $\tau_i$ belonging to participants in the computation. 
 
 The key security property of this MPC is that its security is ensured by having at least one honest participant. An honest participant is one who keeps their private input $\tau_i$ from all other participants, ideally by permanently clearing it from their system's memory after participation. Put differently, this \emph{1-out-of-N} honest participants guarantee states that to determine the toxic waste $\tau$ requires the collusion of \emph{all} participants in the MPC. 
 
 By soliciting contributions to the MPC from a diverse set of participants, we increase the difficulty of such collusion. Note that any individual with a stake in the security of \MantaPay{} can guarantee this personally, simply by participating honestly in the \Setup{} MPC.
 
-\subsubsection{Groth 16 Phase 2 MPC}\label{sec: mpc_def}
-Here we define a secure, updateable, verifiable multi-party computation for the Groth16 \Setup{} function. 
-
-The MPC proceeds in $N$ Rounds of computation, each of which produces a \emph{state} $\sigma_n$, \emph{challenge} $c_n$, and \emph{proof} $\pi_n$. The triple $(\sigma_n, c_n, \pi_n)$ is computed recursively from the previous round's triple $(\sigma_{n-1}, c_{n-1}, \pi_{n-1})$ via functions \contribute{} and \challenge{}. A third function \verify{} allows any third party to verify from a transcript $T = \{ \sigma_n, c_n, \pi_n \}_{n=1,\ldots, N}$ that each participant computed \contribute{} correctly. 
-
-\begin{definition}[State]
-    The \emph{state} of the MPC is a Groth16 prover key \eqref{eq: prover_key}. We may denote this as 
-    \begin{equation}\label{eq: short sigma} \sigma = \left( \subsigma{}, \ldots \right) \end{equation} 
-    a shorthand for \eqref{eq: prover_key} that reminds us which parts of the prover key depend on $\delta$. Only these parts of the prover key are affected by the MPC; all terms summarized by the ellipsis remain invariant.
-\end{definition}
-
-\begin{definition}[Challenge]
-    \emph{Challenges} are outputs of a collision-resistant hash function $H$ (for example, Blake2 hash with 64-byte digest), computed as [todo]  %\eqref{eq: challenge}.
-\end{definition}
-
-% ? Would `Discrete Log Knowledge Proof' be a more descriptive name? 
-\begin{definition}[Consistent Pair]
-    A \emph{consistent pair} in the bilinear group $\Gone \times \Gtwo \to \Gt$ of size $r$ consists of two pairs $(a_1, b_1) \in \Gone \times \Gone $, $(a_2, b_2) \in \Gtwo \times \Gtwo$ satisfying 
-    \begin{equation}\label{eq: ratio}
-        e\left( a_1, b_2 \right) = e\left( a_2, b_1\right)
-    \end{equation}
-\end{definition}
-Consistent pairs can be used to prove the knowledge of discrete logs:
-
-The main idea is that the pairs satisfy \eqref{eq: ratio} only if there exists a scalar $\delta$ such that $b_1 = \delta \cdot a_1$ and $b_2 = \delta \cdot a_2$ (due to the non-degeneracy of $e$). Thus the following interactive protocol requires the \Prover{} to know the discrete log $\delta$ in order to pass:
-\begin{enumerate}
-    \item \Prover{} sends $(a_1, b_1)$ to \Verifier{}.
-    \item \Verifier{} sends challenge point $a_2 \in \Gtwo$ to \Prover{}.
-    \item \Prover{} sends matching point $b_2 \in \Gtwo$ to \Verifier{}.
-    \item \Verifier{} checks \eqref{eq: ratio}.
-\end{enumerate}
-In Step 3, a prover with knowledge of $\delta$ merely computes $b_2 = \delta \cdot a_2$. A prover without knowledge of $\delta$ must first solve a discrete log problem to find $b_2$, so this proof is sound for $r$ large enough.
-
-In practice, step 2 above is replaced by a Fiat-Shamir transform. % todo \ref{def: challenge}
-When this is the case, we define
-\begin{definition}[Ratio Proof]
-    A \emph{ratio proof} is a pair $(a_1, b_1) \in \Gone \times \Gone$ and a \emph{matching point} $b_2 \in \Gtwo$, together with a prescription for computing a \emph{challenge point} $a_2 \in \Gtwo$ from $a_1, b_1$ and public data, such that \eqref{eq: ratio} is satisfied. We will denote ratio proofs by $\pi$.
-\end{definition}
-
-In addition to making the above protocol non-interactive, the Fiat-Shamir step forms a \emph{contribution chain} by computing the challenge for Round $n$ from the data of Round $n-1$. Verifying the MPC means checking that state $\sigma_n$ was computed from state $\sigma_{n-1}$ using some $\delta$ attested to by a ratio proof $\pi_n$ whose $a_2$ challenge point is computed from (a commitment to) $\sigma_{n-1}, \sigma_n, \pi_{n-1}$, and the Round $n-1$ challenge point. % see verify def. below
-
-The two functions that enable computation in our MPC are \contribute{} and \challenge{}:
-
-\subsubsection*{fn \contribute{}}
-Inputs: $\sigma_{n-1}, c_{n-1}$, the state and challenge hash from Round $n-1$.
-
-Outputs: $\sigma_n, \pi_n$, the state and proof of Round $n$.
-
-Definition: 
-    \begin{enumerate}
-        \item Sample $\delta_n \in \mathbb{F}_r$
-        \item From $\sigma_{n-1}$ of the form \eqref{eq: short sigma}, compute 
-            \begin{equation*}
-                \sigma_n = \left( \newsigma , \ldots \right)
-            \end{equation*}
-        \item Form ratio proof $\pi_n$: Sample $a_1 \in \Gone$, compute $b_1 = \delta_n \cdot a_1$. Compute challenge point $a_2$ from $c_{n-1}, a_1, b_1$. Compute $b_2 = \delta_n \cdot a_2$ and let $\pi_n = (a_1, b_1, b_2)$.
-    \end{enumerate}
-
-\subsubsection*{fn \challenge{}}
-Inputs: $c_{n-1}, \sigma_{n-1}, \sigma_n, \pi_n$, the state and challenge hash from Round $n-1$ and the state and ratio proof from Round $n$.
-
-Outputs: $c_n$, the challenge hash of Round $n$.
-
-Definition: for some CRH $H$, let $c_n = H(c_{n-1} \vert \sigma_{n-1} \vert \sigma_n \vert \pi_n)$, the hash of the concatenated byte representations of each piece of data.
-
-Finally, for verification we have 
-
-\subsubsection*{fn \verify{}}
-Inputs: $c_{n-1}, \sigma_{n-1}, \sigma_n, \pi_n$ as above.
-
-Outputs: boolean, indicating whether $\sigma_n$ was formed from $\sigma_{n-1}$ according to protocol.
-
-Definition:
-\begin{enumerate}
-    \item Check that the Phase 2 invariants of $\sigma_{n-1}$ and $\sigma_n$ match.
-    \item Compute challenge point $a_2$ from $c_{n-1}$ and $a_1, b_1$ of $\pi_n$.
-    \item Check that $a_2,$ and $\pi_n = (a_1, b_1, b_2)$ form a consistent pair \eqref{eq: ratio}.
-    \item Check that $a_1, b_1$ of $\pi_n$ form a consistent pair with the $[\delta]_2$ points of $\sigma_{n-1}$ and $\sigma_n$. 
-    \item Check that the $[\delta]_1$ points of $\sigma_{n-1}, \sigma_n$ form a consistent pair with their $[\delta]_2$ points.
-    \item\label{testlabel} Check that the terms $\subsubsigma{}$ of $\sigma_{n-1}, \sigma_n$ form a consistent pair with the $[\delta]_2$ points. Here we reverse the order of the pair of $[\delta]_2$ points to account for the fact that $\subsubsigma{}$ is proportional to $\delta^{-1}$.
-\end{enumerate}
-In practice, Step \ref{testlabel} is performed quickly by computing random linear combinations of the points $\subsubsigma{}$ and checking this pair's consistency.
 
 \subsection{Phase Structure}
 
-The full \Setup{} MPC splits usefully into two \emph{phases}. In \emph{Phase 1} we generate a modified KZG setup (todo cite KZG) which is \emph{universal} in the sense that these parameters may be used by any ZK circuit of small enough size. In \emph{Phase 2} we derive $\sigma$ from the output of Phase 1. The parameters generated in Phase 2 are \emph{circuit-specific}: they depend on the QAP description of the circuit \eqref{eqn: qap} and must be computed separately for each ZK circuit. This two-phase splitting of the MPC is formalized in \cite{bowe19}.
+The full \Setup{} MPC splits usefully into two \emph{phases}. The output of \emph{Phase 1} is \emph{universal} in the sense that these parameters may be used by any ZK circuit of small enough size. In \emph{Phase 2} we derive $\sigma$ from the output of Phase 1. The parameters generated in Phase 2 are \emph{circuit-specific}: they depend on the R1CS description of the circuit \eqref{eqn: r1cs} and must be computed separately for each ZK circuit. This two-phase splitting of the MPC is formalized in \cite{bowe19}.
 
-\subsubsection{Phase 1}
-
-The first class consists of those which only depend on the elliptic curves and not on the circuit, i.e., on the QAP. These parameters, namely (TODO: Get the number of powers of $[x^i]_1$ right)
+Phase 1 computes a modified KZG setup \cite{KZG} consisting of the curve points 
 \begin{align}\label{eq: kzg}
 KZG = \KzgParams{}
 \end{align}
-are known as the \emph{Kate--Zaverucha--Goldberg (KZG)} commitments. Since these parameters don't depend on the specifics of the circuit, we take them from the Perpetual Powers of Tau (PPoT) project \cite{PPoT}, a multi-party computation similar to our trusted setup described below, with a $1$-out-of-$N$ security assumption. To ensure its soundness, we have personally verified each contribution to PPoT.
-
-\subsubsection{Phase 2}
-The rest of the Groth16 parameters do depend on the circuit, so we have the corresponding values for the \MantaPay{} circuit. The rest of the paper is devoted to explaining in detail the multi-party computation known as the trusted setup ceremony which we perform to make sure the remaining Groth16 parameters are computed safely.
-
-\begin{itemize}
-    \item Refer to above definition of $\sigma$
-    \item Explain ininitialization: at least mention that inputs are \eqref{eq: kzg} plus QAP coefficients. 
-    \item Mention that at this point we have prover keys but with $\delta = 1$, and the point is to modify $\delta$.
-    \item Outline how $\sigma$ is derived from these inputs. This part is MPC, reference protocol description below.
-\end{itemize}
-
-Also need to define what is a phase 2 Contribution, what is a Proof. (Maybe this is in Protocol Design?)
+These Phase 1 parameters are computed via a MPC such that $x, \alpha, \beta \in \mathbb{F}_r$ are shared secrets among the participants. Since Phase 1 parameters don't depend on the specifics of the circuit, a Phase 1 ceremony may be treated as a public good for any project using circuits of appropriate size over the same pairing curve. In our case, we take the Phase 1 parameters computed by the Perpetual Powers of Tau (PPoT) ceremony \cite{PPoT}, an ongoing multi-party computation similar to our trusted setup described below, with a $1$-out-of-$N$ security assumption. To ensure its soundness, we have personally verified each contribution to PPoT.

@@ -1,34 +1,28 @@
 \lsection{Design}{design}
 \subsection{Ceremony Protocol}
 
-Here we describe the MPC protocol for the trusted setup ceremony. This is a protocol for $N$ contributors $C_1, \ldots C_N$ to participate in the computation of the public parameters $\sigma$. Because the participants must contribute in serial, we use a central \Coordinator{} to order the participants and check their contributions. We emphasize that the \Coordinator{} exists solely to help organize the ceremony and has no effect on the security properties of the MPC.
+Here we describe a MPC protocol for $N$ contributors $C_1, \ldots C_N$ to participate in the computation of the public parameters $\sigma$. Because the participants must contribute in serial, we use a central \Coordinator{} to order the participants and check their contributions. We emphasize that the \Coordinator{} exists solely to help organize the ceremony and has no effect on the security properties of the MPC.
 
 The protocol is initialized by the \Coordinator{} and proceeds in repeated rounds, in which the \Coordinator{} and a \Contributor{} exchange messages. The messaging protocol is described in Section \ref{sec: MessagingProtocol}.
 
 \subsubsection*{Initialization}
 
-The \Coordinator{} computes an initial state $\sigma_0$ and challenge point $c_0$ as 
+The \Coordinator{} computes an initial state $\sigma_0$ and challenge hash $c_0$ as 
 \begin{equation*}
     (\sigma_0, c_0) =  \initialize{}(\text{circuits, KZG parameters})
 \end{equation*} 
-The inputs to \initialize{} are the R1CS descriptions \eqref{eqn: r1cs} of some ZK circuits and modified KZG parameters \eqref{eq: kzg} (the output of a prior Phase 1 ceremony). The function \initialize{} computes $\sigma_0$, a Groth16 proving key with $\delta = 1$ (see \eqref{eq: prover_key}), and an initial challenge point $c_0$.
+The inputs to \initialize{} are the QAP descriptions \eqref{eqn: qap} of some ZK circuits and modified KZG parameters \eqref{eq: kzg} (the output of a prior Phase 1 ceremony). The function \initialize{} computes $\sigma_0$, a Groth16 proving key with $\delta = 1$ (see \eqref{eq: prover_key}), and an initial challenge hash $c_0$.
 
 Note that \initialize{} is deterministic and the circuit descriptions and KZG parameters are public. Therefore any observer may verify that \Coordinator{} completed this step correctly.
 
 \subsubsection*{Contribution Round}
 
-The $n^{\text{th}}$ round of contribution begins with the state $\sigma_{n-1}$ and challenge $c_{n-1}$ of the previous round. \Contributor{} $C_n$ will interact with \Coordinator{} to produce the next state $\sigma_{n}$ and a proof $\pi_{n}$ that it was computed according to the protocol. The round consists of these steps:
+The $n^{\text{th}}$ round of contribution begins with the state $\sigma_{n-1}$ and challenge $c_{n-1}$ of the previous round. \Contributor{} $C_n$ will interact with \Coordinator{} to produce the next state $\sigma_{n}$ and a proof $\pi_{n}$ that it was computed according to the protocol. The round consists of these steps: (refer to Section \ref{sec:phase2})
 
 \begin{enumerate}
 \item \Coordinator{} sends $(\sigma_{n-1}, c_{n-1})$ to \Contributor{} $C_n$.
-\item \Contributor{} computes $(\sigma_n, \pi_n) = $ \contribute{}$(\sigma_{n-1}, c_{n-1})$. The \contribute{} function must:
-    \begin{enumerate}
-        \item Sample $\delta_n \in \mathbb{F}$ randomly
-        \item Compute contribution (TODO: ref. def.)
-        \item Generate proof (TODO: ref. def.)
-        \item Remove $\delta_n$ from memory
-    \end{enumerate}
-\item \Contributor{} sends $(\sigma_n, \pi_n)$ to \Coordinator{}
+\item \Contributor{} computes $(\sigma_n, \pi_n) = $ \contribute{}$(\sigma_{n-1}, c_{n-1})$.
+\item \Contributor{} sends $(\sigma_n, \pi_n)$ to \Coordinator{} (as a signed message)
 \item \Coordinator{} computes \verify{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$. This checks that the \Contributor{} has formed $\sigma_n$ from $\sigma_{n-1}$ according to the protocol.
     \begin{enumerate}
         \item If the check fails, \Coordinator{} rejects this contribution. Nothing is added to the transcript and the \Coordinator{} proceeds to next round with state and challenge unchanged ($\sigma_n = \sigma_{n-1}$ and $c_n = c_{n-1}$).
@@ -36,7 +30,7 @@ The $n^{\text{th}}$ round of contribution begins with the state $\sigma_{n-1}$ a
     \end{enumerate}
 \item \Coordinator{} proceeds to next round with $(\sigma_n, c_n)$.
 \end{enumerate}
-This process repeats until all \Contributor{}s have made their contribution. At the end (assuming all contributions were valid) we have a Groth16 prover key $\sigma$ with $\delta = \delta_1 \cdot \delta_2 \cdot \ldots \cdot \delta_n $ and a \Transcript{} $T = \{ (\sigma_i, \pi_i, c_i) \}_{i=1}^N $ recording all contributions to the ceremony and allowing a third-party to verify that $\sigma$ was computed according to protocol.
+This process repeats until all \Contributor{}s have made their contribution. At the end (assuming all contributions were valid) we have a Groth16 prover key $\sigma$ with $\delta = \delta_1 \cdot \delta_2 \cdot \ldots \cdot \delta_N $ and a \Transcript{} $T = \{ (\sigma_i, \pi_i, c_i) \}_{i=1}^N $ recording all contributions to the ceremony and allowing a third-party to verify that $\sigma$ was computed according to protocol.
 
 \subsection{Messaging Protocol}\label{sec: MessagingProtocol}
 
@@ -72,7 +66,7 @@ To enforce the MPC protocol, the \Coordinator{} performs:
 \end{itemize}
 To organize the contributions, the \Coordinator{} performs:
 \begin{itemize}
-    \item Registry Maintenance: a registry of participants records who is authorized to submit contributions to the ceremony and the public keys with which they will sign their messages.
+    \item Registry Maintenance: a registry of authorized participants is kept.
     \item Signature Verification: all messages from a \Contributor{} to the \Coordinator{} will be signed.
     \item Queue Management: during the ceremony, participants are ordered in a queue.
 \end{itemize}
@@ -81,8 +75,8 @@ To organize the contributions, the \Coordinator{} performs:
 The above \Coordinator{} tasks are accomplished by a machine whose state consists of:
 \begin{itemize}
     \item \Registry{}: For each participant, a record of their public signing key, current signature nonce, and whether they have already contributed to the ceremony.
-    \item \MpcState{}: The current pair $(\sigma_n, c_n)$ (see above). 
-    \item \Transcript{}: The history of MPC states and proofs (see above).
+    \item \MpcState{}: The current pair $(\sigma_n, c_n)$ (see Section \ref{sec:phase2}). 
+    \item \Transcript{}: The history of MPC states and proofs.
     \item \Queue{}: an ordering of the participants waiting to contribute. This may be a priority queue, if desired.\footnote{A priority queue can help defend against a DDoS attack in which malicious participants intentionally time out without contributing. If a participant times out too many times they can be de-prioritized, allowing more reliable participants to skip them in the queue.}
     \item \TimedLock{}: a lock is given to the participant at the front of the queue while they compute their contribution. This lock times out after a specified duration and drops the participant from the queue.
 \end{itemize}
@@ -92,6 +86,7 @@ The following function calls change the state of the machine:
 \begin{itemize}
     \item \initialize{}: set \MpcState{} to $(\sigma_0, c_0)$ (see above).
     \item \enqueue{}(\ParticipantId{}): check that participant is registered and has not already contributed. If so, add to end of \Queue{}.
+    \item \textsf{register}: add new participants to the \Registry{}.
     \item \update{}: Compute \verify{}$(\sigma_{n-1}, c_{n-1}, \sigma_n, \pi_n)$ to check that the latest contribution conforms to MPC protocol. If so, 
         \begin{itemize}
             \item compute challenge $c_n$, update \MpcState{} to $(\sigma_n, c_n)$
@@ -121,7 +116,7 @@ The \Coordinator{} state machine initializes its state and then listens for mess
 \end{itemize}
 If any of the above checks do not pass, the \Coordinator{} responds with an appropriate error message.
 
-TODO: Flow chart would express this nicely
+The operation of this machine is summarized in Figure \ref{fig: server}.
 
 \subsection{Client State Machine}
 
@@ -133,9 +128,9 @@ The duty of a \Contributor{} is to contribute according to the MPC protocol. To 
 \end{itemize}
 
 \subsubsection*{State}
-The state of this machine is an immutable Ed25519 private key. The machine also needs access to some random oracle to perform keypair generation and contribution. (TODO: The state also includes a signer, since it keeps track of nonces the state can change)
+The state of this machine is an Ed25519 private key and a message nonce (unsigned integer). The only state changes during operation are updates to the message nonce. The machine also needs access to some random oracle to perform keypair generation and contribution.
 
-This state is initialized by \generatekeypair{}, which generates an Ed25519 private/public keypair. Note that the same state can later be recovered by prompting users to enter their private key or seed phrase.
+This state is initialized by \generatekeypair{}, which generates an Ed25519 private/public keypair. Note that the same state can later be recovered by prompting users to enter their private key or seed phrase (the correct nonce can be recovered by queries to the server).
 
 \subsubsection*{Operation}
 
@@ -152,4 +147,8 @@ This state is initialized by \generatekeypair{}, which generates an Ed25519 priv
     \item Clear $\delta$ from memory.
 \end{enumerate}
 
-Steps 3a and 5 of this protocol have famously led to participants sampling $\delta$ using randomness from Chernobyl and later smashing their computers to clear it from memory. An ambitious participant can easily modify our implementation (todo: cite code) to accommodate exotic sources of randomness.
+\begin{figure}
+    \caption{Operation of the server state machine.}\label{fig: server}
+    \includegraphics[width = \textwidth]{diagrams/server-state-machine.png}
+\end{figure}
+    
