@@ -6,12 +6,12 @@ The MPC proceeds in $N$ Rounds of computation, each of which produces a \emph{st
 
 \begin{definition}[State]
     The \emph{state} of the MPC is a Groth16 prover key \eqref{eq: prover_key}. We may denote this as 
-    \begin{equation}\label{eq: short sigma} \sigma = \left( \subsigma{}, \ldots \right) \end{equation} 
-    a shorthand for \eqref{eq: prover_key} that reminds us which parts of the prover key depend on $\delta$. Only these parts of the prover key are affected by the MPC; all terms summarized by the ellipsis remain invariant.
+    \begin{equation}\label{eq: short sigma} \sigma = \left( \subsigma{}, \ldots \right), \end{equation} where $\textrm{cross-term}_i = \beta u_i(x) + \alpha v_i(x) + w_i(x)$. 
+    The expression above is just a shorthand for \eqref{eq: prover_key} that reminds us which parts of the prover key depend on $\delta$. Only these parts of the prover key are affected by the MPC; all terms summarized by the ellipsis remain invariant.
 \end{definition}
 
 \begin{definition}[Challenge Hash]
-    \emph{Challenge hashes} are outputs of a collision-resistant hash function $H$ (for example, Blake2 hash with 64-byte digest), see \challenge{} below.
+    \emph{Challenge hashes} are outputs of a collision-resistant hash (CRH) function $H$\footnote{We use Blake2 with a 64-byte digest, see \cite{blake2}}, see \challenge{} below.
 \end{definition}
 
 % ? Would `Discrete Log Knowledge Proof' be a more descriptive name? 

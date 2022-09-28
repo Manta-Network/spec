@@ -34,7 +34,7 @@ This process repeats until all \Contributor{}s have made their contribution. At 
 
 \subsection{Messaging Protocol}\label{sec: MessagingProtocol}
 
-In each round, the \Coordinator{} and \Contributor{} communicate via (unencrypted?) messages. Messages from the \Contributor{} to the \Coordinator{} are signed with an Ed25519 signature. The \Coordinator{} accepts only those messages with a valid signature whose public verifying key belongs to a \Registry{} of participants. The \Registry{} and signature checks prevent a DDoS attack on the ceremony in which malicious participants fill up the contribution queue and intentionally time-out without contributing.
+In each round, the \Coordinator{} and \Contributor{} communicate via (unencrypted?) messages. Messages from the \Contributor{} to the \Coordinator{} are signed with an Ed25519 signature \cite{edsign}. The \Coordinator{} accepts only those messages with a valid signature whose public verifying key belongs to a \Registry{} of participants. The \Registry{} and signature checks prevent a DDoS attack on the ceremony in which malicious participants fill up the contribution queue and intentionally time-out without contributing.
 
 The \Contributor{} sends one of two messages to the \Coordinator{}: a \QueryRequest{} or an \UpdateRequest{}. Each message follows the format 
 \begin{center} 
