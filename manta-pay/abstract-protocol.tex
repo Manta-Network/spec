@@ -235,9 +235,20 @@ Here we define each key and its function in the \Transfer{} protocol:
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
-The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \zkAsset{s} among participants while preserving their anonymity. The \Transfer{} is made up of special cryptographic constructions called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction. To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \zkAddress{es} from other participants for the outputs, assigning each key a subset of the input \zkAsset{s}, and then builds a \Transfer{} object representing the transfer they want to build. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated and stored, representing a completed state transition in the \Ledger{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{must} not be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
+The \Transfer{} protocol is the core abstraction of \MantaPay{} and facilitiates the valid transfer of \zkAsset{s} among participants while preserving their privacy. The \Transfer{} is made up of cryptographic constructions called \Sender{s} and \Receiver{s} that represent the private input and private output of a transaction respectively. To perform a \Transfer{}, a protocol participant chooses a \SpendingKey{} they own, selects a subset of the \UTXO{s} they have still not yet spent (for a fixed \AssetId{}), collects \zkAddress{es} from other participants for the private outputs, assigning each key a subset of the input \zkAsset{s}, and then builds a \Transfer{} object representing the desired transaction. From this \Transfer{} object, they construct a \TransferPost{}, a representation of the transaction that contains only public information, and send it to the \Ledger{} to be verified. The transformation from a \Transfer{} to a \TransferPost{} involves producing a \emph{zero-knowledge proof} that attests to the valid construction of this public data from the private data.
 
 We begin by defining the cryptographic primitives involved in the \Transfer{} protocol:
+
+\begin{definition}{\UTXO{}}
+    For a field $\F$, we define a \UTXO{} as the following record:
+    \begin{align*}
+        t      &: \Bool  & \textit{transparency flag} \\
+        \pa    &: \Asset & \textit{public \AssetId{} and \AssetValue{} pair} \\
+        \cm    &: \F     & \textit{asset and public key commitment}
+    \end{align*}
+
+    A \UTXO{} represents the ownership of a \zkAsset{} that can be in one of two forms, either \emph{transparent} when $t = \True$ or \emph{opaque} when $t = \False$. Whenever a \UTXO{} is transparent, the \zkAsset{} it represents is written in the $\pa$ field in plain-text and the owner is hidden by the commitment $\cm$. Whenever a \UTXO{} is opaque, the \zkAsset{} it represents and the owner are both hidden by the commitment $\cm$ and the $\pa$ is unused. We will see below how this \UTXO{} is constructed.
+\end{definition}
 
 \begin{definition}[Transfer Configuration]
     A \TransferConfiguration{} is a collection of implementations of the following abstract cryptographic primitives:
@@ -251,7 +262,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
         \item \textbf{UTXO Dynamic Cryptographic Accumulator}: $\UTXOSet$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
-    where $\F$ is a prime field and $\G$ is a cryptographic group. The \Nullifier{} type is the output of $\COM^{\textsf{N}}$ and the \UTXO{} type is the tuple $\Bool \times \Asset \times \F$ where the last field element is the output of $\COM^{\U}$.
+    where $\F$ is a prime field and $\G$ is a cryptographic group. The \Nullifier{} type is defined as the output of $\COM^{\N}$.
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -283,7 +294,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \utxo  &:= (t, \pa, \cm) \\
         h      &:= \HH^{\U}(\utxo) \\
         \Some\left(h_z, h_w\right) &:= \UTXOSet.\contains(h, \Ledger.\utxos()) \\
-        n      &:= \COM^{\textsf{N}}(\ak, h) \\
+        n      &:= \COM^{\N}(\ak, h) \\
         \epk   &:= g \cdot \esk \\
         \Cout  &:= \AUTHout.\encrypt(\pk \cdot \esk, \select(t, \sa, \pa))
     \end{align*}
@@ -403,7 +414,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 S.\utxo  &= (S.t, S.\pa, S.\cm) \\
                 S.h      &= \HH^{\U}(S.\utxo) \\
                 \iszero(S.\asset.\VALUE) &\,\vee\, \UTXOSet.\verify(S.h, S.h_z, S.h_w) = \True \\
-                S.n      &= \COM^{\textsf{N}}(\ak, S.h) \\
+                S.n      &= \COM^{\N}(\ak, S.h) \\
                 S.\epk   &= g \cdot S.\esk \\
                 S.\Cout  &= \AUTHout.\encrypt(\pk \cdot S.\esk, S.\asset)
             \end{align*}
