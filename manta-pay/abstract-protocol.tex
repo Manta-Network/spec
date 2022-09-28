@@ -177,7 +177,7 @@ In the following section, we outline the formal specifications for all of the \e
 \end{definitiontoc}
 
 \begin{definitiontoc}{Cryptographic Group}
-    We define a \emph{cryptographic group} $(\G, p, g)$ as some finite cyclic group $\G$, of prime order $p$ with generator $g$ where the discrete logarithm problem is hard, namely, given $X \in \G$ it is infeasible to find $x$ such that $X = g^x$. We may omit the prime $p$ when convenient.
+    We define a \emph{cryptographic group} $(\G, p, g)$ as a finite cyclic group $\G$, of prime order $p$ with generator $g$ where the discrete logarithm problem is hard, namely, given $X \in \G$ it is infeasible to find $x$ such that $X = g^x$. We may omit the prime $p$ when convenient.
 \end{definitiontoc}
 
 \lsubsection{Addresses and Key Components}{addresses-and-key-components}
@@ -191,7 +191,7 @@ For the \Transfer{} protocol we use a multi-layered system of keys:
             \begin{tikzcd}
                 &  & \sk \arrow[lldd, "(\dash)\,\cdot\,\alpha"'] \arrow[rrdd, "g\,\cdot\,(\dash)"] & & & & & & \\
                 & & & & & & & & \\
-                \sk_\alpha \arrow[rrdd, "g\,\cdot\,(\dash)"'] & & & & \ak \arrow[lldd, "(\dash)\,\cdot\,\alpha"] \arrow[rr, "\KDF^\vk"] & & \vk \arrow[rr, "g\,\cdot\,(\dash)"] & & \pk \\
+                \sk_\alpha \arrow[rrdd, "g\,\cdot\,(\dash)"'] & & & & \ak \arrow[lldd, "(\dash)\,\cdot\,\alpha"] \arrow[rr, "\HH^\vk"] & & \vk \arrow[rr, "g\,\cdot\,(\dash)"] & & \pk \\
                 & & & & & & & & \\
                 & & \ak_\alpha & & & & & &
 \end{tikzcd}
@@ -207,14 +207,14 @@ Here we define each key and its function in the \Transfer{} protocol:
     A $\KeySchedule$ is a collection of implementations of the following abstract cryptographic primitives as described in the above definitions:
     \begin{itemize}
         \item \textbf{Cryptographic Group}: $(\G, p, g)$
-        \item \textbf{Viewing Key Derivation Function}: $\KDF^\vk$
+        \item \textbf{Viewing Key Derivation Function}: $\HH^\vk$
         \item \textbf{Proof Authorization Signature}: $\SIG$
     \end{itemize}
     with the following notational conventions:
     \begin{align*}
-        \SpendingKey         &:= Z_p \\
+        \SpendingKey         &:= \Z_p \\
         \ProofAuthorizingKey &:= \G \\
-        \ViewingKey          &:= Z_p \\
+        \ViewingKey          &:= \Z_p \\
         \zkAddress           &:= \G
     \end{align*}
     with the following constraints:
@@ -224,7 +224,7 @@ Here we define each key and its function in the \Transfer{} protocol:
         \SIG.\derive    &= g\,\cdot\,(\dash)
     \end{align*}
     To derive the \zkAddress{}, $\pk$, we use the following:
-    \[\sk \quad\mapsto\quad \ak := g \cdot \sk \quad\mapsto\quad \vk := \KDF^\vk(\ak) \quad\mapsto\quad \pk := g \cdot \vk\]
+    \[\sk \quad\mapsto\quad \ak := g \cdot \sk \quad\mapsto\quad \vk := \HH^\vk(\ak) \quad\mapsto\quad \pk := g \cdot \vk\]
     For signing a message $m$ with a randomized key, the owner of the \SpendingKey{}, $\sk$, and owner of the \ProofAuthorizingKey{}, $\ak$, perform the following protocol:
     \begin{enumerate}
         \item Spender samples $\alpha$ randomly and sends it to prover.
@@ -235,7 +235,7 @@ Here we define each key and its function in the \Transfer{} protocol:
 
 \lsubsection{\Transfer{} Protocol}{transfer-protocol}
 
-The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \zkAsset{s} among participants while preserving their anonymity. The \Transfer{} is made up of special cryptographic constructions called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction. To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \ReceivingKey{s} from other participants for the outputs, assigning each key a subset of the input \zkAsset{s}, and then builds a \Transfer{} object representing the transfer they want to build. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated and stored, representing a completed state transition in the \Ledger{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{must} not be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
+The \Transfer{} protocol is the fundamental abstraction in \MantaPay{} and facilitiates the valid transfer of \zkAsset{s} among participants while preserving their anonymity. The \Transfer{} is made up of special cryptographic constructions called \Sender{s} and \Receiver{s} which represent the private input and the private output of a transaction. To perform a \Transfer{}, a protocol participant gathers the \SpendingKey{s} they own, selects a subset of the \UTXO{s} they have still not spent (with a fixed \AssetId{}), collects \zkAddress{es} from other participants for the outputs, assigning each key a subset of the input \zkAsset{s}, and then builds a \Transfer{} object representing the transfer they want to build. From this \Transfer{} object, they construct a \TransferPost{} which they then send to the \Ledger{} to be validated and stored, representing a completed state transition in the \Ledger{}. The transformation from \Transfer{} to \TransferPost{} involves keeping the parts of the \Transfer{} that \emph{must} be known to the \Ledger{} and for the parts that \emph{must} not be known, substituting them for a \emph{zero-knowledge proof} representing the validity of the secret information known to the participant, and the \Transfer{} as a whole.
 
 We begin by defining the cryptographic primitives involved in the \Transfer{} protocol:
 
@@ -245,49 +245,43 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
         \item \textbf{Key Schedule}: $\KeySchedule$
         \item \textbf{Incoming Authenticated Encryption Scheme}: $\AUTHin$
         \item \textbf{Outgoing Authenticated Encryption Scheme}: $\AUTHout$
-        \item \textbf{UTXO Commitment Scheme}: $\COM^{\UTXO} : \F \times \G \times \Asset \to \F$
-        \item \textbf{Nullifier Commitment Scheme}: $\COM^{\textsf{N}} : \G \times \F \to \F$
-        \item \textbf{UTXO Hash Function}: $H^{\UTXO} : \Bool \times \Asset \times \F \to \F$
+        \item \textbf{UTXO Commitment Scheme}: $\COM^{\U} : \F \times \G \times \Asset \to \F$
+        \item \textbf{Nullifier Commitment Scheme}: $\COM^{\N} : \G \times \F \to \F$
+        \item \textbf{UTXO Hash Function}: $\HH^{\U} : \UTXO \to \F$
         \item \textbf{UTXO Dynamic Cryptographic Accumulator}: $\UTXOSet$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
-    where $\F$ is a prime field and $\G$ is a cryptographic group. The \Nullifier{} type is the output of $\COM^{\textsf{N}}$ and the \UTXO{} type is the tuple $\Bool \times \Asset \times \F$ where the last field element is the output of $\COM^{\UTXO}$.
+    where $\F$ is a prime field and $\G$ is a cryptographic group. The \Nullifier{} type is the output of $\COM^{\textsf{N}}$ and the \UTXO{} type is the tuple $\Bool \times \Asset \times \F$ where the last field element is the output of $\COM^{\U}$.
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
 
-We also make use of the following two functions:
-\begin{itemize}
-    \item $\iszero : T \to \Bool$ which returns $\True$ whenever the input element is equal to the zero element of $T$ (this function is only defined whenever $T$ has a well-defined zero element).
-    \item $\select : \Bool \times T \times T \to T$ which selects a value from a pair, using the left element if the input boolean is $\False$ and the right element if the input boolean is $\True$.
-\end{itemize}
-
 \begin{definition}[\Transfer{} Sender]
-    A \Sender{} is the following tuple:
+    A \Sender{} is the following record:
     \begin{align*}
-        r      &: \F \\
-        \sa    &: \Asset \\
-        \pa    &: \Asset \\
-        t      &: \Bool \\
-        \asset &: \Asset \\
-        \cm    &: \F \\
-        \utxo  &: \UTXO \\
-        h      &: \F \\
-        h_z    &: \UTXOSet.\Output \\
-        h_w    &: \UTXOSet.\Witness \\
-        n      &: \Nullifier \\
-        \esk   &: \Z_p \\
-        \epk   &: \G \\
-        \Cout  &: \AUTHout.\Ciphertext
+        r      &: \F                   & \textit{\UTXO{} commitment randomness} \\
+        \sa    &: \Asset               & \textit{secret \AssetId{} and \AssetValue{} pair} \\
+        \pa    &: \Asset               & \textit{public \AssetId{} and \AssetValue{} pair} \\
+        t      &: \Bool                & \textit{transparency flag} \\
+        \asset &: \Asset               & \textit{representative non-zero \AssetId{} and \AssetValue{} pair} \\
+        \cm    &: \F                   & \textit{asset and public key commitment} \\
+        \utxo  &: \UTXO                & \textit{full \UTXO{}} \\
+        h      &: \F                   & \textit{\UTXO{} hash} \\
+        h_z    &: \UTXOSet.\Output     & \textit{\UTXO{} hash accumulator output} \\
+        h_w    &: \UTXOSet.\Witness    & \textit{\UTXO{} hash accumulator witness} \\
+        n      &: \Nullifier           & \textit{\Nullifier{}} \\
+        \esk   &: \Z_p                 & \textit{Ephemeral Secret Key} \\
+        \epk   &: \G                   & \textit{Ephemeral Public Key} \\
+        \Cout  &: \AUTHout.\Ciphertext & \textit{Outgoing Encrypted Note Ciphertext} 
     \end{align*}
 
     A \Sender{}, $S$, is constructed from a public key $\pk : \zkAddress$ with the following algorithm:
     \begin{align*}
         t      &:= \iszero(\sa.\ID) \,\wedge\, \iszero(\sa.\VALUE) \\
         \asset &:= \select(t, \sa, \pa) \\
-        \cm    &:= \COM^{\UTXO}(r, \pk, \sa) \\
+        \cm    &:= \COM^{\U}(r, \pk, \sa) \\
         \utxo  &:= (t, \pa, \cm) \\
-        h      &:= H^{\UTXO}(\utxo) \\
+        h      &:= \HH^{\U}(\utxo) \\
         \Some\left(h_z, h_w\right) &:= \UTXOSet.\contains(h, \Ledger.\utxos()) \\
         n      &:= \COM^{\textsf{N}}(\ak, h) \\
         \epk   &:= g \cdot \esk \\
@@ -296,7 +290,7 @@ We also make use of the following two functions:
 \end{definition}
 
 \begin{definition}[\Transfer{} Sender Post]
-    A \SenderPost{} is the following tuple extracted from a \Sender{}:
+    A \SenderPost{} is the following record extracted from a \Sender{}:
     \begin{align*}
         h_z   &: \UTXOSet.\Output \\
         n     &: \Nullifier \\
@@ -307,26 +301,25 @@ We also make use of the following two functions:
 \end{definition}
 
 \begin{definition}[\Transfer{} Receiver]
-    A \Receiver{} is the following tuple:
+    A \Receiver{} is the following record:
     \begin{align*}
-        \pk    &: \zkAddress \\
-        r      &: \F \\
-        \sa    &: \Asset \\
-        \pa    &: \Asset \\
-        t      &: \Bool \\
-        \asset &: \Asset \\
-        \cm    &: \F \\
-        \utxo  &: \UTXO \\
-        \esk   &: \Z_p \\
-        \epk   &: \G \\
-        \Cin   &: \AUTHin.\Ciphertext
+        r      &: \F                  & \textit{\UTXO{} commitment randomness} \\
+        \sa    &: \Asset              & \textit{secret \AssetId{} and \AssetValue{} pair} \\
+        \pa    &: \Asset              & \textit{public \AssetId{} and \AssetValue{} pair} \\
+        t      &: \Bool               & \textit{transparency flag} \\
+        \asset &: \Asset              & \textit{representative non-zero \AssetId{} and \AssetValue{} pair} \\
+        \cm    &: \F                  & \textit{asset and public key commitment} \\
+        \utxo  &: \UTXO               & \textit{full \UTXO{}} \\
+        \esk   &: \Z_p                & \textit{Ephemeral Secret Key} \\
+        \epk   &: \G                  & \textit{Ephemeral Public Key} \\
+        \Cin   &: \AUTHin.\Ciphertext & \textit{Incoming Encrypted Note Ciphertext}
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed in the following way:
+    A \Receiver{}, $R$, is constructed from a public key $\pk : \zkAddress$ with the following algorithm:
     \begin{align*}
         t      &:= \iszero(\sa.\ID) \,\wedge\, \iszero(\sa.\VALUE) \\
         \asset &:= \select(t, \sa, \pa) \\
-        \cm    &:= \COM^{\UTXO}(r, \pk, \sa) \\
+        \cm    &:= \COM^{\U}(r, \pk, \sa) \\
         \utxo  &:= (t, \pa, \cm) \\
         \epk   &:= g \cdot \esk \\
         \Cin   &:= \AUTHin.\encrypt(\pk \cdot \esk, (r, \sa))
@@ -334,7 +327,7 @@ We also make use of the following two functions:
 \end{definition}
 
 \begin{definition}[\Transfer{} Receiver Post]
-    A \ReceiverPost{} is the following tuple extracted from a \Receiver{}:
+    A \ReceiverPost{} is the following record extracted from a \Receiver{}:
     \begin{align*}
         \utxo &: \UTXO \\
         \epk  &: \G \\
@@ -348,7 +341,7 @@ We also make use of the following two functions:
 \end{definition}
 
 \begin{definition}[\Transfer{} Object]
-    A \Transfer{} is the following tuple:
+    A \Transfer{} is the following record:
     \begin{align*}
         \ID        &: \Option(\AssetId) \\
         \sources   &: \List(\AssetValue) \\
@@ -379,7 +372,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
         \item The signing authority is correctly constructed:
             \begin{align*}
                 \ak_\alpha &:= \ak \cdot \alpha \\
-                \vk        &:= \KDF^{\vk}(\ak) \\
+                \vk        &:= \HH^{\vk}(\ak) \\
                 \pk        &:= g \cdot \vk
             \end{align*}
         \item All the \AssetId{s} in $T$ are equal:
@@ -406,9 +399,9 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \begin{align*}
                 S.t      &= \iszero(S.\sa.\ID) \,\wedge\, \iszero(S.\sa.\VALUE) \\
                 S.\asset &= \select(S.t, S.\sa, S.\pa) \\
-                S.\cm    &= \COM^{\UTXO}(S.r, S.\pk, S.\sa) \\
+                S.\cm    &= \COM^{\U}(S.r, S.\pk, S.\sa) \\
                 S.\utxo  &= (S.t, S.\pa, S.\cm) \\
-                S.h      &= H^{\UTXO}(S.\utxo) \\
+                S.h      &= \HH^{\U}(S.\utxo) \\
                 \iszero(S.\asset.\VALUE) &\,\vee\, \UTXOSet.\verify(S.h, S.h_z, S.h_w) = \True \\
                 S.n      &= \COM^{\textsf{N}}(\ak, S.h) \\
                 S.\epk   &= g \cdot S.\esk \\
@@ -418,7 +411,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
             \begin{align*}
                 R.t      &= \iszero(R.\sa.\ID) \,\wedge\, \iszero(R.\sa.\VALUE) \\
                 R.\asset &= \select(R.t, R.\sa, R.\pa) \\
-                R.\cm    &= \COM^{\UTXO}(R.r, R.\pk, R.\sa) \\
+                R.\cm    &= \COM^{\U}(R.r, R.\pk, R.\sa) \\
                 R.\utxo  &= (R.t, R.\pa, R.\cm) \\
                 R.\epk   &= g \cdot R.\esk \\
                 R.\Cin   &= \AUTHin.\encrypt(R.\pk \cdot R.\esk, (R.r, R.\sa))
@@ -430,7 +423,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
 To finish the transfer, the \SpendingKey{} for the $\Transfer.\ak : \ProofAuthorizingKey$ needs to sign the public side of the transaction. The public part of the transaction is the following post body:
 
 \begin{definition}[\Transfer{} Post Body]
-    A \TransferPostBody{} is the following tuple:
+    A \TransferPostBody{} is the following record:
     \begin{align*}
         \ID        &: \Option(\AssetId) \\
         \sources   &: \List(\Source) \\
@@ -457,7 +450,7 @@ To finish the transfer, the \SpendingKey{} for the $\Transfer.\ak : \ProofAuthor
 Now we can sign this body with $\sk_\alpha : \SpendingKey := \sk \cdot \alpha$ where the signature scheme has $\TransferPostBody$ as the $\SIG.\Message$ type and we use $\ak_\alpha$ as the verifying key:
 
 \begin{definition}[\Transfer{} Post]
-    A \TransferPost{} is the following tuple:
+    A \TransferPost{} is the following record:
     \begin{align*}
         \sigma &: \Option(\SIG.\VerifyingKey \times \SIG.\Signature) \\
         \body  &: \TransferPostBody
@@ -474,7 +467,7 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
         \item \textbf{Public Withdraw}: All the public addresses corresponding to the \Asset{s} in $P.\body.\sources$ have enough public balance (i.e. in the \PublicLedger{}) to withdraw the given \Asset{}.
         \item \textbf{Public Deposit}: All the public addresses corresponding to the \Asset{s} in $P.\body.\sinks$ exist.
         \item \textbf{Current Accumulated State}: The $\UTXOSet.\Output$ stored in each $P.\body.\senders$ is equal to current accumulated value, $\UTXOSet.\current(\Ledger.\utxos())$, for the current state of the \Ledger{}.
-        \item \textbf{New \VoidNumber{s}}: All the \VoidNumber{s} in $P.\body.\senders$ are unique, and no \VoidNumber{} in $P.\body.\senders$ has already been stored in the $\Ledger.\VoidNumberSet$.
+        \item \textbf{New \Nullifier{s}}: All the \Nullifier{s} in $P.\body.\senders$ are unique, and no \Nullifier{} in $P.\body.\senders$ has already been stored in the $\Ledger.\NullifierSet$.
         \item \textbf{New \UTXO{s}}: All the \UTXO{s} in $P.\body.\receivers$ are unique, and no \UTXO{} in $P.\body.\receivers$ has already been stored on the ledger.
         \item \textbf{Verify \Transfer{}}: Check that the following relation holds:
             \begin{align*}
@@ -492,7 +485,7 @@ Now that a participant has constructed a transfer post $P : \TransferPost$ they 
     \begin{itemize}
         \item \textbf{Public Updates}: All the relevant public accounts on the \PublicLedger{} are updated to reflect their new balances using the \Source{s} and \Sink{s} present in $P$.
         \item \textbf{\UTXOSet{} Update}: The new \UTXO{s} are appended to the \UTXOSet{}.
-        \item \textbf{\VoidNumberSet{} Update}: The new \VoidNumber{s} are appended to the \VoidNumberSet{}.
+        \item \textbf{\NullifierSet{} Update}: The new \Nullifier{s} are appended to the \NullifierSet{}.
     \end{itemize}
 \end{definition}
 

@@ -18,7 +18,7 @@ One of the important ways that privacy is preserved for \zkAsset{s} across many 
 
 \lsubsection{\zkAddress{es}}{concept-zkaddress}
 
-In order for \MantaPay{} participants to receive \zkAsset{s} via the \Transfer{} protocol, they create \emph{zk-addresses} which they use as identifiers to represent them on the ledger.
+In order for \MantaPay{} participants to receive \zkAsset{s} via the \Transfer{} protocol, they create \zkAddress{} which they use as identifiers to represent them on the ledger.
 
 \begin{center}
     \vspace{1em}
@@ -54,7 +54,7 @@ There are two kinds of \Note{s} in the \MantaPay{} protocol, \emph{incoming} \No
 
 \lsubsection{\ShieldedPool{}}{concept-shielded-pool}
 
-The \ShieldedPool{} is a data structure that contains the necessary data to enable the \MantaPay{} \Transfer{} protocol. The \ShieldedPool{} is made up of the following three general storage groups:
+The \ShieldedPool{} is an object that contains the necessary data to enable the \MantaPay{} \Transfer{} protocol. The \ShieldedPool{} is made up of the following three general storage groups:
 
 \begin{itemize}
     \item \UTXO{} Storage: Contains all of the \UTXO{s} that have ever been created along with their \IncomingNote{s}

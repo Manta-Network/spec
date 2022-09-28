@@ -19,6 +19,8 @@ The following notation is used throughout this specification:
     \item We denote the equality predicate as $(\dash\,=\,\dash) : T \times T \to \Type$ and the equality function as $\eq : T \times T \to \Bool$ whenever they exist.
     \item We denote the selection function as $\select: \Bool \times T \times T \to T$. For a boolean $b: \Bool$ and two values $t_1, t_2 : T$, $\select(b, t_1, t_2)$ returns $t_1$ when $b=\True$ and returns $t_2$ when $b=\False$.
     \item Depending on the context, the notation $\abs{\,\cdot\,}$ denotes either the absolute value of a quantity, the length of a list, the number of characters in a string, or the cardinality of a set.
+    \item We denote $\iszero : T \to \Bool$ the function that returns $\True$ whenever the input element is equal to the zero element of $T$ (this function is only defined whenever $T$ has a well-defined zero element).
+    \item We denote $\select : \Bool \times T \times T \to T$ the function that selects a value from a pair, using the left element if the input boolean is $\False$ and the right element if the input boolean is $\True$.
 \end{itemize}
 
 \footnotetext{By \emph{type of types}, we mean the type of \emph{first-level} types in some family of type universes. Discussion of the type theory necessary to make these notions rigorous is beyond the scope of this paper.}
