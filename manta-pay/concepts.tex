@@ -14,7 +14,7 @@ But \zkAsset{s} are not private on their own. A \UTXO{} is a container for a \zk
 
 \lsubsection{\Nullifier{s}}{concept-nullifier}
 
-One of the important ways that privacy is preserved for \zkAsset{s} across many transactions is that the exact transaction where a \UTXO{} is spent is not known to the public. Instead, only the owner of the \zkAsset{}, or anyone with the appropriate viewing key, can know this information. The \Nullifier{} is another cryptographic commitment that takes the place of the \UTXO{} when it is spent and it is cryptographically hard for any particular \UTXO{} to be derived from its \Nullifier{}.
+One of the important ways that privacy is preserved for \zkAsset{s} across many transactions is that the exact transaction where a \UTXO{} is spent is not known to the public. Instead, only the owner of the \zkAsset{}, or anyone with the appropriate viewing key, can know this information. The \Nullifier{} is another cryptographic commitment that takes the place of the \UTXO{} when it is spent and it is cryptographically hard for any particular \UTXO{} to be derived from its \Nullifier{}, thereby ensuring that the creation of a \UTXO{} and its nullification are not events that can be correlated by outside observers, preserving the privacy guarantees.
 
 \lsubsection{\zkAddress{es}}{concept-zkaddress}
 
@@ -50,7 +50,7 @@ Participants in \MantaPay{} are represented by their zk-addresses, but they are 
 
 The encrypted \Note{} is the primary means of communication in the \MantaPay{} protocol. For a \zkAddress{} owner to know that they have received a \zkAsset{} and can now spend it they decrypt \Note{s} with their viewing key to discover how much of an asset they have received and what information they need to spend it. The \Note{} is also used to keep track of the balances of an entire account over its transaction history.
 
-There are two kinds of \Note{s} in the \MantaPay{} protocol, \emph{incoming} \Note{s} and \emph{outgoing} \Note{s}. The \IncomingNote{} is attached to every new \UTXO{} and contains the same \zkAsset{} as the \UTXO{} and also a secret randomizer used to hide the \UTXO{} commitment. The \OutgoingNote{} is attached to every new \Nullifier{} and contains the same \zkAsset{} as the \UTXO{} that the \Nullifier{} is marking. When performing accounting over a \zkAddress{} to measure how much of a particular \AssetId{} that address controls, the \AssetValue{} stored in the \IncomingNote{s} should be \emph{added} to the running total whereas the \AssetValue{} stored in the \OutgoingNote{s} should be \emph{subtracted} from the running total as they represent inflows and outflows respectively.
+There are two kinds of \Note{s} in the \MantaPay{} protocol, \emph{incoming} \Note{s} and \emph{outgoing} \Note{s}. The \IncomingNote{} is attached to every new \UTXO{} and encrypts the same \Asset{} that is held by the \UTXO{} as well as the secret randomness value used to hide the \UTXO{} commitment. The \OutgoingNote{} is attached to every new \Nullifier{} and encrypts the same \Asset{} that is held by the \UTXO{} that the \Nullifier{} is marking for removal. When performing accounting over a \zkAddress{} to measure how much of a particular \AssetId{} that address controls, the \AssetValue{} encrypted in the \IncomingNote{s} should be \emph{added} to the running total whereas the \AssetValue{} encrypted in the \OutgoingNote{s} should be \emph{subtracted} from the running total as they represent inflows and outflows respectively.
 
 \lsubsection{\ShieldedPool{}}{concept-shielded-pool}
 

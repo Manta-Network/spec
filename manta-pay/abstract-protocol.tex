@@ -100,11 +100,11 @@ In the following section, we outline the formal specifications for all of the \e
 \begin{definitiontoc}{Non-Interactive Zero-Knowledge Proving System}
     A \emph{non-interactive zero-knowledge proving system} $\NIZK$ is defined by the schema:
     \begin{align*}
+        \SecretInput  &: \Type \\
+        \PublicInput  &: \Type \\
         \Statement    &: \Type \\
         \ProvingKey   &: \Type \\
         \VerifyingKey &: \Type \\
-        \PublicInput  &: \Type \\
-        \SecretInput  &: \Type \\
         \Proof        &: \Type \\
         \keys         &: \Statement \to \mathfrak{D}(\ProvingKey \times \VerifyingKey) \\
         \prove        &: \Statement \times \ProvingKey \times \PublicInput \times \SecretInput \to \mathfrak{D}(\Option(\Proof)) \\
@@ -116,17 +116,17 @@ In the following section, we outline the formal specifications for all of the \e
             \[\prove^P_\pk(x, w) := \prove(P, \pk, x, w)\]
         \item We write the $\VerifyingKey$ argument of $\verify$ in the subscript,
             \[\verify_\vk(x, \pi) := \verify(\vk, x, \pi)\]
-        \item Given $P \colon \Statement$ and $\pk \colon \ProvingKey$, we define the function
+        \item Given $P \colon \Statement$, we define the function
         \begin{align*}
-            \satisfying^P_\pk : \PublicInput \times \SecretInput \longrightarrow \Bool, 
+            \satisfying^P : \PublicInput \times \SecretInput \longrightarrow \Bool
         \end{align*}
-        which is true if $\exists \pi : \Proof$ such that $\Some(\pi) \in \prove^P_\pk(x, w)$ and false otherwise. If $\satisfying^P_\pk (x, w) = \True$, we call the pair $(x,w)$ a \emph{satisfying input}.
+        which is $\True$ whenever the input pair satisfies the statement $P$ and $\False$ otherwise.
     \end{itemize}
 
     Every $\NIZK$ has the following properties for a fixed statement $P : \Statement$ and keys $(\pk, \vk) \sim \keys(P)$:
 
     \begin{itemize}
-        \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P_\pk(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
+        \item \textbf{Completeness}: For all $(x, w) : \PublicInput \times \SecretInput$, if $\satisfying^P(x, w) = \True$ with proof witness $\pi$, then $\verify_\vk(x, \pi) = \True$.
         \item \textbf{Knowledge Soundness}: For any polynomial-size adversary $\mathcal{A}$ such that the probability 
         \[
             \Prob{
@@ -146,7 +146,7 @@ In the following section, we outline the formal specifications for all of the \e
                 (\pk, \vk) \sim \keys(P) \\
                 (x, \pi) \sim \mathcal{A}(\pk, \vk)
             } - \Prob{
-                    \satisfying^P_\pk(x, w) = \True
+                    \satisfying^P(x, w) = \True
                 }{
                     w \sim \mathcal{E}_\mathcal{A}(\pk, \vk)
                 } \right| 
@@ -155,7 +155,7 @@ In the following section, we outline the formal specifications for all of the \e
         \item \textbf{Statistical Zero-Knowledge}: There exists a stateful simulator $\mathcal{S}$, such that for all stateful distinguishers $\mathcal{D}$, the difference between the following two probabilities is negligible:
             \[
                 \Prob{
-                    \satisfying^P_\pk(x, w) = \True \\
+                    \satisfying^P(x, w) = \True \\
                     \mathcal{D}(\pi) = \True
                 }{
                     (\pk, \vk) \sim \keys(P) \\
@@ -164,7 +164,7 @@ In the following section, we outline the formal specifications for all of the \e
                 }
                 \,\,\text{and}\,\,
                 \Prob{
-                    \satisfying^P_\pk(x, w) = \True \\
+                    \satisfying^P(x, w) = \True \\
                     \mathcal{D}(\pi) = \True
                 }{
                     (\pk, \vk) \sim \mathcal{S}(P) \\
@@ -262,7 +262,7 @@ We begin by defining the cryptographic primitives involved in the \Transfer{} pr
         \item \textbf{UTXO Dynamic Cryptographic Accumulator}: $\UTXOSet$
         \item \textbf{Zero-Knowledge Proving System}: $\NIZK$
     \end{itemize}
-    where $\F$ is a prime field and $\G$ is a cryptographic group. The \Nullifier{} type is defined as the output of $\COM^{\N}$.
+    where $\F$ is a prime field and $\G$ is a cryptographic group. The \Nullifier{} type is defined as the output of $\COM^{\N}$. The authenticated encryption schemes encrypt $\F \times \Asset$ for \IncomingNote{s} and $\Asset$ for \OutgoingNote{s}.
 \end{definition}
 
 For the rest of this section, we assume the existence of a \TransferConfiguration{} and use the primitives outlined above explicitly. We continue by defining the \Sender{} and \Receiver{} constructions as well as their public counterparts, the \SenderPost{} and \ReceiverPost{}.
@@ -286,7 +286,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \Cout  &: \AUTHout.\Ciphertext & \textit{Outgoing Encrypted Note Ciphertext} 
     \end{align*}
 
-    A \Sender{}, $S$, is constructed from a public key $\pk : \zkAddress$ with the following algorithm:
+    A \Sender{}, $S$, is constructed in the following way:
     \begin{align*}
         t      &:= \iszero(\sa.\ID) \,\wedge\, \iszero(\sa.\VALUE) \\
         \asset &:= \select(t, \sa, \pa) \\
@@ -326,7 +326,7 @@ For the rest of this section, we assume the existence of a \TransferConfiguratio
         \Cin   &: \AUTHin.\Ciphertext & \textit{Incoming Encrypted Note Ciphertext}
     \end{align*}
     
-    A \Receiver{}, $R$, is constructed from a public key $\pk : \zkAddress$ with the following algorithm:
+    A \Receiver{}, $R$, is constructed in the following way:
     \begin{align*}
         t      &:= \iszero(\sa.\ID) \,\wedge\, \iszero(\sa.\VALUE) \\
         \asset &:= \select(t, \sa, \pa) \\
@@ -508,7 +508,7 @@ For \MantaPay{} participants to use the \Transfer{} protocol, they will need to 
 \caption{Batched Transaction Algorithm}
 \begin{algorithmic}
     \Procedure {BuildBatch}{$\sk$, $\mathcal{B}$, $\total$, $\pk$}
-        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples coins from $\mathcal{B}$ that total at least $\total$}
+        \State $B \gets \Sample(\total, \mathcal{B})$  \Comment{Samples assets from $\mathcal{B}$ that total at least $\total$}
         \If{$\len(B) = 0$}
             \State \textsf{return} $[\,]$ \Comment{Insufficient Balance}
         \EndIf
@@ -535,7 +535,7 @@ Any wallet implementation should see that their users need not keep track of thi
 
 \footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
 
-For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\Bool \times \F \times \AssetValue\right)$, a set of transparent-blinder-balance triples for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\pk : \zkAddress$. We can then compute 
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\Bool \times \F \times \AssetValue\right)$, a set of transparency-blinder-balance triples for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\pk : \zkAddress$. We can then compute 
 \[\textsc{BuildBatch}(\sk, \mathcal{B}, \total, \pk)\]
 to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\pk$.
 

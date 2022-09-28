@@ -38,7 +38,7 @@ For this protocol, we use \texttt{BN254} as our outer (pairing-friendly) curve w
 \begin{definition}[Hash Functions]
     The protocol features two additional hash functions: $\HH^{\vk}$ the viewing key derivation function and $H^{\U}$ the \UTXO{} hash function. Both hash functions use \Poseidon{} as the underlying cryptographic primitive. The viewing key derivation function uses an arity-2 \Poseidon{}
     \[\HH^{\vk}(\ak) := \Poseidon_2(d, \X(\ak), \Y(\ak))\]
-    where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/kdf-vk})$ the domain separation element. Since the target type of this hash function is the scalar field $\mathbb{S}$ instead of $\F$, we reduce the result modulo the order of $\mathbb{S}$.
+    where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/vk-hash})$ the domain separation element. Since the target type of this hash function is the scalar field $\mathbb{S}$ instead of $\F$, we reduce the result modulo the order of $\mathbb{S}$.
     For the \UTXO{} hash function we use an arity-4 \Poseidon{}
     \[H^{\U}(t, \pa, \cm) := \Poseidon_4(d, t, \pa.\ID, \pa.\VALUE, \cm)\]
     where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/utxo-hash})$ the domain separation element.
@@ -49,7 +49,7 @@ For this protocol, we use \texttt{BN254} as our outer (pairing-friendly) curve w
 \end{definition}
 
 \begin{definition}[Authenticated Encryption Scheme]
-    For $\AUTHin$ and $\AUTHout$ we use the $\Poseidon$ permutation as the permutation of a duplex sponge encryption protocol.
+    For $\AUTHin$ and $\AUTHout$ we use the $\Poseidon$ permutation as the permutation of a duplex sponge \cite{duplexsponge} encryption protocol.
 \end{definition}
 
 \begin{definition}[Dynamic Cryptographic Accumulator]
