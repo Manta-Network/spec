@@ -27,20 +27,20 @@ For this protocol, we use \texttt{BN254} as our outer (pairing-friendly) curve w
 \subsection{Concrete Cryptographic Schemes}
 
 \begin{definition}[Commitment Schemes]
-    The protocol features two different commitment schemes: $\COM^{\UTXO}$ the \UTXO{} Commitment Scheme and $\COM^{\VN}$ the Void Number Commitment Scheme. Both commitment schemes use \Poseidon{} as the underlying cryptographic primitive. The \UTXO{} uses an arity-5 \Poseidon{} with the following mapping:
-    \[\COM^{\UTXO}(r, \pk, \asset) := \Poseidon_5(d, r, \X(\pk), \Y(\pk), \asset.\ID, \asset.\VALUE)\]
+    The protocol features two different commitment schemes: $\COM^{\U}$ the \UTXO{} Commitment Scheme and $\COM^{\N}$ the Nullifier Commitment Scheme. Both commitment schemes use \Poseidon{} as the underlying cryptographic primitive. The \UTXO{} uses an arity-5 \Poseidon{} with the following mapping:
+    \[\COM^{\U}(r, \pk, \asset) := \Poseidon_5(d, r, \X(\pk), \Y(\pk), \asset.\ID, \asset.\VALUE)\]
     where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/com-utxo})$ the domain separation element.
-    For the Void Number Commitment Scheme we use an arity-3 \Poseidon{} with the following mapping:
-    \[\COM^{\VN}(\ak, h) := \Poseidon_3(d, \X(\ak), \Y(\ak), h)\]
+    For the Nullifier Commitment Scheme we use an arity-3 \Poseidon{} with the following mapping:
+    \[\COM^{\N}(\ak, h) := \Poseidon_3(d, \X(\ak), \Y(\ak), h)\]
     where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/com-vn})$ the domain separation element.
 \end{definition}
 
 \begin{definition}[Hash Functions]
-    The protocol features two additional hash functions: $\KDF^{\vk}$ the viewing key derivation function and $H^{\UTXO}$ the \UTXO{} hash function. Both hash functions use \Poseidon{} as the underlying cryptographic primitive. The viewing key derivation function uses an arity-2 \Poseidon{}
-    \[\KDF^{\vk}(\ak) := \Poseidon_2(d, \X(\ak), \Y(\ak))\]
+    The protocol features two additional hash functions: $\HH^{\vk}$ the viewing key derivation function and $H^{\U}$ the \UTXO{} hash function. Both hash functions use \Poseidon{} as the underlying cryptographic primitive. The viewing key derivation function uses an arity-2 \Poseidon{}
+    \[\HH^{\vk}(\ak) := \Poseidon_2(d, \X(\ak), \Y(\ak))\]
     where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/kdf-vk})$ the domain separation element. Since the target type of this hash function is the scalar field $\mathbb{S}$ instead of $\F$, we reduce the result modulo the order of $\mathbb{S}$.
     For the \UTXO{} hash function we use an arity-4 \Poseidon{}
-    \[H^{\UTXO}(t, \pa, \cm) := \Poseidon_4(d, t, \pa.\ID, \pa.\VALUE, \cm)\]
+    \[H^{\U}(t, \pa, \cm) := \Poseidon_4(d, t, \pa.\ID, \pa.\VALUE, \cm)\]
     where $d = \HashToScalar(\domainstr{manta-pay/1.0.0/utxo-hash})$ the domain separation element.
 \end{definition}
 
