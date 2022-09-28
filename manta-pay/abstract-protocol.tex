@@ -225,7 +225,7 @@ Here we define each key and its function in the \Transfer{} protocol:
     \end{align*}
     To derive the \zkAddress{}, $\pk$, we use the following:
     \[\sk \quad\mapsto\quad \ak := g \cdot \sk \quad\mapsto\quad \vk := \HH^\vk(\ak) \quad\mapsto\quad \pk := g \cdot \vk\]
-    For signing a message $m$ with a randomized key, the owner of the \SpendingKey{}, $\sk$, and owner of the \ProofAuthorizingKey{}, $\ak$, perform the following protocol:
+    For signing a message $m$ with a randomized key, the Spender (owner of the \SpendingKey{}, $\sk$) and Prover (owner of the \ProofAuthorizingKey{}, $\ak$) perform the following protocol:
     \begin{enumerate}
         \item Spender samples $\alpha$ randomly and sends it to prover.
         \item Prover computes $\ak_\alpha := \ak \cdot \alpha$ and binds it to the message $m$ and sends the message to spender.
@@ -416,7 +416,7 @@ In order to prove that these constraints are satisfied for a given \Transfer{}, 
                 \iszero(S.\asset.\VALUE) &\,\vee\, \UTXOSet.\verify(S.h, S.h_z, S.h_w) = \True \\
                 S.n      &= \COM^{\N}(\ak, S.h) \\
                 S.\epk   &= g \cdot S.\esk \\
-                S.\Cout  &= \AUTHout.\encrypt(\pk \cdot S.\esk, S.\asset)
+                S.\Cout  &= \AUTHout.\encrypt(S.\pk \cdot S.\esk, S.\asset)
             \end{align*}
         \item For all $R \in T.\receivers$, the \Receiver{} $R$ is well-formed:
             \begin{align*}
@@ -531,11 +531,11 @@ For \MantaPay{} participants to use the \Transfer{} protocol, they will need to 
 \end{algorithmic}
 \end{algorithm*}
 
-Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single atomic action that the user can take, performing a withdrawl from their balance. To describe such a \emph{batched transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
+Any wallet implementation should see that their users need not keep track of this complexity themselves. Instead, like a public ledger, the notion of a \emph{transaction} between one participant and another should be viewed as a single atomic action that the user can take, performing a withdrawal from their balance. To describe such a \emph{batched transaction}, we assume the existence of two transfer shapes\footnotemark{}: $\Mint$ with shape $(1, 0, 1, 0)$ and $\PrivateTransfer$ with shape $(0, N, N, 0)$ for some natural number $N > 1$.
 
 \footnotetext{Other \Transfer{} accumulation algorithms are possible with different starting shapes.}
 
-For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\Bool \times \F \times \AssetValue\right)$, a set of transparenct-blinder-balance triples for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\pk : \zkAddress$. We can then compute 
+For a fixed spending key, $\sk : \SpendingKey$, and asset id, $\ID : \AssetId$, we are given a balance state, $\mathcal{B} : \FinSet\left(\Bool \times \F \times \AssetValue\right)$, a set of transparent-blinder-balance triples for unspent assets, a total balance to withdraw, $\total : \AssetValue$, and a receiving key $\pk : \zkAddress$. We can then compute 
 \[\textsc{BuildBatch}(\sk, \mathcal{B}, \total, \pk)\]
 to receive a $\List(\TransferPost)$ to send to the ledger, representing the transfer of $\total$ to $\pk$.
 
