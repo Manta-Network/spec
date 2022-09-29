@@ -8,14 +8,17 @@ The following notation is used throughout this specification:
     \item $\Bool$ is the type of booleans with values $\True$ and $\False$.
     \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{type of functions} from $A$ to $B$ as $A \to B : \Type$.
     \item For any types $A : \Type$ and $B : \Type$ we denote the \emph{product type} over $A$ and $B$ as $A \times B : \Type$ with constructor $(\dash, \dash) : A \to (B \to A \times B)$. Depending on context, we may omit the constructor and inline the pair into another constructor/destructor. For example, if $f : A \times B \to C$ we can denote $f((a, b))$ as $f(a, b)$ to reduce the number of parentheses.
-    \item For any type $T : \Type$, we define $\Option(T) : \Type$ as the inductive type with constructors:
+    \item For any type $T : \Type$, we define $\Option\bra{T} : \Type$ as the inductive type with constructors:
         \begin{align*}
-            \None &: \Option(T) \\
-            \Some &: T \to \Option(T)
+            \None &: \Option\bra{T} \\
+            \Some &: T \to \Option\bra{T}
         \end{align*}
-    \item We denote the \emph{type of finite sets} over a type $T : \Type$ as $\FinSet(T) : \Type$. The membership predicate for a value $x : T$ in a finite set $S : \FinSet(T)$ is denoted $x \in S$.
-    \item We denote the \emph{type of finite ordered sets} over a type $T : \Type$ as $\List(T) : \Type$. This can either be defined by an inductive type or as a $\FinSet(T)$ with a fixed ordering. We denote the constructor for a list as $[\,\dots\,]$ for an arbitrary set of elements.
-    \item We denote the \emph{type of distributions} over a type $T : \Type$ as $\mathfrak{D}(T) : \Type$. A value $x$ sampled from $\mathfrak{D}(T)$ is denoted $x \sim \mathfrak{D}(T)$ and the fact that the value $x$ belongs to the range of $\mathfrak{D}(T)$ is denoted $x \in \mathfrak{D}(T)$. So namely, $y \in \set{x \,|\, x \sim \mathfrak{D}(T)} \leftrightarrow y \in \mathfrak{D}(T)$.
+    \item We denote the \emph{type of finite sets} over a type $T : \Type$ as $\FinSet\bra{T} : \Type$. The membership predicate for a value $x : T$ in a finite set $S : \FinSet(T)$ is denoted $x \in S$.
+    \item We denote the \emph{type of finite ordered sets} over a type $T : \Type$ as $\List\bra{T} : \Type$. This can either be defined by an inductive type or as a $\FinSet(T)$ with a fixed ordering. We denote the constructor for a list as $[\,\dots\,]$ for an arbitrary set of elements.
+    \item We denote the \emph{type of distributions} over a type $T : \Type$ as $\mathfrak{D}\bra{T} : \Type$. A value $x$ sampled from $\mathfrak{D}\bra{T}$ is denoted $x \sim \mathfrak{D}\bra{T}$ and the fact that the value $x$ belongs to the range of $\mathfrak{D}\bra{T}$ is denoted $x \in \mathfrak{D}\bra{T}$. So namely, $y \in \set{x \,|\, x \sim \mathfrak{D}\bra{T}} \leftrightarrow y \in \mathfrak{D}\bra{T}$.
+    \item We denote the equality predicate as $(\dash\,=\,\dash) : T \times T \to \Type$ and the equality function as $\eq : T \times T \to \Bool$ whenever they exist.
+    \item We denote the selection function as $\select: \Bool \times T \times T \to T$. For a boolean $b: \Bool$ and two values $t_1, t_2 : T$, $\select(b, t_1, t_2)$ returns $t_1$ when $b = \False$ and returns $t_2$ when $b = \True$.
+    \item We denote the zero-equality check as $\iszero : T \to \Bool$ the function that returns $\True$ whenever the input element is equal to the zero element of $T$ (this function is only defined whenever $T$ has a well-defined zero element).
     \item Depending on the context, the notation $\abs{\,\cdot\,}$ denotes either the absolute value of a quantity, the length of a list, the number of characters in a string, or the cardinality of a set.
 \end{itemize}
 
