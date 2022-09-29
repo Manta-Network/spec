@@ -1,0 +1,23 @@
+\lsection{Requirements}{requirements}
+
+\subsection*{Goals}
+
+\begin{itemize}
+    \item Anonymous: Registration only requires a Twitter handle and an email address, none of which needs to be linked to a participant's identity. Participants are encouraged to publicly announce their contribution, but this is not mandatory.
+    \item Low barrier to entry: participation does not require sophisticated understanding of cryptography. Participants can contribute using a free, open source, independently audited client.
+    \item Low downtime: a ceremony coordinator will minimize the waiting time between contributions.
+    \item Updatable: More contributions can be added to the ceremony at a later stage if desired.
+    \item Verifiable: The ceremony and all its contributions can be verified by independent auditors. We ensure that is the case by:
+    \begin{itemize}
+        \item Publishing the transcript of the ceremony, including the validity proof and hash of each contribution.
+        \item Asking participants to publish their hashes in independent locations, e.g. Twitter.
+        \item Distributing an open-source verification library. 
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Non-Goals}
+
+\begin{itemize}
+    \item Permisionless: We require participants to pre-register to contribute to the ceremony. However, registration is open to anyone with a Twitter account and an email address.
+    \item Support for independently computed contributions: We make no special effort to support contribution clients other than our own. However, the server code is open-source and a knowledgeable user could write their own contribution client, provided it adheres to the messaging protocol \ref{sec: MessagingProtocol}.
+\end{itemize}

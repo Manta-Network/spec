@@ -1,0 +1,87 @@
+\lsection{Context}{Context}
+
+\subsection{Circuit}
+Throughout this paper, by circuit we mean a \emph{Rank-1 Constraint System (R1CS)}. It is defined as a system of equations over $\mathbb{F}_r$ of the form 
+\begin{align}
+\sum_{i=0}^m a_i u_{i, q} \cdot \sum_{i=0}^m a_i v_{i, q} = \sum_{i=0}^m a_i w_{i, q}, \qquad q = 1, \dots, n, \label{eqn: r1cs}
+\end{align}
+where $a_0 = 1$. This system of equations, in the context of zero-knowledge proofs, is to be understood as follows:
+\begin{itemize}
+\item The numbers $u_{i, q}, v_{i, q}, w_{i, q}$ are constants in $\mathbb{F}_r$ which represent the operations performed in an arithmetic circuit. Here constant means constant in the circuit, e.g. each \MantaPay{} circuit will have a fixed set of $u_{i, q}, v_{i, q}, w_{i, q}$.
+\item The numbers $\phi = (a_1, \dots, a_\ell)$ are the public inputs. In \MantaPay{}, these correspond to the \TransferPost{}, excluding the proof.
+\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the private witnesses. In \MantaPay{}, these correspond to the elements of the \Transfer{} which are not part of the \TransferPost{}.
+\item A R1CS defines the following binary relation
+\begin{align}
+R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, \dots, a_m), \ \eqref{eqn: r1cs} \textrm{ is satisfied} \right\} \subset \mathbb{F}_r^\ell \times \mathbb{F}_r^{m-\ell}
+\end{align}
+\item The statements that can be proved in this terminology are of the form,  ``For a given circuit \eqref{eqn: r1cs} and public input $\phi$, I know a witness $w$ such that $(\phi, w) \in R$.''
+\end{itemize}
+
+\subsection{Quadratic Arithmetic Programs}
+\emph{Quadratic Arithmetic Programs (QAPs)} give an alternative way to describe a circuit, equivalent to R1CS. A QAP is a system of polynomial equations of the form
+\begin{align}
+\sum_{i=0}^m a_i u_i(X) \cdot \sum_{i=0}^m a_i v_i(X) \equiv \sum_{i=0}^m a_i w_i(X) \mod t(X), \label{eqn: qap}
+\end{align}
+where 
+\begin{itemize}
+\item $u_i(X), v_i(X), w_i(X) \in \mathbb{F}_r[X]$ are degree $n-1$ polynomials, and $t(X) \in \mathbb{F}_r[X]$ is a degree $2^k$ polynomial (see below), all of which are fixed for the protocol.
+\item The numbers $\phi = (a_1, \dots, a_\ell)$ are the public inputs.
+\item The numbers $w = (a_{\ell + 1}, \dots, a_m)$ are the private witnesses.
+\item A QAP defines the following binary relation
+\begin{align}
+R = \left\{ (\phi, w) \big| \ \phi = (a_1, \dots, a_\ell), \ w = (a_{\ell + 1}, \dots, a_m), \ \eqref{eqn: qap} \textrm{ is satisfied} \right\} \subset \mathbb{F}_r^\ell \times \mathbb{F}_r^{m-\ell}
+\end{align}
+\item The statements that can be proved in this terminology are of the form, ``For a given circuit \eqref{eqn: qap} and public input $\phi$, I know a witness $w$ such that $(\phi, w) \in R$.''
+\end{itemize}
+
+We derive the QAP description of a circuit from its R1CS description as follows:
+\begin{enumerate}
+    \item Choose $k$ as the minimal integer such that $2^k \geq n$. Let $t(X) = X^{2^k} - 1$. This is the \emph{vanishing polynomial} for the set of $2^k$-th roots of unity in $\mathbb{F}_r$.
+    \item We derive the polynomial $u_i(X)$ from the R1CS vector $(u_{i,q})_{q=1}^n$ via a Lagrange basis $\{ L_q(x) \}_{t(q) = 0}$ for the set of $2^k$-th roots of unity.  That is,
+    \begin{equation}\label{eq: interpolate}
+        u_i(X) = \sum_{q=1}^n u_{i,q} L_q(X),
+    \end{equation}
+    where we use the convention $u_{i,q} = 0$ for $q > n$.
+    \item We repeat the same procedure to define $v_i(X)$ and $w_i(X)$.
+\end{enumerate}
+One may readily check that \eqref{eqn: r1cs} is equivalent to \eqref{eqn: qap} with these definitions.
+
+\subsection{The Groth16 \Setup{} function}
+We now recall the Groth16 \Setup{} function. It is defined relative to two choices:
+\begin{itemize}
+\item A pairing curve\footnote{We use BN254 (see \cite{Naehrig10} and the references therein)}, which consists of a triple of elliptic curves $(\mathbb{G}_1, \mathbb{G}_2,\mathbb{G}_T) $ and a non-degenerate bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$. We fix generators $g$ and $h$ of $\mathbb{G}_1$ and $\mathbb{G}_2$, respectively. We require that $g, h$, and $e(g,h)$ all have the same prime order $r$. 
+\item A circuit, encoded as a QAP $\{u_i(X), v_i(X), w_i(X), t(X)\}$.
+\end{itemize}
+All public parameters derive from a simulation trapdoor $\tau = (\alpha, \beta, \delta, x) \leftarrow \mathbb{F}_r^*$ (the famous ``toxic waste''). The Groth16 public parameters themselves are elements of $\Gone$ and $\Gtwo$, specifically
+\begin{equation}\label{eq: prover_key}
+    \begin{split} % TODO: Why are there raw powers of x in sigma2 ?
+\sigma_1 = \Biggl[ \alpha, \beta, \delta, 
+    \left\{u_i(x) \right\}_{i=0}^m, &
+    \left\{v_i(x) \right\}_{i=0}^m, 
+    \left\{ (\beta u_i(x) + \alpha v_i(x) + w_i(x)) \right\}_{i=0}^\ell, \\
+    & \left\{  \frac{\beta u_i(x) + \alpha v_i(x) + w_i(x)}{\delta} \right\}_{i=\ell+1}^m, 
+    \left\{ \frac{x^i t(x)}{\delta} \right\}_{i=0}^{n-2}  \Biggr]_1 \\
+\sigma_2 = \left[ \left( \beta, \delta, \left\{ v_i(x) \right\}_{i=0}^m \right) \right]_2
+    \end{split}
+\end{equation} 
+where we denote $[y]_1 = y \cdot g$ and $[y]_2 = y \cdot h$ for all $y \in \mathbb{F}_r$. These public parameters make up the Groth 16 proving and verifying keys.
+
+The public output of \Setup{} is $\sigma = (\sigma_1, \sigma_2)$. These are the public parameters from which Groth16 proofs are formed. The trapdoor $\tau$ is \emph{not} public; indeed, a malicious prover with knowledge of $\tau$ could construct fraudulent proofs. The goal of the trusted setup is to compute $\sigma$ without revealing $\tau$.
+
+\subsection{Multi-Party Computation}
+A decentralized way to compute $\sigma$ without revealing $\tau$ is to compute $\sigma$ in such a way that $\tau$ becomes a shared secret split among a diverse set of participants. This may be achieved via \emph{secure multi-party computation} (MPC). The MPC we employ is a protocol for computing $\sigma$ incrementally from private inputs $\tau_i$ belonging to participants in the computation. 
+
+The key security property of this MPC is that its security is ensured by having at least one honest participant. An honest participant is one who keeps their private input $\tau_i$ from all other participants, ideally by permanently clearing it from their system's memory after participation. Put differently, this \emph{1-out-of-N} honest participants guarantee states that to determine the toxic waste $\tau$ requires the collusion of \emph{all} participants in the MPC. 
+
+By soliciting contributions to the MPC from a diverse set of participants, we increase the difficulty of such collusion. Note that any individual with a stake in the security of \MantaPay{} can guarantee this personally, simply by participating honestly in the \Setup{} MPC.
+
+
+\subsection{Phase Structure}
+
+The full \Setup{} MPC splits usefully into two \emph{phases}. The output of \emph{Phase 1} is \emph{universal} in the sense that these parameters may be used by any ZK circuit of small enough size. In \emph{Phase 2} we derive $\sigma$ from the output of Phase 1. The parameters generated in Phase 2 are \emph{circuit-specific}: they depend on the R1CS description of the circuit \eqref{eqn: r1cs} and must be computed separately for each ZK circuit. This two-phase splitting of the MPC is formalized in \cite{bowe19}.
+
+Phase 1 computes a modified KZG setup \cite{KZG} consisting of the curve points 
+\begin{align}\label{eq: kzg}
+KZG = \KzgParams{}
+\end{align}
+These Phase 1 parameters are computed via a MPC such that $x, \alpha, \beta \in \mathbb{F}_r$ are shared secrets among the participants. Since Phase 1 parameters don't depend on the specifics of the circuit, a Phase 1 ceremony may be treated as a public good for any project using circuits of appropriate size over the same pairing curve. In our case, we take the Phase 1 parameters computed by the Perpetual Powers of Tau (PPoT) ceremony \cite{PPoT}, an ongoing multi-party computation similar to our trusted setup described below, with a $1$-out-of-$N$ security assumption. To ensure its soundness, we have personally verified each contribution to PPoT.

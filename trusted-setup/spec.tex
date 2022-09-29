@@ -1,0 +1,31 @@
+\documentclass{article}
+
+\input{prelude}
+
+\title{\textbf{\MantaPay{} Trusted Setup Protocol Specification}\\ v\input{version}}
+\author{Francisco Hern\'andez Iglesias, Todd Norton \thanks{ordered alphabetically.}
+}
+\date{\today}
+
+\begin{document}
+    
+\maketitle
+
+\begin{abstract}
+    We describe the protocol for the \MantaPay{} trusted setup ceremony to generate prover and verifier keys for Groth16 ZK-SNARK proofs.
+\end{abstract}
+    
+\tableofcontents
+\newpage
+
+\input{introduction}
+\input{context-scope}
+\input{phase2}
+\input{requirements}
+\input{design}
+
+\bibliographystyle{plain}
+\bibliography{ref}
+
+\end{document}
+
