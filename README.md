@@ -6,5 +6,5 @@ These are the current specifications for the protocols in the Manta family:
 |----------|-----------|-----------|
 | [`MantaPay`](manta-pay/) |  Testnet         |  v0.4.0          |
 | [`FeeRelay`](fee-relay/)  |  Draft         | N.A          |
-
+| [`TrustedSetup`](trusted-setup/) | ? | ? |
 
